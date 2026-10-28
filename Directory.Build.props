@@ -11,4 +11,25 @@
     <!-- もう一方の OS の出力フォルダーを、ソースとして拾わない -->
     <DefaultItemExcludes>$(DefaultItemExcludes);obj/**;bin/**;obj.unix/**;bin.unix/**</DefaultItemExcludes>
   </PropertyGroup>
+
+  <!--
+    C# の静的解析（ラチェット）。kit の docs/lint.md（2. C#）の「各サイトへの取り込み」と同じ形。
+    重大度は kit の tools/lint/dotnet.editorconfig を読む（error: CS4014・VSTHRD100・CA1816・IDE0059 ／ warning: CA1031・CA2000・VSTHRD002・VSTHRD003・VSTHRD103）。
+    album は違反が 0 件の error だけを使う（件数と理由は CLAUDE.md の「C# の静的解析」）。album 独自の上書きが要るときは、この下に別の GlobalAnalyzerConfigFiles を書く。
+    EnforceCodeStyleInBuild: IDE の規則（IDE0059 など）を dotnet build でも見る。
+    Microsoft.VisualStudio.Threading.Analyzers: async void・同期の待ち（VSTHRD）。PrivateAssets=all なので、参照するプロジェクトには流れない。
+  -->
+  <PropertyGroup>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <GlobalAnalyzerConfigFiles Include="$(MSBuildThisFileDirectory)external/fara-site-kit/tools/lint/dotnet.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.14.15" PrivateAssets="all" />
+  </ItemGroup>
 </Project>
+

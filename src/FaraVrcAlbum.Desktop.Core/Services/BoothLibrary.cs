@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.Data.Sqlite;
 
@@ -18,6 +19,19 @@ public static partial class BoothLibrary
 {
     /// <summary>服として扱うカテゴリ（BOOTH の「3D モデル」→「3D 衣装」）。</summary>
     public const string OutfitParentCategory = "3Dモデル";
+
+    /// <summary>コピーした data.db の一時フォルダを消す。消せなくても結果は変えない（開いたままのプロセスなど）。失敗は Debug 出力に残す。</summary>
+    private static void TryDeleteTemp(string temp)
+    {
+        try
+        {
+            Directory.Delete(temp, recursive: true);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Debug.WriteLine($"BoothLibrary: 一時フォルダを消せませんでした: {e.Message}");
+        }
+    }
 
     public const string OutfitSubCategory = "3D衣装";
 
@@ -70,7 +84,7 @@ public static partial class BoothLibrary
         finally
         {
             SqliteConnection.ClearAllPools();
-            try { Directory.Delete(temp, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            TryDeleteTemp(temp);
         }
     }
 
@@ -107,7 +121,7 @@ public static partial class BoothLibrary
         finally
         {
             SqliteConnection.ClearAllPools();
-            try { Directory.Delete(temp, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            TryDeleteTemp(temp);
         }
     }
 
@@ -167,7 +181,7 @@ public static partial class BoothLibrary
         finally
         {
             SqliteConnection.ClearAllPools();
-            try { Directory.Delete(temp, recursive: true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            TryDeleteTemp(temp);
         }
     }
 

@@ -29,18 +29,23 @@ else
     private IReadOnlyList<PostSummary> posts = Array.Empty<PostSummary>();
     private int pageCount = 1;
     private bool loaded;
+    private int _request;
 
     private string Heading => $"タグ: {tag?.Name}";
 
     protected override async Task OnParametersSetAsync()
     {
+        // 読み込みの途中でパラメータが変わったら、古い応答は捨てる（後から届いた古い応答で、新しい表示を上書きしない）
+        var request = ++_request;
         loaded = false;
-        tag = null;
+        TagSummary? found = null;
         if (SiteRules.IsValidSlug(Slug))
         {
             var tags = await Store.GetTagsAsync();
-            tag = tags?.FirstOrDefault(t => t.Slug == Slug);
+            if (request != _request) return;
+            found = tags?.FirstOrDefault(t => t.Slug == Slug);
         }
+        tag = found;
         posts = tag is null ? Array.Empty<PostSummary>() : Store.PostsOfTag(Slug);
         pageCount = SiteRules.PageCount(posts.Count, Store.Settings.PostsPerPage);
         loaded = true;

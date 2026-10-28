@@ -1,0 +1,53 @@
+using System.Net;
+using FaraVrcAlbum.Web.Services;
+using Xunit;
+
+namespace FaraVrcAlbum.Web.Tests;
+
+/// <summary>AlbumStore: 重複したタグ（起動を止めない）と、読めなかったタグ一覧の取り直し。</summary>
+public sealed class AlbumStoreSafetyTests
+{
+    private const string SiteJson = "{\"siteName\":\"Fara Photo Album\",\"author\":\"Fara\",\"imageBaseUrl\":\"https://i.test/\",\"postsPerPage\":2}";
+
+    private sealed class Routes : HttpMessageHandler
+    {
+        public Dictionary<string, string> Map { get; } = new(StringComparer.Ordinal);
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var found = Map.TryGetValue(request.RequestUri!.AbsolutePath, out var body);
+            return Task.FromResult(new HttpResponseMessage(found ? HttpStatusCode.OK : HttpStatusCode.NotFound) { Content = new StringContent(body ?? "", System.Text.Encoding.UTF8, "application/json") });
+        }
+    }
+
+    private static (AlbumStore Store, Routes Routes) Create()
+    {
+        var routes = new Routes();
+        routes.Map["/data/site.json"] = SiteJson;
+        routes.Map["/data/posts-index.json"] = "[]";
+        return (new AlbumStore(new HttpClient(routes) { BaseAddress = new Uri("https://album.test/") }), routes);
+    }
+
+    [Fact]
+    public async Task DuplicateTagSlugsDoNotStopStartupAndTheFirstNameWins()
+    {
+        var (store, routes) = Create();
+        routes.Map["/data/tags.json"] = "[{\"slug\":\"night\",\"name\":\"夜景\",\"postCount\":1},{\"slug\":\"night\",\"name\":\"別名\",\"postCount\":2}]";
+
+        Assert.True(await store.LoadAsync());                                            // 例外で起動が止まらない
+        Assert.Equal("夜景", store.TagNames["night"]);
+    }
+
+    [Fact]
+    public async Task AnUnreadTagListIsFetchedAgainTheNextTime()
+    {
+        var (store, routes) = Create();
+        Assert.True(await store.LoadAsync());                                            // タグの一覧は無い（読めない）
+        Assert.Null(await store.GetTagsAsync());
+
+        routes.Map["/data/tags.json"] = "[{\"slug\":\"night\",\"name\":\"夜景\",\"postCount\":1}]";
+        var tags = await store.GetTagsAsync();                                           // 失敗を覚えず、取り直す
+        Assert.NotNull(tags);
+        Assert.Single(tags);
+    }
+}

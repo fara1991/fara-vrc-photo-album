@@ -61,11 +61,6 @@ public static class ContentSyncService
 
     private static string StoreKey(string path) => Prefix + path;
 
-    /// <summary>相対パスとして使ってよいか（.json・区切りは /・上の階層やルートを指さない）。</summary>
-    internal static bool IsSafePath(string path) =>
-        path.Length > 0 && path.EndsWith(".json", StringComparison.Ordinal) && !Path.IsPathRooted(path) && !path.StartsWith('/')
-        && !path.Contains('\\') && !path.Split('/').Any(part => part is "" or "." or "..");
-
     private static string LocalPath(string contentDir, string path) => Path.Combine(contentDir, path.Replace('/', Path.DirectorySeparatorChar));
 
     /// <summary>ローカルと R2 を比べる（R2 の中身は、同じかどうかを確かめるため、ファイルごとに読む。JSON は小さい）。並びはパス順。</summary>
@@ -76,7 +71,7 @@ public static class ContentSyncService
         await foreach (var (key, size) in store.ListAsync(Prefix, ct))
         {
             var path = key[Prefix.Length..];
-            if (IsSafePath(path)) remote[path] = size;                                      // 形の合わないキー（控えの目録など）は見ない
+            if (ContentPath.IsSafe(path)) remote[path] = size;                                    // 形の合わないキー（控えの目録など）は見ない
         }
 
         var items = new List<SyncItem>();
@@ -110,7 +105,7 @@ public static class ContentSyncService
     public static async Task<SyncResult> ApplyAsync(string contentDir, IObjectStore store, IReadOnlyList<(string Path, SyncAction Action)> actions, string safetyCopyDir, CancellationToken ct = default)
     {
         foreach (var (path, _) in actions)
-            if (!IsSafePath(path)) throw new InvalidOperationException($"ファイル名が不正です: {path}");
+            if (!ContentPath.IsSafe(path)) throw new InvalidOperationException($"ファイル名が不正です: {path}");
 
         // ---- 先に読む（ここまでは、何も変えない）
         var downloads = new List<(string Path, byte[] Data, byte[]? Before)>();
@@ -149,7 +144,7 @@ public static class ContentSyncService
             {
                 foreach (var (path, data, before) in downloads)
                 {
-                    WriteAtomic(LocalPath(contentDir, path), data);
+                    JsonFiles.WriteAtomic(LocalPath(contentDir, path), data);
                     changed.Add((path, before));
                 }
                 foreach (var (path, before) in localDeletes)
@@ -161,13 +156,12 @@ public static class ContentSyncService
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                foreach (var (path, before) in changed)
-                {
-                    var local = LocalPath(contentDir, path);
-                    if (before is null) File.Delete(local);
-                    else WriteAtomic(local, before);
-                }
-                throw new InvalidDataException($"この内容にすると、記事の中身として読めなくなるので、ローカルは変えませんでした（元に戻しました。R2 も変えていません）: {e.Message}", e);
+                var failed = ContentPath.RollBack(contentDir, changed);
+                if (failed.Count > 0)
+                    throw new IOException("ローカルを元に戻せなかったファイルがあります（R2 は変えていません。変える前の内容は local/sync-backups にあります）:\n  " + string.Join("\n  ", failed), e);
+                if (e is ContentException or InvalidDataException)
+                    throw new InvalidDataException($"この内容にすると、記事の中身として読めなくなるので、ローカルは変えませんでした（元に戻しました。R2 も変えていません）: {e.Message}", e);
+                throw;                                                                     // 書けなかった（容量・権限など）も、元に戻したうえで、そのままの例外
             }
         }
 
@@ -200,13 +194,5 @@ public static class ContentSyncService
         var copy = LocalPath(baseDir, path);
         Directory.CreateDirectory(Path.GetDirectoryName(copy)!);
         await File.WriteAllBytesAsync(copy, data, ct);
-    }
-
-    private static void WriteAtomic(string path, byte[] data)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        var temp = path + ".sync.tmp";
-        File.WriteAllBytes(temp, data);
-        File.Move(temp, path, overwrite: true);
     }
 }

@@ -22,6 +22,8 @@ public sealed class AlbumStore(HttpClient http)
     /// <summary>公開月別の件数（サイドのアーカイブメニュー。新しい年・新しい月が先）。読めなかったときは空（メニューを出さない）。</summary>
     public IReadOnlyList<ArchiveYear> Archive { get; private set; } = Array.Empty<ArchiveYear>();
 
+    private static readonly System.Text.RegularExpressions.Regex OutfitIdPattern = new("^[a-z0-9]+(-[a-z0-9]+)*$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
     private Task<List<TagSummary>?>? _tags;
     private Task<List<WorldSummary>?>? _worlds;
     private Task<List<OutfitSummary>?>? _outfits;
@@ -41,7 +43,7 @@ public sealed class AlbumStore(HttpClient http)
             Settings = settings.Result;
             Posts = posts.Result;
             if (tags.Result is not null) _tags = Task.FromResult<List<TagSummary>?>(tags.Result);   // 読めなかったときは、タグの一覧のページが取り直す
-            TagNames = tags.Result?.ToDictionary(t => t.Slug, t => t.Name, StringComparer.Ordinal) ?? new Dictionary<string, string>();
+            TagNames = TagNamesOf(tags.Result);
             Archive = SiteRules.ArchiveYears(archive.Result);
             return true;
         }
@@ -68,8 +70,28 @@ public sealed class AlbumStore(HttpClient http)
         return await TryGetAsync($"data/posts/{slug}.json", SiteJsonContext.Default.PostPage);
     }
 
-    /// <summary>タグの一覧（読めなければ null）。</summary>
-    public Task<List<TagSummary>?> GetTagsAsync() => _tags ??= TryGetAsync("data/tags.json", SiteJsonContext.Default.ListTagSummary);
+    /// <summary>
+    /// タグの一覧（読めなければ null）。読めたものは覚えるが、読めなかった（null）ものは覚えず、次に開くとき取り直す
+    /// （一度の失敗で、そのあとずっと空になるのを防ぐ）。
+    /// </summary>
+    public async Task<List<TagSummary>?> GetTagsAsync()
+    {
+        if (_tags is { } pending)
+        {
+            var known = await pending;
+            if (known is not null) return known;
+        }
+        _tags = TryGetAsync("data/tags.json", SiteJsonContext.Default.ListTagSummary);
+        return await _tags;
+    }
+
+    /// <summary>タグの slug → 表示名。同じ slug が 2 つあれば最初のものを使う（例外にして起動を止めない）。</summary>
+    private static Dictionary<string, string> TagNamesOf(IEnumerable<TagSummary>? tags)
+    {
+        var names = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var tag in tags ?? []) names.TryAdd(tag.Slug, tag.Name);
+        return names;
+    }
 
     /// <summary>ワールドの一覧（読めなければ null）。</summary>
     public Task<List<WorldSummary>?> GetWorldsAsync() => _worlds ??= TryGetAsync("data/worlds.json", SiteJsonContext.Default.ListWorldSummary);
@@ -80,7 +102,7 @@ public sealed class AlbumStore(HttpClient http)
     /// <summary>服 1 つ分（id は服のマスタの id。形式が不正・存在しない・読めないときは null）。</summary>
     public async Task<OutfitPage?> GetOutfitAsync(string id)
     {
-        if (!System.Text.RegularExpressions.Regex.IsMatch(id, "^[a-z0-9]+(-[a-z0-9]+)*$")) return null;
+        if (!OutfitIdPattern.IsMatch(id)) return null;
         return await TryGetAsync($"data/outfits/{id}.json", SiteJsonContext.Default.OutfitPage);
     }
 

@@ -6,6 +6,20 @@
 import { getMaintenance, maintenanceResponse } from "../external/fara-site-kit/worker/maintenance.js";
 import { handleReport } from "../external/fara-site-kit/worker/report.js";
 
+/**
+ * ログに出す例外の要約（名前とメッセージだけ）。URL・Bearer トークン・token= の値は伏せ、制御文字を除き、長さを切る。
+ * portfolio の worker/index.js と同じ形（ログに秘密を残さないため）。
+ */
+export function errorSummary(error) {
+  const name = typeof error?.name === "string" ? error.name : "Error";
+  const message = String(error?.message ?? error ?? "")
+    .replace(/https?:\/\/\S+/g, "[url]")
+    .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+    .replace(/token=[^&\s]+/gi, "token=[redacted]")
+    .replace(/[\u0000-\u001f\u007f]/g, " ");
+  return `${name}: ${message.slice(0, 300)}`;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -22,8 +36,9 @@ export default {
     if (url.pathname === "/api/report" || url.pathname === "/api/report/config") {
       try {
         return await handleReport(request, env, "Fara Album");
-      } catch {
-        // 詳細（シークレットを含む可能性がある）は返さない
+      } catch (error) {
+        // 例外の中身はログに残す（URL・トークンは伏せる）。応答には詳細を返さない（シークレットを含む可能性がある）
+        console.error(`報告の受け口で例外: ${errorSummary(error)}`);
         return new Response(JSON.stringify({ error: "internal_error", message: "サーバーでエラーが発生しました" }), {
           status: 500,
           headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },

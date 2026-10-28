@@ -50,4 +50,19 @@ public sealed class AlbumStoreSafetyTests
         Assert.NotNull(tags);
         Assert.Single(tags);
     }
+
+    [Fact]
+    public async Task AnUnreadWorldAndOutfitListAreFetchedAgainTheNextTime()
+    {
+        var (store, routes) = Create();
+        Assert.True(await store.LoadAsync());
+        Assert.Null(await store.GetWorldsAsync());                                       // 読めなかった null を覚えない
+        Assert.Null(await store.GetOutfitsAsync());
+
+        routes.Map["/data/worlds.json"] = "[]";
+        routes.Map["/data/outfits.json"] = "[]";
+        Assert.NotNull(await store.GetWorldsAsync());                                    // 次に開くとき取り直す
+        Assert.NotNull(await store.GetOutfitsAsync());
+        Assert.NotNull(await store.GetWorldsAsync());                                    // 読めたものは覚える（同じ一覧）
+    }
 }

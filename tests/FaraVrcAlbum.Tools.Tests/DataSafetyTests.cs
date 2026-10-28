@@ -47,6 +47,22 @@ public sealed class DataSafetyTests : IDisposable
     [InlineData("posts//a.json", false)]
     [InlineData("a.txt", false)]
     [InlineData("", false)]
+    [InlineData("posts/a.json:x.json", false)]          // 代替データストリーム（Windows）
+    [InlineData("posts/a.json:stream", false)]
+    [InlineData("C:/a.json", false)]
+    [InlineData("posts/a<b>.json", false)]
+    [InlineData("posts/a|b.json", false)]
+    [InlineData("posts/a?.json", false)]
+    [InlineData("posts/a\u0001.json", false)]           // 制御文字
+    [InlineData("posts/a\n.json", false)]
+    [InlineData("posts/.. /a.json", false)]             // Windows は末尾の空白を落とす
+    [InlineData("posts./a.json", false)]                // Windows は末尾のドットを落とす
+    [InlineData("posts/a.json ", false)]
+    [InlineData("posts/CON.json", false)]               // 予約名
+    [InlineData("posts/nul/a.json", false)]
+    [InlineData("posts/a b.json", true)]                // 途中の空白はよい
+    [InlineData("posts/a.b.json", true)]
+    [InlineData("posts/日本語.json", true)]
     public void ContentPathIsSafeRejectsEveryWayOutOfTheContentFolder(string path, bool expected)
     {
         Assert.Equal(expected, ContentPath.IsSafe(path));

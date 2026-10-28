@@ -255,6 +255,7 @@ public sealed class AvatarOutfitViewModel : PageViewModel
 
         var boothThumbnails = Session.IsOffline ? new Dictionary<long, string>() : BoothLibrary.LoadThumbnails(Session.Preferences.BoothDatabase is { Length: > 0 } db ? db : null);
         var avatarThumbnails = Session.IsOffline ? AvatarThumbnails.Empty : AvatarThumbnails.Build(Session.AvatarThumbnailFolder, Session.Preferences.AvatarFolder);
+        var boothWarnings = BoothLibrary.TakeWarnings();                              // 消せなかった一時フォルダ（購入履歴を含むコピー）は、下で状態の行に出す
 
         Outfits.Clear();
         foreach (var (id, entry) in content.Outfits.OrderBy(o => o.Key, StringComparer.Ordinal))
@@ -276,7 +277,7 @@ public sealed class AvatarOutfitViewModel : PageViewModel
         if (SelectedAvatar is null) { AvatarId = AvatarName = AvatarAliases = AvatarNote = ""; SetChoices([]); OnPropertyChanged(nameof(IsNewAvatar)); }
         RemoveOutfitCommand.RaiseCanExecuteChanged();
         RemoveAvatarCommand.RaiseCanExecuteChanged();
-        Status = $"服 {Outfits.Count} 件・アバター {Avatars.Count} 件を読みました。";
+        Status = $"服 {Outfits.Count} 件・アバター {Avatars.Count} 件を読みました。" + (boothWarnings.Count > 0 ? " " + string.Join(" ", boothWarnings) : "");
     }
 
     private void OnRowChecked(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

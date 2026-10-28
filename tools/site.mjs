@@ -13,7 +13,7 @@ import { cpSync, existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { PUBLISH_ATTEMPTS, isIllinkCrash } from "./publish-retry.mjs";
-import { checkPublishBranch } from "./publish-guard.mjs";
+import { checkPublishBranch, checkWorkTree } from "./publish-guard.mjs";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -111,6 +111,22 @@ function currentBranch() {
   return result.status === 0 ? result.stdout.trim() : "";
 }
 
+/** git の出力（失敗・使えないときは空）。 */
+function gitOut(args) {
+  const result = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+  return result.status === 0 ? result.stdout.trim() : "";
+}
+
+/** 公開の前に見る作業ツリーとコミットの状態（publish-guard の checkWorkTree に渡す）。ignore 済み（content/・local/・publish/・dist/ など）は porcelain に出ない。 */
+function gitState() {
+  const porcelain = spawnSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
+  return {
+    porcelain: porcelain.status === 0 ? porcelain.stdout : "failed",                  // 読めないときは「変更あり」として止める
+    head: gitOut(["rev-parse", "HEAD"]),
+    remoteHead: gitOut(["rev-parse", "--verify", "--quiet", "origin/master"]),
+  };
+}
+
 function main(argv) {
   const [command, arg] = argv;
   switch (command) {
@@ -132,7 +148,9 @@ function main(argv) {
     case "deploy": {
       const [env] = parseEnv(arg, []);
       if (!env) throw new StepError("公開先を指定してください: node tools/site.mjs deploy <production|develop>", 2);
-      checkPublishBranch(env, currentBranch());                                  // 本番は master・確認用は develop からだけ（ビルドの前に確かめる）
+      // 本番は master・確認用は develop からだけ。作業ツリーがクリーンであること（本番は HEAD が origin/master と同じこと）も、ビルドの前に確かめる
+      checkPublishBranch(env, currentBranch());
+      checkWorkTree(env, gitState());
       // 公開では、サンプルの記事（ALBUM_ALLOW_SAMPLE）の関門を外さない（CI のビルドだけ使う印）
       delete process.env.ALBUM_ALLOW_SAMPLE;
       ensureWrangler();

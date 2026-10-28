@@ -116,8 +116,9 @@ npm run desktop -- --demo <作業フォルダ> # 合成データで起動（R2 �
 - **アップロード時**: 写真の XMP の `faratag:AvatarName`（と `faratag:AvatarID`。fara-vrc-photo-server v1.0.1 から。v1.0.0 の旧形式 `faraxml:AvatarName`・`faraxml:AvatarId` も読む）を、台帳（`content/catalog/photos.json`。公開データではない）の写真の行に控える（`avatarName`・`avatarId`）。
 - **記事の画面（まだ作っていない日付の記事を開くとき）**: 写真ごとに、アバターを次の順で決める。
   1. 台帳に控えた、写真の記録のアバター名
-  2. 無ければ、fara-vrc-photo-server の履歴ファイル（`%LOCALAPPDATA%\FaraVrcPhotoServer\history.jsonl`）の、撮影日時の直前の切り替え（24 時間以内）
-  3. どちらも無い・合わないときは、いつものアバター（`local/desktop.json` に覚えている値。画面に選ぶ場所は無いので、実際には「なし」のことが多い）
+  2. 台帳に控えが無ければ（ソフトを入れる前・形式が違うときに取り込んだ写真）、**元の写真（VRChat の写真格納フォルダの「年-月」フォルダ）の XMP を読み直す**（旧形式 `faraxml`・新形式 `faratag` のどちらも。`SourceAvatar`）
+  3. それも無ければ、fara-vrc-photo-server の履歴ファイル（`%LOCALAPPDATA%\FaraVrcPhotoServer\history.jsonl`）の、撮影日時の直前の切り替え（24 時間以内）
+  4. どれも無い・合わないときは、いつものアバター（`local/desktop.json` に覚えている値。画面に選ぶ場所は無いので、実際には「なし」のことが多い）
 - **名前の合わせ方**: アバターのマスタの名前・別名と、空白を取り、大文字小文字を区別せずに比べる（VRChat の `Fara AlmarianDress` と、prefab の `FaraAlmarianDress` が合う）。**2 つ以上に合うときは選ばない**（違う服を出さないため）。合わない名前は、そのまま捨てる。
 - 手で選んだアバターは、これで上書きしない（新しい記事を開くときだけ働く。作成済みの記事は変えない）。
 - 履歴ファイルの場所は、画面の設定には出さない（既定の場所だけ。テストなどは `local/album.local.json` の `photoServerHistory` で変えられる）。

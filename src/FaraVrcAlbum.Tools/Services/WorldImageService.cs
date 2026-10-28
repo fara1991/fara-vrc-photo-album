@@ -20,7 +20,7 @@ namespace FaraVrcAlbum.Tools.Services;
 /// </summary>
 public static class WorldImageService
 {
-    public const string UserAgent = "FaraVrcAlbum/1.0 (Fara; game_fara@outlook.com)";
+    public const string UserAgent = "FaraVrcAlbum/1.0 (Fara; https://github.com/fara1991/fara-vrc-photo-album)";
 
     /// <summary>VRChat へのリクエストの間隔。実際は 0〜5 秒のゆらぎを足す（決まった時刻に揃えない）。</summary>
     public static readonly TimeSpan Interval = TimeSpan.FromSeconds(60);

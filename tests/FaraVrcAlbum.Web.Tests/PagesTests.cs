@@ -280,8 +280,8 @@ public class PagesTests : BunitContext
         var photos = new[] { new PhotoRef { Key = Key, W = 2048, H = 1152, Slug = "a" } };
         var stats = new WorldStats
         {
-            AuthorName = "Fins", Description = "説明文", Capacity = 80, RecommendedCapacity = 40, Visits = 575361, Favorites = 50162,
-            Tags = ["Chill", "Field"], PublicationDate = "2024-11-01T16:21:27Z", UpdatedAt = "2025-06-30T07:12:48Z",
+            AuthorName = "テスト作者", Description = "説明文", Capacity = 80, RecommendedCapacity = 40, Visits = 123456, Favorites = 4321,
+            Tags = ["Chill", "Field"], PublicationDate = "2025-01-04T15:00:00Z", UpdatedAt = "2025-03-10T03:00:00Z",
         };
         var cut = Render<WorldPageView>(p => p.Add(c => c.Id, World).Add(c => c.Name, "ワールド名").Add(c => c.Image, Img)
             .Add(c => c.Stats, stats).Add(c => c.StatsFetchedAt, "2026-10-26T12:00:00+09:00")
@@ -299,7 +299,7 @@ public class PagesTests : BunitContext
         Assert.DoesNotContain("vrchat.cloud", cut.Markup);
 
         var info = cut.Find("dl.album-world-info").TextContent;
-        foreach (var expected in new[] { "Fins", "575,361", "50,162", "80 人（推奨 40 人）", "2024年11月2日", "2025年6月30日", "Chill、Field" })
+        foreach (var expected in new[] { "テスト作者", "123,456", "4,321", "80 人（推奨 40 人）", "2025年1月5日", "2025年3月10日", "Chill、Field" })
             Assert.Contains(expected, info);
         Assert.DoesNotContain("人気度", info);
         Assert.DoesNotContain("注目度", info);

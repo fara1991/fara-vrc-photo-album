@@ -26,7 +26,7 @@ internal sealed class TempDir : IDisposable
 /// <summary>合成の画像（実写真は使わない）。VRChat の XMP の形を模して、iTXt に入れる。</summary>
 internal static class TestImages
 {
-    public const string WorldId = "wrld_951b8ef4-bc5a-47c5-a156-2b62057d313f";
+    public const string WorldId = "wrld_11111111-2222-4333-8444-555555555555";
     public const string AuthorId = "usr_11111111-2222-4333-8444-555555555555";
 
     public static string XmpAttributes(string? worldId = WorldId, string worldName = "テストのワールド", string created = "2026-10-23T21:33:12.345+09:00") =>

@@ -35,7 +35,7 @@ internal sealed class RepoFixture : IDisposable
     public const string Key1 = "2026-10/20261023-213312-345_a1b2c3d4";
     public const string Key2 = "2026-10/20261023-214001-120_0f1e2d3c";
     public const string WorldOld = "wrld_00000000-0000-4000-8000-000000000001";
-    public const string WorldNew = "wrld_951b8ef4-bc5a-47c5-a156-2b62057d313f";
+    public const string WorldNew = "wrld_11111111-2222-4333-8444-555555555555";
 
     private readonly TempDir _dir = new();
 

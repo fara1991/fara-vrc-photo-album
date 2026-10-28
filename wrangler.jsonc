@@ -38,6 +38,13 @@
   "routes": [
     { "pattern": "vrc-album.fara-labs.com", "custom_domain": true }
   ],
+  // 報告の 1 日の送信回数の制限（kit の report-rate-limit.js。送信元ごと 3 回・JST の 0 時に消す）。環境は継承されないので、本番と env.develop の両方に書く
+  "durable_objects": {
+    "bindings": [{ "name": "REPORT_LIMITER", "class_name": "ReportRateLimiter" }]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ReportRateLimiter"] }
+  ],
   "env": {
     "develop": {
       // Worker 名（ダッシュボードで変更した名前に合わせる）
@@ -62,6 +69,12 @@
       "preview_urls": false,
       "routes": [
         { "pattern": "vrc-album-dev.fara-labs.com", "custom_domain": true }
+      ],
+      "durable_objects": {
+        "bindings": [{ "name": "REPORT_LIMITER", "class_name": "ReportRateLimiter" }]
+      },
+      "migrations": [
+        { "tag": "v1", "new_sqlite_classes": ["ReportRateLimiter"] }
       ]
     }
   }

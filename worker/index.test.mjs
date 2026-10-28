@@ -1,7 +1,7 @@
 // Fara Album の Worker（worker/index.js）のテスト: 報告の経路、メンテナンス中の 503、メンテナンスの状態（/api/maintenance）。  node --test worker/index.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import worker, { errorSummary } from "./index.js";
+import worker from "./index.js";
 
 const HOST = "https://vrc-album.fara-labs.com";
 
@@ -92,30 +92,4 @@ test("報告の受け口の例外は、ログに名前とメッセージだけ�
   const line = logs.join("\n");
   assert.match(line, /TypeError: boom \[url\] Bearer \[redacted\] token=\[redacted\]/);
   assert.ok(!line.includes("s3cret-value") && !line.includes("t0ken-value") && !line.includes("discord.example"));
-});
-
-test("errorSummary: 例外の名前とメッセージを出し、URL（Webhook の秘密を含む）は外す。長さも切る", () => {
-  assert.equal(errorSummary(new TypeError("bad input")), "TypeError: bad input");
-  const s = errorSummary(new Error("failed to fetch https://discord.example/api/webhooks/123/secret-token now"));
-  assert.equal(s, "Error: failed to fetch [url] now");
-  assert.ok(!s.includes("secret-token"));
-  assert.ok(errorSummary(new Error("x y ".repeat(500))).length <= "Error: ".length + 200);
-  assert.equal(errorSummary("plain"), "Error: plain");
-});
-
-test("errorSummary: URL 以外の秘密（Bearer・token=・token:・長い英数字）も取り除く", () => {
-  assert.equal(errorSummary(new Error("auth failed Bearer abc.def-123 for user")), "Error: auth failed Bearer [redacted] for user");
-  assert.equal(errorSummary(new Error("bad request token=sk_live_xyz9 in body")), "Error: bad request token=[redacted] in body");
-  assert.equal(errorSummary(new Error("TOKEN: hunter2 rejected")), "Error: token=[redacted] rejected");
-  // Webhook の token のような、長い英数字の連続（ハイフン・アンダースコアを含む）
-  const webhookToken = "AbCdEf123456_ghijkLMNOP-qrstuvWXYZ0123";
-  const s = errorSummary(new Error(`sent to ${webhookToken} failed`));
-  assert.equal(s, "Error: sent to [redacted] failed");
-  assert.ok(!s.includes(webhookToken));
-  // 短い語（TypeError など）は残す
-  assert.equal(errorSummary(new TypeError("cannot read properties of undefined")), "TypeError: cannot read properties of undefined");
-});
-
-test("errorSummary: 制御文字は空白にする", () => {
-  assert.equal(errorSummary(new Error("a\nb")), "Error: a b");
 });

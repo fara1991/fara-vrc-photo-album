@@ -14,7 +14,7 @@ const ERROR_SUMMARY_MAX = 200;
 /**
  * ログに出す例外の要約（名前とメッセージ。秘密らしいものは取り除き、長さを切る）。
  * 取り除くもの: URL（Discord の Webhook の URL など）・Bearer のトークン・token=／token: の値・長い英数字の連続（Webhook のトークンなど）。
- * fara-portfolio-site の worker/index.js と同じ実装（kit の共有ヘルパーに寄せるときは、この関数を import に置き換える）。
+ * fara-labs の worker/index.js と同じ実装（kit の共有ヘルパーに寄せるときは、この関数を import に置き換える）。
  */
 export function errorSummary(error) {
   const name = typeof error?.name === "string" ? error.name : "Error";

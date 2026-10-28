@@ -19,13 +19,18 @@ export function checkPublishBranch(env, branch) {
 
 /**
  * 作業ツリーと、コミットの状態を確かめる。合わなければ例外（理由つき）。
- * - porcelain: `git status --porcelain` の出力（無視したファイル（content/・local/・publish/ など）は含まれない）。空でなければ未コミットの変更がある
+ * - porcelain: `git status --porcelain` の出力（無視したファイル（content/・local/・publish/ など）は含まれない）。空でなければ未コミットの変更がある。
+ *   null は「git status が読めなかった」（変更の有無は分からない。原因の文を変えて止める）
  * - head: `git rev-parse HEAD`。remoteHead: `git rev-parse --verify origin/master`（無ければ空）
  * 確認用（develop）は、作業ツリーがクリーンであることだけを確かめる（未 push のコミットは許す）。
  * 本番（production）は、作業ツリーがクリーンで、HEAD が origin/master と同じコミットのときだけ許す。
+ * 公開の対象は Git の作業ツリーだけ。content/（Git 外）の変更は見ない（R2 の同期で確かめる。docs/album-desktop.md）。
  */
 export function checkWorkTree(env, { porcelain = "", head = "", remoteHead = "" }) {
   if (!PUBLISH_BRANCH[env]) throw new Error(`公開先が不正です: ${env}`);
+  if (porcelain === null) {
+    throw new Error("git の状態を読めませんでした（git status が失敗しました）。Git が使えるか確かめてからやり直してください。公開は止めました");
+  }
   if (String(porcelain).trim() !== "") {
     throw new Error("作業ツリーに、コミットしていない変更（または追跡されていないファイル）があります。公開する内容を確かめてから、コミットするか退避してからやり直してください（git status で確認）");
   }

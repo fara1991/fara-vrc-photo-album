@@ -8,12 +8,11 @@ namespace FaraVrcAlbum.Desktop.Services;
 /// デスクトップ版の手元の設定（local/desktop.json。Git 管理外）。既定のアバター・Unity のアバター/服のフォルダ。
 /// 読めなければ既定値（壊れたファイルで起動を止めない）。
 /// </summary>
-public sealed class DesktopPreferences(string path)
+/// <param name="path">設定ファイルのパス。</param>
+/// <param name="onRecovered">壊れた設定を退避して作り直したとき（退避先のパス）に呼ぶ。画面が知らせる。例外は握る（設定の保存を失敗させない）。</param>
+public sealed class DesktopPreferences(string path, Action<string>? onRecovered = null)
 {
     public string Path { get; } = path;
-
-    /// <summary>壊れた設定を退避して作り直したとき（退避先のパス）。画面（MainViewModel）が知らせる。</summary>
-    public static event Action<string>? Recovered;
 
     /// <summary>新しく選んだ写真に自動で入れるアバターの id（空 = 入れない）。</summary>
     public string DefaultAvatar
@@ -73,7 +72,15 @@ public sealed class DesktopPreferences(string path)
         var aside = Path + ".broken-" + DateTime.Now.ToString("yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture) + "-" + Guid.NewGuid().ToString("N")[..8];
         File.Move(Path, aside, overwrite: false);
         Debug.WriteLine($"DesktopPreferences: 壊れた設定を退避しました: {aside}");
-        Recovered?.Invoke(aside);
+        try
+        {
+            onRecovered?.Invoke(aside);
+        }
+        catch (Exception e)
+        {
+            // 通知の失敗（画面の例外など）で、設定の読み書きを失敗させない
+            Debug.WriteLine($"DesktopPreferences: 退避の通知で例外: {e.Message}");
+        }
         return new JsonObject();
     }
 

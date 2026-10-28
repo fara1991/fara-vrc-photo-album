@@ -199,8 +199,7 @@ public sealed class FolderImportViewModel : ObservableObject
             Candidates.Add(candidate);
         }
         var fresh = Candidates.Count(c => !c.Registered);
-        var boothWarnings = BoothLibrary.TakeWarnings();                               // 消せなかった BOOTH の一時フォルダ（購入履歴を含むコピー）を出す
-        Summary = $"{Candidates.Count} 件（未登録 {fresh}・登録済み {Candidates.Count - fresh}）" + scan.Note + string.Concat(boothWarnings.Select(w => " " + w));
+        Summary = $"{Candidates.Count} 件（未登録 {fresh}・登録済み {Candidates.Count - fresh}）" + scan.Note;      // 注意（消せなかった BOOTH の一時フォルダ）は、読み取りの scan.Note に入っている
         _report(Candidates.Count == 0 ? "フォルダの中に該当するものがありませんでした。" : "フォルダを読みました。登録するものにチェックを入れてください。");
         Refresh();
     }

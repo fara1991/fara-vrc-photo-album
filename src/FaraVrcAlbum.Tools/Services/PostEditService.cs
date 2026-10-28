@@ -138,10 +138,7 @@ public static class PostEditService
         if (!DateTimeOffset.TryParse(changes.PublishedAt, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
             throw new InvalidDataException("公開日時の形式が正しくありません（例: 2026-10-24T20:00:00+09:00）");
         var tagsPath = Path.Combine(editor.ContentDir, "tags.json");
-        var snapshot = new FileSnapshot();
-        snapshot.Capture(path);
-        snapshot.Capture(tagsPath);
-        try
+        FileSnapshot.Run([path, tagsPath], () =>
         {
             var post = ContentEditor.ReadObject(path);
             // タグ: 名前か slug。登録の無い名前は tags.json に足す（表示名はその名前）
@@ -189,13 +186,7 @@ public static class PostEditService
             post["photos"] = reordered;
             ContentEditor.WriteNode(path, post);
             editor.ValidateOrThrow();
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
-        if (!apply) snapshot.Restore();
+        }, keep: apply);
     }
 
     private static string Normalize(string text) => text.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();

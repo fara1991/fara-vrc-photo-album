@@ -1,8 +1,6 @@
-using FaraVrcAlbum.Images;
-
 namespace FaraVrcAlbum.Tools.Services;
 
-/// <summary>content/ の中のファイルを指す相対パス（控え・同期・復元で使う）の検査と、content の巻き戻し。</summary>
+/// <summary>content/ の中のファイルを指す相対パス（控え・同期・復元で使う）の検査。巻き戻しは <see cref="FileSnapshot"/> を使う。</summary>
 public static class ContentPath
 {
     /// <summary>Windows で特別な意味を持つ名前（拡張子を付けても同じ）。</summary>
@@ -37,27 +35,5 @@ public static class ContentPath
         if (part.Any(c => c < ' ' || c == '\u007f')) return false;
         if (part.IndexOfAny(ExplicitInvalid) >= 0 || part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0) return false;
         return !ReservedNames.Contains(part.Split('.')[0]);
-    }
-
-    /// <summary>
-    /// content のファイルを変える前の内容に戻す（before が null のものは消す）。後ろから 1 つずつ試し、戻せなかったものは一覧にして返す（残りは戻す）。
-    /// </summary>
-    public static List<string> RollBack(string contentDir, IEnumerable<(string Path, byte[]? Before)> changed)
-    {
-        var failed = new List<string>();
-        foreach (var (path, before) in changed.Reverse())
-        {
-            try
-            {
-                var local = Path.Combine(contentDir, path.Replace('/', Path.DirectorySeparatorChar));
-                if (before is null) File.Delete(local);
-                else JsonFiles.WriteAtomic(local, before);
-            }
-            catch (Exception r)
-            {
-                failed.Add($"{path}: {r.Message}");
-            }
-        }
-        return failed;
     }
 }

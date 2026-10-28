@@ -34,6 +34,12 @@ test("本番: 未コミットの変更（追跡・未追跡どちらも）があ
   assert.throws(() => checkWorkTree("production", { porcelain: "?? notes.txt\n", head: SHA, remoteHead: SHA }), /コミットしていない変更/);
 });
 
+test("git status が読めなかった（null）ときは、「コミットしていない変更」ではなく、読めなかったという理由で止める", () => {
+  assert.throws(() => checkWorkTree("production", { porcelain: null, head: SHA, remoteHead: SHA }), /git の状態を読めませんでした/);
+  assert.throws(() => checkWorkTree("develop", { porcelain: null, head: SHA, remoteHead: SHA }), /git の状態を読めませんでした/);
+  assert.throws(() => checkWorkTree("develop", { porcelain: null }), (e) => !/コミットしていない変更/.test(e.message));
+});
+
 test("本番: HEAD が origin/master と違う（master に無いコミット）なら止める", () => {
   assert.throws(() => checkWorkTree("production", { porcelain: "", head: OTHER, remoteHead: SHA }), /origin\/master と一致しません/);
 });

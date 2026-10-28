@@ -79,6 +79,7 @@ public static class SiteBuilder
         string? Optional(string name) => root.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString()!.Trim() : null;
         string Text(string name) => Optional(name) ?? throw new InvalidDataException($"appsettings.json に {name}（文字列）がありません");
         var perPage = root.TryGetProperty("PostsPerPage", out var p) && p.TryGetInt32(out var n) ? n : 12;
+        // 範囲外はビルドを止める（入力の誤りを公開の前に気づかせる）。Web（AlbumStore）は、読んだ data/site.json の範囲外を既定の 12 に戻して画面を開く（意図の違い）
         if (perPage < 1 || perPage > 100) throw new InvalidDataException($"PostsPerPage は 1〜100 です（{perPage}）");
         // 画像は確認用も本番も R2（ImageBaseUrl）。確認用は本番と同じ写真を参照する（確認用の合成画像は作らない）
         var publicImageBase = SiteRules.NormalizeImageBaseUrl(Text("ImageBaseUrl"));

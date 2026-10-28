@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.Data.Sqlite;
@@ -21,15 +20,11 @@ public static partial class BoothLibrary
     /// <summary>服として扱うカテゴリ（BOOTH の「3D モデル」→「3D 衣装」）。</summary>
     public const string OutfitParentCategory = "3Dモデル";
 
-    /// <summary>画面（ログ・通知）に出す注意。読む側は <see cref="TakeWarnings"/> で取る。</summary>
-    private static readonly ConcurrentQueue<string> Warnings = new();
-
-    /// <summary>たまった注意（消せなかった一時フォルダなど）を取り出す。</summary>
-    public static IReadOnlyList<string> TakeWarnings()
+    /// <summary>注意（消せなかった一時フォルダなど）を、呼び出し元の一覧に足す。一覧が無ければ（null）、デバッグ出力だけ。画面ごとに一覧を持ち、ほかの画面の注意を取らない。</summary>
+    private static void Warn(List<string>? warnings, string text)
     {
-        var list = new List<string>();
-        while (Warnings.TryDequeue(out var warning)) list.Add(warning);
-        return list;
+        if (warnings is null) Debug.WriteLine($"BoothLibrary: {text}");
+        else warnings.Add(text);
     }
 
     /// <summary>一時フォルダの名前（fara-album-booth- + GUID の 32 桁）。これに合う、古いフォルダだけを掃除する。</summary>
@@ -37,7 +32,7 @@ public static partial class BoothLibrary
     private static partial Regex TempFolderName();
 
     /// <summary>コピーの一時フォルダを作る前に、消し残し（以前の失敗・異常終了）を掃除する。使用中のものを消さないよう、1 時間より古いものだけ。</summary>
-    private static string NewTempFolder()
+    private static string NewTempFolder(List<string>? warnings)
     {
         var root = Path.GetTempPath();
         try
@@ -45,18 +40,18 @@ public static partial class BoothLibrary
             var cutoff = DateTime.UtcNow.AddHours(-1);
             foreach (var dir in Directory.EnumerateDirectories(root).Where(d => TempFolderName().IsMatch(Path.GetFileName(d))).ToList())
             {
-                if (Directory.GetLastWriteTimeUtc(dir) < cutoff) TryDeleteTemp(dir);
+                if (Directory.GetLastWriteTimeUtc(dir) < cutoff) TryDeleteTemp(dir, warnings);
             }
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            Warnings.Enqueue($"BOOTH の一時フォルダの掃除ができませんでした: {e.Message}");
+            Warn(warnings, $"BOOTH の一時フォルダの掃除ができませんでした: {e.Message}");
         }
         return Path.Combine(root, "fara-album-booth-" + Guid.NewGuid().ToString("N"));
     }
 
-    /// <summary>コピーした data.db の一時フォルダを消す。消せなくても結果は変えない（開いたままのプロセスなど）。消せなかったことは <see cref="TakeWarnings"/> で画面に出す（次回の取り込み・起動で掃除する）。</summary>
-    private static void TryDeleteTemp(string temp)
+    /// <summary>コピーした data.db の一時フォルダを消す。消せなくても結果は変えない（開いたままのプロセスなど）。消せなかったことは warnings に入れて画面に出す。1 時間たった残りは、次に BOOTH のデータを読むときに消す（起動のときには消さない）。</summary>
+    private static void TryDeleteTemp(string temp, List<string>? warnings)
     {
         try
         {
@@ -64,9 +59,8 @@ public static partial class BoothLibrary
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            // 購入履歴を含むデータのコピーが残っている。次回の取り込み・起動のときに掃除する
-            Warnings.Enqueue($"BOOTH のデータのコピー（一時フォルダ）を消せませんでした。次回の取り込みのときに掃除します: {e.Message}");
-            Debug.WriteLine($"BoothLibrary: 一時フォルダを消せませんでした: {e.Message}");
+            // 購入履歴を含むデータのコピーが残っている。1 時間たったあと、次に BOOTH のデータを読むときに消す
+            Warn(warnings, $"BOOTH のデータのコピー（一時フォルダ）を消せませんでした。1 時間たったあと、次に BOOTH のデータを読むときに消します: {e.Message}");
         }
     }
 
@@ -84,11 +78,12 @@ public static partial class BoothLibrary
         ItemFolder().Match(folderName) is { Success: true } m && long.TryParse(m.Groups["id"].Value, out var id) ? id : null;
 
     /// <summary>データベースから全商品を読む。データベースが無い・読めないときは null。</summary>
-    public static IReadOnlyList<BoothItem>? Load(string? databasePath = null)
+    /// <param name="warnings">注意（消せなかった一時フォルダなど）を入れる一覧。呼んだ画面が持つ（null なら出さない）。</param>
+    public static IReadOnlyList<BoothItem>? Load(string? databasePath = null, List<string>? warnings = null)
     {
         var path = databasePath ?? DefaultDatabasePath;
         if (!File.Exists(path)) return null;
-        var temp = NewTempFolder();
+        var temp = NewTempFolder(warnings);
         try
         {
             Directory.CreateDirectory(temp);
@@ -121,17 +116,17 @@ public static partial class BoothLibrary
         finally
         {
             SqliteConnection.ClearAllPools();
-            TryDeleteTemp(temp);
+            TryDeleteTemp(temp, warnings);
         }
     }
 
     /// <summary>商品 ID → サムネイル画像の URL（BOOTH のサーバー上の画像。https のものだけ）。読めなければ空。画面の一覧に出すだけで、ダウンロードして保存はしない。</summary>
-    public static IReadOnlyDictionary<long, string> LoadThumbnails(string? databasePath = null)
+    public static IReadOnlyDictionary<long, string> LoadThumbnails(string? databasePath = null, List<string>? warnings = null)
     {
         var path = databasePath ?? DefaultDatabasePath;
         var result = new Dictionary<long, string>();
         if (!File.Exists(path)) return result;
-        var temp = NewTempFolder();
+        var temp = NewTempFolder(warnings);
         try
         {
             Directory.CreateDirectory(temp);
@@ -158,17 +153,17 @@ public static partial class BoothLibrary
         finally
         {
             SqliteConnection.ClearAllPools();
-            TryDeleteTemp(temp);
+            TryDeleteTemp(temp, warnings);
         }
     }
 
     /// <summary>商品 ID → 商品の情報（画像・説明・タグ・公開日・更新日・成人向けか）。読めなければ空。サイトに載せる情報の元（アプリが content/outfits.json に書く）。</summary>
-    public static IReadOnlyDictionary<long, FaraVrcAlbum.Tools.Services.AvatarOutfitService.BoothInfo> LoadDetails(string? databasePath = null)
+    public static IReadOnlyDictionary<long, FaraVrcAlbum.Tools.Services.AvatarOutfitService.BoothInfo> LoadDetails(string? databasePath = null, List<string>? warnings = null)
     {
         var path = databasePath ?? DefaultDatabasePath;
         var result = new Dictionary<long, FaraVrcAlbum.Tools.Services.AvatarOutfitService.BoothInfo>();
         if (!File.Exists(path)) return result;
-        var temp = NewTempFolder();
+        var temp = NewTempFolder(warnings);
         try
         {
             Directory.CreateDirectory(temp);
@@ -218,7 +213,7 @@ public static partial class BoothLibrary
         finally
         {
             SqliteConnection.ClearAllPools();
-            TryDeleteTemp(temp);
+            TryDeleteTemp(temp, warnings);
         }
     }
 

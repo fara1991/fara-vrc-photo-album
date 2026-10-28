@@ -7,17 +7,24 @@ import { getMaintenance, maintenanceResponse } from "../external/fara-site-kit/w
 import { handleReport } from "../external/fara-site-kit/worker/report.js";
 
 /**
- * ログに出す例外の要約（名前とメッセージだけ）。URL・Bearer トークン・token= の値は伏せ、制御文字を除き、長さを切る。
- * portfolio の worker/index.js と同じ形（ログに秘密を残さないため）。
+ * ログに出す文の長さ（これより長いものは切る）。
+ */
+const ERROR_SUMMARY_MAX = 200;
+
+/**
+ * ログに出す例外の要約（名前とメッセージ。秘密らしいものは取り除き、長さを切る）。
+ * 取り除くもの: URL（Discord の Webhook の URL など）・Bearer のトークン・token=／token: の値・長い英数字の連続（Webhook のトークンなど）。
+ * fara-portfolio-site の worker/index.js と同じ実装（kit の共有ヘルパーに寄せるときは、この関数を import に置き換える）。
  */
 export function errorSummary(error) {
   const name = typeof error?.name === "string" ? error.name : "Error";
   const message = String(error?.message ?? error ?? "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
     .replace(/https?:\/\/\S+/g, "[url]")
     .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
-    .replace(/token=[^&\s]+/gi, "token=[redacted]")
-    .replace(/[\u0000-\u001f\u007f]/g, " ");
-  return `${name}: ${message.slice(0, 300)}`;
+    .replace(/\btoken\s*[=:]\s*\S+/gi, "token=[redacted]")
+    .replace(/[A-Za-z0-9_-]{24,}/g, "[redacted]");
+  return `${name.slice(0, 40)}: ${message.slice(0, ERROR_SUMMARY_MAX)}`;
 }
 
 export default {

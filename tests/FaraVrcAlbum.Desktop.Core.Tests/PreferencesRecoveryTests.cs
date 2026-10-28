@@ -19,25 +19,29 @@ public sealed class PreferencesRecoveryTests : IDisposable
         Directory.CreateDirectory(_dir);
         var path = Path.Combine(_dir, "desktop.json");
         var notified = new List<string>();
-        Action<string> handler = notified.Add;
-        DesktopPreferences.Recovered += handler;
-        try
+        // 同じ時刻（ms まで）に 2 回壊れても、退避先が衝突しない
+        for (var i = 0; i < 2; i++)
         {
-            // 同じ時刻（ms まで）に 2 回壊れても、退避先が衝突しない
-            for (var i = 0; i < 2; i++)
-            {
-                File.WriteAllText(path, "{ broken " + i);
-                new DesktopPreferences(path).DefaultAvatar = "avatar-" + i;
-            }
-        }
-        finally
-        {
-            DesktopPreferences.Recovered -= handler;
+            File.WriteAllText(path, "{ broken " + i);
+            new DesktopPreferences(path, notified.Add).DefaultAvatar = "avatar-" + i;
         }
 
         var asides = Directory.GetFiles(_dir, "desktop.json.broken-*");
         Assert.Equal(2, asides.Length);
         Assert.Equal(2, notified.Count);                          // 退避したことを知らせている
         Assert.Equal("avatar-1", new DesktopPreferences(path).DefaultAvatar);
+    }
+
+    [Fact]
+    public void AThrowingRecoveryNoticeDoesNotStopTheSettingFromBeingSaved()
+    {
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "desktop.json");
+        File.WriteAllText(path, "{ broken");
+
+        new DesktopPreferences(path, _ => throw new InvalidOperationException("画面の例外")).DefaultAvatar = "avatar-x";
+
+        Assert.Equal("avatar-x", new DesktopPreferences(path).DefaultAvatar);
+        Assert.Single(Directory.GetFiles(_dir, "desktop.json.broken-*"));
     }
 }

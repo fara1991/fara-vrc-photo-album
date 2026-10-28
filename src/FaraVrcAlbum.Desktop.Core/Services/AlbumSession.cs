@@ -70,7 +70,10 @@ public sealed class AlbumSession
     public string LockPath => Path.Combine(Repo.LocalDir, "album.lock");
 
     /// <summary>デスクトップ版の手元の設定（既定のアバター）。</summary>
-    public DesktopPreferences Preferences => new(Path.Combine(Repo.LocalDir, "desktop.json"));
+    public DesktopPreferences Preferences => new(Path.Combine(Repo.LocalDir, "desktop.json"), aside => PreferencesRecovered?.Invoke(aside));
+
+    /// <summary>設定（desktop.json）が壊れて作り直されたときの通知（退避先のパス）。画面（MainViewModel）が 1 つだけ設定する（+= ではなく =）。</summary>
+    public Action<string>? PreferencesRecovered { get; set; }
 
     /// <summary>バケットの台帳（本番は Git の台帳、試験用は local/ の別ファイル）。</summary>
     public string LedgerPath(string bucket) => Repo.LedgerPathFor(bucket);

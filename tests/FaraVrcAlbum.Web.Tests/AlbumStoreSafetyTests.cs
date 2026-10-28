@@ -78,4 +78,27 @@ public sealed class AlbumStoreSafetyTests
         Assert.NotNull(await store.GetOutfitsAsync());
         Assert.NotNull(await store.GetWorldsAsync());                                    // 読めたものは覚える（同じ一覧）
     }
+
+    /// <summary>数えるだけの応答（少し遅らせて、同時の呼び出しが重なるようにする）。</summary>
+    private sealed class CountingRoutes : HttpMessageHandler
+    {
+        public int Requests;
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref Requests);
+            await Task.Delay(50, cancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("[]", System.Text.Encoding.UTF8, "application/json") };
+        }
+    }
+
+    [Fact]
+    public async Task ConcurrentLoadsOfTheWorldListShareOneRequest()
+    {
+        var counting = new CountingRoutes();
+        var store = new AlbumStore(new HttpClient(counting) { BaseAddress = new Uri("https://album.test/") });
+        var results = await Task.WhenAll(store.GetWorldsAsync(), store.GetWorldsAsync(), store.GetWorldsAsync());
+        Assert.Equal(1, counting.Requests);                                              // 同時に呼んでも、1 回だけ取る（待機中の Task を置き換えない）
+        Assert.All(results, r => Assert.NotNull(r));
+    }
 }

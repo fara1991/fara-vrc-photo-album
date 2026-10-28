@@ -295,6 +295,25 @@ public sealed class IngestTests : IDisposable
     }
 
     [Fact]
+    public void TheAvatarIsReadAgainFromTheOriginalPhotoInEitherFormat()
+    {
+        using var root = new TempDir();
+        Directory.CreateDirectory(Path.Combine(root.Path, "2026-10"));
+        void Put(string name, string description) =>
+            File.WriteAllBytes(Path.Combine(root.Path, "2026-10", name), TestImages.Png(320, 180, TestImages.XmpAttributes().Replace("</rdf:RDF>", description + "</rdf:RDF>")));
+        Put("VRChat_2026-10-28_04-32-21.393_1920x1080.png", FaraXmlDescription);                            // 旧形式（v1.0.0）
+        Put("VRChat_2026-10-28_04-32-39.131_1920x1080.png", FaraTagDescription);                            // 新形式（v1.0.1 から）
+        Put("VRChat_2026-10-28_04-33-00.000_1920x1080.png", "");                                            // アバターの追記なし
+
+        Assert.Equal(("Fara AlmarianDress", "avtr_00000000-0000-4000-8000-000000000003"), SourceAvatar.Read(root.Path, "VRChat_2026-10-28_04-32-21.393_1920x1080.png"));
+        Assert.Equal(("Sample Avatar", "avtr_00000000-0000-4000-8000-000000000001"), SourceAvatar.Read(root.Path, "VRChat_2026-10-28_04-32-39.131_1920x1080.png"));
+        Assert.Null(SourceAvatar.Read(root.Path, "VRChat_2026-10-28_04-33-00.000_1920x1080.png"));
+        Assert.Null(SourceAvatar.Read(root.Path, "VRChat_2026-10-28_09-00-00.000_1920x1080.png"));            // 元の写真が無い
+        Assert.Null(SourceAvatar.Read(root.Path, "other.png"));                                              // 名前の形が違う
+        Assert.Null(SourceAvatar.Read(null, "VRChat_2026-10-28_04-32-21.393_1920x1080.png"));
+    }
+
+    [Fact]
     public async Task TheAvatarFromThePhotoIsKeptInTheLedgerEntry()
     {
         var withAvatar = TestImages.Png(640, 360, TestImages.XmpAttributes().Replace("</rdf:RDF>", FaraXmlDescription + "</rdf:RDF>"), shade: 90);

@@ -491,13 +491,14 @@ public sealed partial class PostEditorViewModel : PageViewModel
             PublishedAt = _newEntries.Count > 0 ? JstDate.DisplayOf(_newEntries[0].TakenAt) : date.Date + " 00:00";
             IsDraft = true;
             TagsText = "";
-            // アバターは、写真の XMP（fara-vrc-photo-server が追記したもの）→ 履歴ファイル → 既定のアバターの順に決める
+            // アバターは、台帳の控え（取り込み時の XMP）→ 元の写真の XMP → 履歴ファイル → 既定のアバターの順に決める
             var fromPhotos = 0;
             var avatars = Session.Editor.LoadContent().Avatars;
             var history = PhotoServerHistory.Load(Session.PhotoServerHistoryPath);
             AvatarOptionViewModel AvatarOf(LedgerEntry e)
             {
                 var name = e.AvatarName;
+                if (string.IsNullOrWhiteSpace(name)) name = SourceAvatar.Read(Session.SourceRoot, e.SourceName)?.Name;     // 台帳に控えが無い写真は、元の写真の XMP を読み直す（旧・新どちらの形式も）
                 if (string.IsNullOrWhiteSpace(name) && DateTimeOffset.TryParse(e.TakenAt, CultureInfo.InvariantCulture, DateTimeStyles.None, out var taken))
                     name = history.AvatarAt(taken)?.Name;
                 var id = AvatarMatcher.Match(name, avatars);

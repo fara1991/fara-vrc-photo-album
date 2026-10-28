@@ -1,7 +1,7 @@
 // Fara Album の Worker（worker/index.js）のテスト: 報告の経路、メンテナンス中の 503、メンテナンスの状態（/api/maintenance）。  node --test worker/index.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import worker from "./index.js";
+import worker, { errorSummary } from "./index.js";
 
 const HOST = "https://vrc-album.fara-labs.com";
 
@@ -72,4 +72,30 @@ test("/api/maintenance は、いまの状態（kit の MaintenanceInfo が読む
     assert.equal(res.headers.get("Cache-Control"), "no-store");
     assert.equal((await res.json()).state, state);
   }
+});
+
+test("報告の受け口の例外は、ログに名前とメッセージだけを出す（URL・Bearer・token= は伏せる）。応答には詳細を返さない", async () => {
+  const secret = new Error("boom https://discord.example/hook/abc Bearer s3cret-value token=t0ken-value");
+  secret.name = "TypeError";
+  const env = { ASSETS, get TURNSTILE_SITE_KEY() { throw secret; } };
+  const logs = [];
+  const original = console.error;
+  console.error = (...args) => logs.push(args.join(" "));
+  try {
+    const res = await worker.fetch(new Request(`${HOST}/api/report/config`), env);
+    assert.equal(res.status, 500);
+    const body = await res.text();
+    assert.ok(!body.includes("s3cret") && !body.includes("discord.example"));
+  } finally {
+    console.error = original;
+  }
+  const line = logs.join("\n");
+  assert.match(line, /TypeError: boom \[url\] Bearer \[redacted\] token=\[redacted\]/);
+  assert.ok(!line.includes("s3cret-value") && !line.includes("t0ken-value") && !line.includes("discord.example"));
+});
+
+test("errorSummary は、制御文字を除き、長さを 300 字で切る", () => {
+  assert.equal(errorSummary(new Error("a\nb")), "Error: a b");
+  assert.equal(errorSummary("plain"), "Error: plain");
+  assert.equal(errorSummary(new Error("x".repeat(500))).length, "Error: ".length + 300);
 });

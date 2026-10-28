@@ -50,4 +50,32 @@ public sealed class AlbumStoreSafetyTests
         Assert.NotNull(tags);
         Assert.Single(tags);
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-3)]
+    [InlineData(500)]
+    public async Task AnOutOfRangePostsPerPageIsReplacedWithTheBuildDefaultSoPagingWorks(int perPage)
+    {
+        var (store, routes) = Create();
+        routes.Map["/data/site.json"] = SiteJson.Replace("\"postsPerPage\":2", $"\"postsPerPage\":{perPage}");
+        Assert.True(await store.LoadAsync());                                            // 起動は止めない
+        Assert.Equal(12, store.Settings.PostsPerPage);
+        Assert.Equal(1, store.PageCount);                                                // 0 件の計算で例外にならない
+    }
+
+    [Fact]
+    public async Task AnUnreadWorldAndOutfitListAreFetchedAgainTheNextTime()
+    {
+        var (store, routes) = Create();
+        Assert.True(await store.LoadAsync());
+        Assert.Null(await store.GetWorldsAsync());                                       // 読めなかった null を覚えない
+        Assert.Null(await store.GetOutfitsAsync());
+
+        routes.Map["/data/worlds.json"] = "[]";
+        routes.Map["/data/outfits.json"] = "[]";
+        Assert.NotNull(await store.GetWorldsAsync());                                    // 次に開くとき取り直す
+        Assert.NotNull(await store.GetOutfitsAsync());
+        Assert.NotNull(await store.GetWorldsAsync());                                    // 読めたものは覚える（同じ一覧）
+    }
 }

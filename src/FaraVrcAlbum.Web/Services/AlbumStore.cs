@@ -41,6 +41,8 @@ public sealed class AlbumStore(HttpClient http)
             await Task.WhenAll(settings, posts, tags, archive);
             if (settings.Result is null || posts.Result is null) return false;
             Settings = settings.Result;
+            // Build と同じ範囲（1〜100）に直す。0 以下だと一覧のページ数の計算が例外になり、画面が開けないため（既定は Build と同じ 12）
+            if (Settings.PostsPerPage is < 1 or > 100) Settings.PostsPerPage = 12;
             Posts = posts.Result;
             if (tags.Result is not null) _tags = Task.FromResult<List<TagSummary>?>(tags.Result);   // 読めなかったときは、タグの一覧のページが取り直す
             TagNames = TagNamesOf(tags.Result);
@@ -93,11 +95,29 @@ public sealed class AlbumStore(HttpClient http)
         return names;
     }
 
-    /// <summary>ワールドの一覧（読めなければ null）。</summary>
-    public Task<List<WorldSummary>?> GetWorldsAsync() => _worlds ??= TryGetAsync("data/worlds.json", SiteJsonContext.Default.ListWorldSummary);
+    /// <summary>ワールドの一覧（読めなければ null）。読めたものは覚えるが、読めなかった（null）ものは覚えず、次に開くとき取り直す。</summary>
+    public async Task<List<WorldSummary>?> GetWorldsAsync()
+    {
+        if (_worlds is { } pending)
+        {
+            var known = await pending;
+            if (known is not null) return known;
+        }
+        _worlds = TryGetAsync("data/worlds.json", SiteJsonContext.Default.ListWorldSummary);
+        return await _worlds;
+    }
 
-    /// <summary>服の一覧（読めなければ null）。</summary>
-    public Task<List<OutfitSummary>?> GetOutfitsAsync() => _outfits ??= TryGetAsync("data/outfits.json", SiteJsonContext.Default.ListOutfitSummary);
+    /// <summary>服の一覧（読めなければ null）。読めたものは覚えるが、読めなかった（null）ものは覚えず、次に開くとき取り直す。</summary>
+    public async Task<List<OutfitSummary>?> GetOutfitsAsync()
+    {
+        if (_outfits is { } pending)
+        {
+            var known = await pending;
+            if (known is not null) return known;
+        }
+        _outfits = TryGetAsync("data/outfits.json", SiteJsonContext.Default.ListOutfitSummary);
+        return await _outfits;
+    }
 
     /// <summary>服 1 つ分（id は服のマスタの id。形式が不正・存在しない・読めないときは null）。</summary>
     public async Task<OutfitPage?> GetOutfitAsync(string id)

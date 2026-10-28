@@ -99,6 +99,11 @@ html {
   padding: 0.75rem 1rem;
 }
 
+/* ドロワーのボタンは、タップの当たり判定を 44px 以上にする（文字の大きさ・配置は変えない） */
+.album-drawer-theme .mud-button-root {
+  min-height: 44px;
+}
+
 @media (min-width: 768px) {
   .album-drawer-theme {
     display: none;
@@ -424,6 +429,9 @@ html {
 .album-card-link {
   color: inherit;
   text-decoration: none;
+  /* 当たり判定を縦に広げる（行の高さは変えない。padding と負の margin を同じ量で入れる） */
+  padding-block: 10px;
+  margin-block: -10px;
 }
 
 /* 題のリンクをカード全体に広げる（リンクの入れ子にしないため）。タグのリンクはその上に出す */

@@ -579,6 +579,22 @@ public class SiteBuilderTests
             Assert.True(templates.Any(t => t.IsMatch(path)), $"{path} に一致する @page のルートがありません");
     }
 
+    [Fact]
+    public void EveryStaticPageHasExactlyOneH1()
+    {
+        // 見出しの階層（h1 は 1 つ）。視覚的に隠した h1 と、画面の題名の h1 が重なると、支援技術で二重に読まれる（報告ページで起きた）
+        var (f, prod, _) = Build(fx => fx.AddPost("third-post", "三番目の記事", new DateTimeOffset(2026, 10, 10, 12, 0, 0, TimeSpan.FromHours(9)), world: BuildFixture.World1, photos: 3, photoOffset: 60), perPage: 2);
+        using var _ = f;
+        // 404.html は kit の build-pages が作る（この test の対象外。kit 側の見出しの扱いは報告に残す）
+        var files = Directory.EnumerateFiles(prod, "*.html", SearchOption.AllDirectories).Where(f => Path.GetFileName(f) != "404.html").ToList();
+        Assert.True(files.Count > 15);
+        foreach (var file in files)
+        {
+            var count = Regex.Matches(File.ReadAllText(file), @"<h1[\s>]").Count;
+            Assert.True(count == 1, $"{Path.GetRelativePath(prod, file)} の h1 が {count} 個です（1 つにする）");
+        }
+    }
+
     /// <summary>@page のテンプレート（/archive/{Year:int}/{Month:int}、/tags/{Slug} など）に一致する正規表現。</summary>
     private static Regex RouteRegex(string template)
     {

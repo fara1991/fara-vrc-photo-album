@@ -34,6 +34,8 @@ public sealed class MainViewModel : ObservableObject
         ];
 
         Current = Ingest;
+        DesktopPreferences.Recovered += aside => _ = dialogs.InformAsync("設定ファイルを作り直しました",
+            $"設定ファイル（desktop.json）が壊れていたので、中身を「{System.IO.Path.GetFileName(aside)}」に残して、新しく作り直しました。必要なら手で戻してください。");
     }
 
     public AppState App { get; }

@@ -31,6 +31,9 @@ public static partial class OutfitDescription
     [GeneratedRegex(@"^[-―─━=＝＊*~～_・\s]{4,}$", RegexOptions.CultureInvariant)]
     private static partial Regex Separator();
 
+    [GeneratedRegex(@"^([0-9０-９]+[.．)）]|[①-⑳]|[・※-]|.{1,20}[:：]\s*\S)", RegexOptions.CultureInvariant)]
+    private static partial Regex TermsItem();
+
     [GeneratedRegex(@"https?://\S+", RegexOptions.CultureInvariant)]
     private static partial Regex Url();
 
@@ -139,5 +142,5 @@ public static partial class OutfitDescription
     }
 
     /// <summary>利用規約の項目（「1.利用主体」「商用利用：可」「・…」「① …」）。次の節の見出しと取り違えない。</summary>
-    private static bool IsTermsItem(string line) => Regex.IsMatch(line, @"^([0-9０-９]+[.．)）]|[①-⑳]|[・※-]|.{1,20}[:：]\s*\S)", RegexOptions.CultureInvariant);
+    private static bool IsTermsItem(string line) => TermsItem().IsMatch(line);
 }

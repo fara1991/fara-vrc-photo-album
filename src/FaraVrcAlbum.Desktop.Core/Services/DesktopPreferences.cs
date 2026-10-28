@@ -12,6 +12,9 @@ public sealed class DesktopPreferences(string path)
 {
     public string Path { get; } = path;
 
+    /// <summary>壊れた設定を退避して作り直したとき（退避先のパス）。画面（MainViewModel）が知らせる。</summary>
+    public static event Action<string>? Recovered;
+
     /// <summary>新しく選んだ写真に自動で入れるアバターの id（空 = 入れない）。</summary>
     public string DefaultAvatar
     {
@@ -66,9 +69,11 @@ public sealed class DesktopPreferences(string path)
         if (!File.Exists(Path)) return new JsonObject();
         var current = ParseObject(File.ReadAllText(Path));
         if (current is not null) return current;
-        var aside = Path + ".broken-" + DateTime.Now.ToString("yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture);
+        // 同じ時刻に 2 回壊れても衝突しないよう、GUID の一部を付ける
+        var aside = Path + ".broken-" + DateTime.Now.ToString("yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture) + "-" + Guid.NewGuid().ToString("N")[..8];
         File.Move(Path, aside, overwrite: false);
         Debug.WriteLine($"DesktopPreferences: 壊れた設定を退避しました: {aside}");
+        Recovered?.Invoke(aside);
         return new JsonObject();
     }
 

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.Data.Sqlite;
@@ -20,7 +21,41 @@ public static partial class BoothLibrary
     /// <summary>服として扱うカテゴリ（BOOTH の「3D モデル」→「3D 衣装」）。</summary>
     public const string OutfitParentCategory = "3Dモデル";
 
-    /// <summary>コピーした data.db の一時フォルダを消す。消せなくても結果は変えない（開いたままのプロセスなど）。失敗は Debug 出力に残す。</summary>
+    /// <summary>画面（ログ・通知）に出す注意。読む側は <see cref="TakeWarnings"/> で取る。</summary>
+    private static readonly ConcurrentQueue<string> Warnings = new();
+
+    /// <summary>たまった注意（消せなかった一時フォルダなど）を取り出す。</summary>
+    public static IReadOnlyList<string> TakeWarnings()
+    {
+        var list = new List<string>();
+        while (Warnings.TryDequeue(out var warning)) list.Add(warning);
+        return list;
+    }
+
+    /// <summary>一時フォルダの名前（fara-album-booth- + GUID の 32 桁）。これに合う、古いフォルダだけを掃除する。</summary>
+    [GeneratedRegex(@"^fara-album-booth-[0-9a-f]{32}$")]
+    private static partial Regex TempFolderName();
+
+    /// <summary>コピーの一時フォルダを作る前に、消し残し（以前の失敗・異常終了）を掃除する。使用中のものを消さないよう、1 時間より古いものだけ。</summary>
+    private static string NewTempFolder()
+    {
+        var root = Path.GetTempPath();
+        try
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-1);
+            foreach (var dir in Directory.EnumerateDirectories(root).Where(d => TempFolderName().IsMatch(Path.GetFileName(d))).ToList())
+            {
+                if (Directory.GetLastWriteTimeUtc(dir) < cutoff) TryDeleteTemp(dir);
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Warnings.Enqueue($"BOOTH の一時フォルダの掃除ができませんでした: {e.Message}");
+        }
+        return Path.Combine(root, "fara-album-booth-" + Guid.NewGuid().ToString("N"));
+    }
+
+    /// <summary>コピーした data.db の一時フォルダを消す。消せなくても結果は変えない（開いたままのプロセスなど）。消せなかったことは <see cref="TakeWarnings"/> で画面に出す（次回の取り込み・起動で掃除する）。</summary>
     private static void TryDeleteTemp(string temp)
     {
         try
@@ -29,6 +64,8 @@ public static partial class BoothLibrary
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
+            // 購入履歴を含むデータのコピーが残っている。次回の取り込み・起動のときに掃除する
+            Warnings.Enqueue($"BOOTH のデータのコピー（一時フォルダ）を消せませんでした。次回の取り込みのときに掃除します: {e.Message}");
             Debug.WriteLine($"BoothLibrary: 一時フォルダを消せませんでした: {e.Message}");
         }
     }
@@ -51,7 +88,7 @@ public static partial class BoothLibrary
     {
         var path = databasePath ?? DefaultDatabasePath;
         if (!File.Exists(path)) return null;
-        var temp = Path.Combine(Path.GetTempPath(), "fara-album-booth-" + Guid.NewGuid().ToString("N"));
+        var temp = NewTempFolder();
         try
         {
             Directory.CreateDirectory(temp);
@@ -94,7 +131,7 @@ public static partial class BoothLibrary
         var path = databasePath ?? DefaultDatabasePath;
         var result = new Dictionary<long, string>();
         if (!File.Exists(path)) return result;
-        var temp = Path.Combine(Path.GetTempPath(), "fara-album-booth-" + Guid.NewGuid().ToString("N"));
+        var temp = NewTempFolder();
         try
         {
             Directory.CreateDirectory(temp);
@@ -131,7 +168,7 @@ public static partial class BoothLibrary
         var path = databasePath ?? DefaultDatabasePath;
         var result = new Dictionary<long, FaraVrcAlbum.Tools.Services.AvatarOutfitService.BoothInfo>();
         if (!File.Exists(path)) return result;
-        var temp = Path.Combine(Path.GetTempPath(), "fara-album-booth-" + Guid.NewGuid().ToString("N"));
+        var temp = NewTempFolder();
         try
         {
             Directory.CreateDirectory(temp);

@@ -59,7 +59,8 @@ public static class MarkdownRenderer
     private static bool IsAllowedUrl(string? url)
     {
         if (string.IsNullOrEmpty(url)) return true;
-        if (url.StartsWith("//", StringComparison.Ordinal)) return false;
+        // 「//」（スキームを省いた別のサイト）と、ブラウザが同じに扱う「/\」「\/」「\\」も、別のサイトへの URL なので不許可
+        if (url.Length >= 2 && (url[0] is '/' or '\\') && (url[1] is '/' or '\\')) return false;
         if (url.StartsWith('/') || url.StartsWith('#') || url.StartsWith("./") || url.StartsWith("../")) return true;
         var colon = url.IndexOf(':');
         if (colon < 0) return true; // スキームなしの相対パス

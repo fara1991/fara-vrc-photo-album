@@ -14,10 +14,10 @@ public class WorldFetchTests
     private const string W2 = "wrld_00000000-0000-4000-8000-000000000002";
     private static readonly DateTimeOffset Now = new(2026, 10, 28, 3, 0, 0, TimeSpan.Zero);
 
-    private static string Info(long visits = 575361) => $$"""
-        { "id": "x", "name": "n", "authorName": "Fins", "description": "説明", "capacity": 80, "recommendedCapacity": 40,
-          "visits": {{visits}}, "favorites": 50162, "tags": ["author_tag_Chill"],
-          "publicationDate": "2024-11-01T16:21:27.800Z", "updated_at": "2025-06-30T07:12:48.100Z", "imageUrl": "{{ImageUrl}}" }
+    private static string Info(long visits = 123456) => $$"""
+        { "id": "x", "name": "n", "authorName": "テスト作者", "description": "説明", "capacity": 80, "recommendedCapacity": 40,
+          "visits": {{visits}}, "favorites": 4321, "tags": ["author_tag_Chill"],
+          "publicationDate": "2025-01-04T15:00:00.800Z", "updated_at": "2025-03-10T03:00:00.100Z", "imageUrl": "{{ImageUrl}}" }
         """;
 
     private static HttpResponseMessage Json(string body, HttpStatusCode status = HttpStatusCode.OK) =>
@@ -78,7 +78,7 @@ public class WorldFetchTests
         Assert.Equal(2, store.Objects.Count);                                                               // 512・1024
         var content = repo.Editor.LoadContent();
         Assert.NotNull(content.Worlds[RepoFixture.WorldOld].Image);
-        Assert.Equal(575361, content.WorldStats!.Worlds[RepoFixture.WorldOld].Visits);
+        Assert.Equal(123456, content.WorldStats!.Worlds[RepoFixture.WorldOld].Visits);
         Assert.Empty(result.Problems);
     }
 

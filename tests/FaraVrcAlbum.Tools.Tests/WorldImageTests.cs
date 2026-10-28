@@ -13,12 +13,12 @@ public class WorldImageTests
     private const string W2 = "wrld_00000000-0000-4000-8000-000000000002";
     private const string W3 = "wrld_00000000-0000-4000-8000-000000000003";
 
-    private static string Info(long visits = 575361) => $$"""
-        { "id": "x", "name": "n", "authorName": "Fins", "authorId": "usr_00000000-0000-4000-8000-0000000000bb",
-          "description": "説明", "capacity": 80, "recommendedCapacity": 40, "visits": {{visits}}, "favorites": 50162,
+    private static string Info(long visits = 123456) => $$"""
+        { "id": "x", "name": "n", "authorName": "テスト作者", "authorId": "usr_00000000-0000-4000-8000-0000000000bb",
+          "description": "説明", "capacity": 80, "recommendedCapacity": 40, "visits": {{visits}}, "favorites": 4321,
           "popularity": 7, "heat": 5, "occupants": 3, "publicOccupants": 3,
           "tags": ["author_tag_Chill", "system_approved", "author_tag_Field"],
-          "publicationDate": "2024-11-01T16:21:27.800Z", "updated_at": "2025-06-30T07:12:48.100Z",
+          "publicationDate": "2025-01-04T15:00:00.800Z", "updated_at": "2025-03-10T03:00:00.100Z",
           "imageUrl": "{{ImageUrl}}" }
         """;
 
@@ -65,10 +65,10 @@ public class WorldImageTests
 
         Assert.Equal(ImageUrl, info.ImageUrl);
         var s = info.Stats;
-        Assert.Equal(("Fins", "説明", 80, 40, 575361L, 50162L), (s.AuthorName, s.Description, s.Capacity, s.RecommendedCapacity, s.Visits, s.Favorites));
+        Assert.Equal(("テスト作者", "説明", 80, 40, 123456L, 4321L), (s.AuthorName, s.Description, s.Capacity, s.RecommendedCapacity, s.Visits, s.Favorites));
         Assert.Equal(["Chill", "Field"], s.Tags);                                         // author_tag_ だけ・接頭辞を外す
-        Assert.Equal("2024-11-01T16:21:27Z", s.PublicationDate);
-        Assert.Equal("2025-06-30T07:12:48Z", s.UpdatedAt);
+        Assert.Equal("2025-01-04T15:00:00Z", s.PublicationDate);
+        Assert.Equal("2025-03-10T03:00:00Z", s.UpdatedAt);
         var json = System.Text.Json.JsonSerializer.Serialize(s, JsonFiles.Options);
         Assert.DoesNotContain("usr_", json);                                             // 作者の ID は持たない
         Assert.DoesNotContain("ccupants", json);                                         // 今いる人数は持たない

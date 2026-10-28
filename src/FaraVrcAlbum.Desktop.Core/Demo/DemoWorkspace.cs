@@ -119,11 +119,11 @@ public static class DemoWorkspace
         {
             foreach (var suffix in new[] { "_640.webp", "_1280.webp", "_2048.webp" })
             {
-                await store.PutAsync(entry.Key + suffix, [0x52, 0x49, 0x46, 0x46], "image/webp", ObjectHeaders.ImmutableImage, ct);
+                await store.PutAsync(entry.Key + suffix, [0x52, 0x49, 0x46, 0x46], "image/webp", ObjectHeaders.ImmutableImage, ct).ConfigureAwait(false);
             }
         }
         // 参照の無いオブジェクト（監査の「孤児」を見せるため）
-        await store.PutAsync("2026-10/20261009-010101-000_deadbeef_640.webp", [0x52], "image/webp", ObjectHeaders.ImmutableImage, ct);
+        await store.PutAsync("2026-10/20261009-010101-000_deadbeef_640.webp", [0x52], "image/webp", ObjectHeaders.ImmutableImage, ct).ConfigureAwait(false);
 
     }
 

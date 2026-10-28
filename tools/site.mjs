@@ -13,6 +13,7 @@ import { cpSync, existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { PUBLISH_ATTEMPTS, isIllinkCrash } from "./publish-retry.mjs";
+import { checkPublishBranch } from "./publish-guard.mjs";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -20,13 +21,20 @@ const ENVS = ["production", "develop"];
 // wrangler の --env。本番はトップレベルの設定（--env ""）、確認用は env.develop
 const WRANGLER_ENV = { production: "", develop: "develop" };
 
+/** 失敗（手順の失敗・使い方の誤り）。投げて、最後に 1 か所で終了コードを決める（途中の finally の掃除を飛ばさないため）。 */
+class StepError extends Error {
+  constructor(message, exitCode = 1) {
+    super(message);
+    this.exitCode = exitCode;
+  }
+}
+
 function run(command, args, options = {}) {
   console.log(`> ${[command, ...args].join(" ")}`);
   const result = spawnSync(command, args, { cwd: root, stdio: "inherit", ...options });
   if (result.error) throw result.error;
   if (result.status !== 0) {
-    console.error(`失敗しました（終了コード ${result.status}）: ${command} ${args.join(" ")}`);
-    process.exit(result.status ?? 1);
+    throw new StepError(`失敗しました（終了コード ${result.status}）: ${command} ${args.join(" ")}`, result.status ?? 1);
   }
 }
 
@@ -46,8 +54,7 @@ function publishWeb() {
       console.log(`ILLink（サイズを小さくする処理）が落ちました。環境の一時的な問題なので、やり直します（${attempt + 1}/${PUBLISH_ATTEMPTS}）`);
       continue;
     }
-    console.error(`失敗しました（終了コード ${result.status}）: dotnet ${args.join(" ")}`);
-    process.exit(result.status ?? 1);
+    throw new StepError(`失敗しました（終了コード ${result.status}）: dotnet ${args.join(" ")}`, result.status ?? 1);
   }
 }
 
@@ -60,10 +67,7 @@ function ensureWrangler() {
   if (existsSync(wranglerBin())) return;
   console.log("wrangler が入っていません。npm ci で入れます（初回だけ）");
   run("npm", ["ci"], { shell: true });
-  if (!existsSync(wranglerBin())) {
-    console.error("npm ci のあとも wrangler が見つかりません（node_modules/wrangler）。");
-    process.exit(1);
-  }
+  if (!existsSync(wranglerBin())) throw new StepError("npm ci のあとも wrangler が見つかりません（node_modules/wrangler）。");
 }
 
 function clean() {
@@ -97,55 +101,67 @@ function putDist(env) {
 
 function parseEnv(value, fallback) {
   if (value === undefined) return fallback;
-  if (!ENVS.includes(value)) {
-    console.error(`環境は production か develop です: ${value}`);
-    process.exit(2);
-  }
+  if (!ENVS.includes(value)) throw new StepError(`環境は production か develop です: ${value}`, 2);
   return [value];
 }
 
-const [command, arg] = process.argv.slice(2);
-switch (command) {
-  case "clean":
-    clean();
-    break;
-  case "build":
-    build(parseEnv(arg, ENVS));
-    break;
-  case "check":
-    ensureWrangler();
-    build(ENVS);
-    for (const env of ENVS) {
-      putDist(env);
-      run(process.execPath, [wranglerBin(), "deploy", "--dry-run", `--env=${WRANGLER_ENV[env]}`]);
-    }
-    rmSync(join(root, "dist"), { recursive: true, force: true });
-    break;
-  case "deploy": {
-    const [env] = parseEnv(arg, []);
-    if (!env) {
-      console.error("公開先を指定してください: node tools/site.mjs deploy <production|develop>");
-      process.exit(2);
-    }
-    ensureWrangler();                                                           // 長いビルドの前に確かめる
-    build([env]);
-    putDist(env);
-    try {
-      run(process.execPath, [wranglerBin(), "deploy", `--env=${WRANGLER_ENV[env]}`]);
-    } finally {
+/** いまのブランチ名（detached HEAD や Git が使えないときは空）。 */
+function currentBranch() {
+  const result = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], { cwd: root, encoding: "utf8" });
+  return result.status === 0 ? result.stdout.trim() : "";
+}
+
+function main(argv) {
+  const [command, arg] = argv;
+  switch (command) {
+    case "clean":
+      clean();
+      break;
+    case "build":
+      build(parseEnv(arg, ENVS));
+      break;
+    case "check":
+      ensureWrangler();
+      build(ENVS);
+      for (const env of ENVS) {
+        putDist(env);
+        run(process.execPath, [wranglerBin(), "deploy", "--dry-run", `--env=${WRANGLER_ENV[env]}`]);
+      }
       rmSync(join(root, "dist"), { recursive: true, force: true });
+      break;
+    case "deploy": {
+      const [env] = parseEnv(arg, []);
+      if (!env) throw new StepError("公開先を指定してください: node tools/site.mjs deploy <production|develop>", 2);
+      checkPublishBranch(env, currentBranch());                                  // 本番は master・確認用は develop からだけ（ビルドの前に確かめる）
+      // 公開では、サンプルの記事（ALBUM_ALLOW_SAMPLE）の関門を外さない（CI のビルドだけ使う印）
+      delete process.env.ALBUM_ALLOW_SAMPLE;
+      ensureWrangler();
+      build([env]);
+      putDist(env);
+      try {
+        run(process.execPath, [wranglerBin(), "deploy", `--env=${WRANGLER_ENV[env]}`]);
+      } finally {
+        rmSync(join(root, "dist"), { recursive: true, force: true });
+      }
+      break;
     }
-    break;
+    case "preview": {
+      const [env] = parseEnv(arg, ["production"]);
+      ensureWrangler();
+      build([env]);
+      putDist(env);
+      run(process.execPath, [wranglerBin(), "dev", `--env=${WRANGLER_ENV[env]}`]);
+      break;
+    }
+    default:
+      throw new StepError("使い方: node tools/site.mjs clean | build [production|develop] | check | deploy <production|develop> | preview [production|develop]", 2);
   }
-  case "preview": {
-    const [env] = parseEnv(arg, ["production"]);
-    ensureWrangler();
-    build([env]);
-    putDist(env);
-    run(process.execPath, [wranglerBin(), "dev", `--env=${WRANGLER_ENV[env]}`]);
-    break;
-  }
-  default:
-    console.error("使い方: node tools/site.mjs clean | build [production|develop] | check | deploy <production|develop> | preview [production|develop]");
-    process.exit(2);
+}
+
+try {
+  main(process.argv.slice(2));
+} catch (e) {
+  if (!(e instanceof StepError)) throw e;
+  console.error(e.message);
+  process.exitCode = e.exitCode;
 }

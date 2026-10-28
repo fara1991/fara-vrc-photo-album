@@ -85,6 +85,16 @@ public interface IProcessRunner
 /// <summary>実際にプログラムを動かす。見つからないプログラムは、名前を示す文にする。</summary>
 public sealed class ProcessRunner : IProcessRunner
 {
+    /// <summary>
+    /// 子プロセスの環境を決める。親の環境変数は継承されるので、ALBUM_ALLOW_SAMPLE（CI 用のサンプル記事の関門を外す印）は、必ず外す
+    /// （アプリの公開で、サンプルの記事が本番に出ないように）。
+    /// </summary>
+    public static void ApplyEnvironment(ProcessStartInfo info, IReadOnlyDictionary<string, string> environment)
+    {
+        foreach (var (name, value) in environment) info.Environment[name] = value;
+        info.Environment.Remove("ALBUM_ALLOW_SAMPLE");
+    }
+
     public async Task<int> RunAsync(string fileName, IReadOnlyList<string> args, string workingDirectory, IReadOnlyDictionary<string, string> environment, Action<string> onLine, CancellationToken ct)
     {
         var info = new ProcessStartInfo(fileName)
@@ -99,7 +109,7 @@ public sealed class ProcessRunner : IProcessRunner
             StandardErrorEncoding = Encoding.UTF8,
         };
         foreach (var arg in args) info.ArgumentList.Add(arg);
-        foreach (var (name, value) in environment) info.Environment[name] = value;
+        ApplyEnvironment(info, environment);
 
         using var process = new Process { StartInfo = info };
         var gate = new object();

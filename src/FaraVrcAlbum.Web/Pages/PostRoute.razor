@@ -22,13 +22,18 @@ else
 
     private PostPage? post;
     private bool loaded;
+    private int _request;
 
     protected override async Task OnParametersSetAsync()
     {
         // 同じ記事のまま（URL の # だけが変わった: ライトボックスの #photo-N など）なら、読み直さない（読み直すと写真が一度消えて点滅する）
         if (loaded && post is not null && string.Equals(post.Slug, Slug, StringComparison.Ordinal)) return;
+        // 読み込みの途中でパラメータが変わったら、古い応答は捨てる（後から届いた古い応答で、新しい表示を上書きしない）
+        var request = ++_request;
         loaded = false;
-        post = await Store.GetPostAsync(Slug);
+        var found = await Store.GetPostAsync(Slug);
+        if (request != _request) return;
+        post = found;
         loaded = true;
     }
 }

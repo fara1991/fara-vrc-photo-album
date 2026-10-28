@@ -83,3 +83,49 @@ jobs:
         run: |
           rm -rf dist && cp -r site-develop dist
           npx wrangler deploy --dry-run --env develop
+
+  # ESLint（tools・worker・.github/scripts・tests/js・画面の JS）。共通の設定は kit（tools/lint/eslint.config.shared.mjs）
+  lint:
+    name: Lint (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+  # レイアウトの自動計測（kit の tools/layout-check。tap-target・横スクロール・フォーカス・文字の大きさ など）。
+  # サンプルの記事で静的サイトを作って（tools/layout-check.mjs）、配って計測する。ブラウザは playwright-core の同梱の chromium。
+  layout-check:
+    name: Layout check (playwright-core)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Chromium（playwright-core の依存込み）
+        run: npx playwright-core install --with-deps chromium
+
+      - name: Layout check（静的サイトを作り、計測する。違反があれば失敗）
+        run: npm run layout-check

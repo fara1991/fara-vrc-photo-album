@@ -16,6 +16,8 @@
     "check": "node tools/site.mjs check",
     "preview": "node tools/site.mjs preview",
     "preview:develop": "node tools/site.mjs preview develop",
+    "lint": "eslint .",
+    "layout-check": "node tools/layout-check.mjs",
     "test": "npm run test:worker && npm run test:kit && npm run test:gate && npm run test:js",
     "test:worker": "node --test worker/index.test.mjs",
     "test:kit": "node --test external/fara-site-kit/worker/report.test.mjs external/fara-site-kit/worker/maintenance.test.mjs",
@@ -23,6 +25,9 @@
     "test:js": "node --test tests/js/theme-default.test.mjs tests/js/wrangler-config.test.mjs tests/js/lightbox.test.mjs tests/js/header-css.test.mjs tests/js/publish-retry.test.mjs tests/js/publish-guard.test.mjs"
   },
   "devDependencies": {
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "playwright-core": "1.64.1",
     "wrangler": "4.152.0"
   }
 }

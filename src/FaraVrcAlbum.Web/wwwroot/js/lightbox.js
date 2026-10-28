@@ -53,10 +53,10 @@
     function isAllowedImageUrl(href, base, origins) {
         if (typeof href !== "string" || href === "") return false;
         var url;
-        try { url = new URL(href, base); } catch (e) { return false; }
+        try { url = new URL(href, base); } catch { return false; }
         if (url.protocol !== "https:" && url.protocol !== "http:") return false;
         var baseUrl;
-        try { baseUrl = new URL(base); } catch (e) { return false; }
+        try { baseUrl = new URL(base); } catch { return false; }
         return url.origin === baseUrl.origin || (origins || []).indexOf(url.origin) >= 0;
     }
 
@@ -75,7 +75,7 @@
             .then(function (res) { return res.ok ? res.json() : null; })
             .then(function (site) {
                 if (!site || typeof site.imageBaseUrl !== "string") return;
-                try { allowedOrigins = [new URL(site.imageBaseUrl, document.baseURI).origin]; } catch (e) { /* 形式不正は許可しない */ }
+                try { allowedOrigins = [new URL(site.imageBaseUrl, document.baseURI).origin]; } catch { /* 形式不正は許可しない */ }
                 if (location.hash && !(dialog && dialog.open) && openFromHash()) guardFocusUntilBooted();      // 読み込みより先にハッシュで開こうとして見送った分
             })
             .catch(function () { /* 読めなければ同一オリジンだけ */ });
@@ -267,7 +267,7 @@
         try {
             if (location.hash === hash) return;
             history.replaceState(history.state, "", location.pathname + location.search + hash);
-        } catch (e) { /* 履歴を書き換えられない環境では、URL は変えない */ }
+        } catch { /* 履歴を書き換えられない環境では、URL は変えない */ }
     }
 
     function onClosed() {
@@ -279,7 +279,7 @@
         preloaded = [];
         touch = null;
         if (parsePhotoHash(location.hash, 1000) >= 0) {
-            try { history.replaceState(history.state, "", location.pathname + location.search); } catch (e) { /* 同上 */ }
+            try { history.replaceState(history.state, "", location.pathname + location.search); } catch { /* 同上 */ }
         }
         // 閉じたら、いまの写真のリンクへフォーカスを戻す（Blazor の描画でリンクが入れ替わっていても、番号で探し直す）
         var list = links();

@@ -1115,6 +1115,53 @@ html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
 .album-align-right { text-align: right; }
 .album-post-body ins { text-decoration: underline; }
 
+/* レイアウト計測（tools/layout-check・600px 未満の tap-target）。行の中のリンクは、押せる範囲（中心から上下左右 21.5px）が自分に当たる必要がある。
+   見た目と行の高さは変えず、padding と負の margin で広げる。隣の行の文字と重なる分は、リンクが先に受ける（position・z-index） */
+.album-taglist a,
+.album-tag {
+  padding-block: 12px;
+  margin-block: -12px;
+}
+
+.album-taglist a,
+.album-tag,
+.album-breadcrumb a {
+  position: relative;
+  z-index: 1;
+}
+
+.album-heading-link {
+  padding-block: 4.5px;
+  margin-block: -4.5px;
+}
+
+@media (max-width: 599.98px) {
+  /* パンくずの「ホーム」などは幅が 44px に届かないので、スマホでは左右にも広げる（間の「›」は、リンクの当たり判定の外） */
+  .album-breadcrumb a {
+    padding-inline: 4px;
+    margin-inline: -4px;
+  }
+
+  /* SNS のアイコン（22px）は、当たり判定だけ 44px にする（padding と負の margin。間隔は kit の 22px のまま、隣と重ならない） */
+  a.fsk-footer-social {
+    box-sizing: content-box;
+    padding: 11px;
+    margin: -11px;
+  }
+
+  /* 当たり判定が隣と接すると、端の 0.5px で隣が取ってしまう（計測の 21.5px の点）ので、間隔を 2px 広げる */
+  .fsk-footer-socials {
+    gap: 24px;
+  }
+}
+
+/* 入力欄のフォーカス（MudBlazor は下線の色だけで示すため、キーボードのフォーカスを枠でも示す）。
+   MudBlazor の `.mud-input>input.mud-input-root:focus { outline: 0 }` に勝つため、:root を付けて詳細度を上げる */
+:root .mud-input-slot.mud-input-root:focus-visible {
+  outline: 2px solid var(--fsk-focus, #e9d5ff);
+  outline-offset: 2px;
+}
+
 /* スマホのタップ領域（44px 以上）: メニューの項目（kit の既定は 41px）・ヘッダーのメニューボタン（40px）・テーマ切替（ライトモードの文字の行） */
 .mud-drawer .mud-nav-link { min-height: 44px; }
 .mud-appbar .mud-icon-button { width: 44px; height: 44px; }

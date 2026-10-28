@@ -1,10 +1,8 @@
 # 動作確認（Playwright）
 
-CI では動かさない（ブラウザが要る）。`playwright-core` は、リポジトリの外の作業用フォルダに入れて使う（リポジトリには入れない）。
+CI では動かさない（この確認は手元で行う）。`playwright-core` は devDependency（1.64.1 に固定。kit の layout-check と同じ版。`npm ci` で入る）。レイアウトの自動計測（`npm run layout-check`・CI の layout-check job）は [docs/static-checks.md](../../docs/static-checks.md)。
 
 ```bash
-# 作業用フォルダで 1 回
-npm i playwright-core@1.64.1
 # 配信（Cloudflare と同じ動き。Worker と _headers の CSP が効く）
 npm run preview                       # http://localhost:8787（本番用の出力。確認用は npm run preview:develop）
 ```

@@ -101,6 +101,12 @@ public static partial class SiteRules
 
     public const string AuthorXHandle = "@game_fara";
 
+    /// <summary>作者の Twitch（フッターの SNS。fara-labs の profile.json と同じ URL）。</summary>
+    public const string AuthorTwitchUrl = "https://twitch.tv/game_fara";
+
+    /// <summary>作者の Discord の招待（フッターの SNS。fara-labs の profile.json と同じ URL）。</summary>
+    public const string AuthorDiscordUrl = "https://discord.com/invite/B38eCSYyk5";
+
     /// <summary>トップページのリード文（自己紹介）。</summary>
     public const string HomeLead = "Faraです。インバイトで良く引きこもってます。\nたまにVRC潜って撮った写真や、フレンドに撮ってもらった写真をこのサイトに載せていきます。";
 

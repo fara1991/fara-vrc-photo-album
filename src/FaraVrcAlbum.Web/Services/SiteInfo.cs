@@ -26,6 +26,10 @@ public static class SiteInfo
     /// <summary>PC のサイドバーを隠しているか（"1" で隠す）の localStorage のキー。index.html の theme-init.js の data-sidebar-key と同じ値。</summary>
     public const string SidebarKey = "fara-vrc-album.sidebar-hidden";
 
+    /// <summary>
+    /// フッターの SNS（GitHub・X・Twitch・Discord）。URL は fara-labs の profile.json・pokemon の SiteInfo と同じ値。
+    /// 並びは fara-labs と同じ（kit が絵柄を持つ 4 サービスの順）。
+    /// </summary>
     public static void Configure(SiteOptions options, SiteSettings settings)
     {
         options.Name = settings.SiteName;
@@ -38,5 +42,7 @@ public static class SiteInfo
         options.SidebarKey = SidebarKey;
         options.Social.Add(new SiteSocialLink("github", "https://github.com/fara1991"));
         options.Social.Add(new SiteSocialLink("twitter", SiteRules.AuthorXUrl));
+        options.Social.Add(new SiteSocialLink("twitch", SiteRules.AuthorTwitchUrl));
+        options.Social.Add(new SiteSocialLink("discord", SiteRules.AuthorDiscordUrl));
     }
 }

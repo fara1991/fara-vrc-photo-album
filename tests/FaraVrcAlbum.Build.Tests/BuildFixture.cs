@@ -55,7 +55,7 @@ public sealed class BuildFixture : IDisposable
         File.WriteAllText(Path.Combine(Repo, "content", "tags.json"),
             "{ \"sample\": { \"name\": \"サンプル\" }, \"night\": { \"name\": \"夜景\" }, \"unused\": { \"name\": \"使われないタグ\" } }");
         File.WriteAllText(Path.Combine(Repo, "content", "outfits.json"),
-            "{ \"coat-red\": { \"name\": \"赤いコート\", \"shop\": \"テスト店\", \"url\": \"https://booth.pm/ja/items/1\", \"thumbnail\": \"https://booth.pximg.net/x/i/1/thumb.jpg\", \"description\": \"あたたかいコートです。\\n二行目\", \"tags\": [\"コート\", \"冬服\"], \"publishedAt\": \"2025-11-20T10:00:00+09:00\", \"updatedAt\": \"2025-12-01T10:00:00+09:00\", \"fetchedAt\": \"2026-10-26T12:00:00+09:00\" }, \"boots\": { \"name\": \"靴\" } }");
+            "{ \"coat-red\": { \"name\": \"赤いコート\", \"shop\": \"テスト店\", \"url\": \"https://booth.pm/ja/items/1\", \"thumbnail\": \"https://booth.pximg.net/x/i/1/thumb.jpg\", \"description\": \"あたたかいコートです。\\n\\n対応アバター\\n■ Alpha\\nhttps://example.booth.pm/items/9\\n■ Beta\\nhttps://example.booth.pm/items/8\\n\\n■利用規約\\n再配布禁止\\nhttps://example.com/terms\", \"tags\": [\"コート\", \"冬服\"], \"publishedAt\": \"2025-11-20T10:00:00+09:00\", \"updatedAt\": \"2025-12-01T10:00:00+09:00\", \"fetchedAt\": \"2026-10-26T12:00:00+09:00\" }, \"boots\": { \"name\": \"靴\" } }");
         File.WriteAllText(Path.Combine(Repo, "content", "avatars.json"),
             "{ \"avatar-a\": { \"name\": \"Avatar A\", \"aliases\": [], \"outfitIds\": [\"coat-red\", \"boots\"] } }");
     }

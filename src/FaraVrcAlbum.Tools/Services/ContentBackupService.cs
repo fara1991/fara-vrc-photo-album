@@ -93,11 +93,22 @@ public static class ContentBackupService
     {
         var raw = await store.GetAsync(SnapshotsPrefix + id + "/" + ManifestName, ct);
         if (raw is null) return null;
-        using var doc = JsonDocument.Parse(raw);
-        var files = doc.RootElement.GetProperty("files").EnumerateArray()
-            .Select(e => (e.GetProperty("path").GetString()!, e.GetProperty("bytes").GetInt64(), e.GetProperty("sha256").GetString()!)).ToList();
-        var created = DateTimeOffset.TryParse(doc.RootElement.GetProperty("createdAt").GetString(), out var at) ? at : DateTimeOffset.MinValue;
-        return (new SnapshotInfo(id, created, files.Count, files.Sum(f => f.Item2)), files);
+        try
+        {
+            using var doc = JsonDocument.Parse(raw);
+            var files = doc.RootElement.GetProperty("files").EnumerateArray()
+                .Select(e => (
+                    e.GetProperty("path").GetString() ?? throw new InvalidDataException("path がありません"),
+                    e.GetProperty("bytes").GetInt64(),
+                    e.GetProperty("sha256").GetString() ?? throw new InvalidDataException("sha256 がありません")))
+                .ToList();
+            var created = DateTimeOffset.TryParse(doc.RootElement.GetProperty("createdAt").GetString(), out var at) ? at : DateTimeOffset.MinValue;
+            return (new SnapshotInfo(id, created, files.Count, files.Sum(f => f.Item2)), files);
+        }
+        catch (Exception e) when (e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or InvalidDataException)
+        {
+            return null;                                                                // 形の壊れた目録の控えは一覧から外す（ほかの控えは出す）
+        }
     }
 
     /// <summary>
@@ -106,15 +117,17 @@ public static class ContentBackupService
     /// </summary>
     public static async Task<int> RestoreAsync(IObjectStore store, string snapshotId, string contentDir, string safetyCopyDir, CancellationToken ct = default)
     {
-        var manifest = await ReadManifestAsync(store, snapshotId, ct) ?? throw new InvalidOperationException($"控えが見つかりません（{snapshotId}）");
+        var manifest = await ReadManifestAsync(store, snapshotId, ct) ?? throw new InvalidOperationException($"控えが見つからないか、壊れています（{snapshotId}）");
         var temp = Path.Combine(Path.GetTempPath(), "fara-album-restore-" + Guid.NewGuid().ToString("N"));
         try
         {
+            var contents = new Dictionary<string, byte[]>(StringComparer.Ordinal);
             foreach (var (path, bytes, sha) in manifest.Files)
             {
-                if (path.Contains("..", StringComparison.Ordinal) || Path.IsPathRooted(path)) throw new InvalidOperationException($"控えのファイル名が不正です: {path}");
+                if (!ContentPath.IsSafe(path)) throw new InvalidOperationException($"控えのファイル名が不正です: {path}");
                 var data = await store.GetAsync(SnapshotsPrefix + snapshotId + "/" + path, ct) ?? throw new InvalidOperationException($"控えのファイルがありません: {path}");
                 if (data.Length != bytes || Sha(data) != sha) throw new InvalidOperationException($"控えのファイルが壊れています: {path}");
+                contents[path] = data;
                 var target = Path.Combine(temp, path.Replace('/', Path.DirectorySeparatorChar));
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 await File.WriteAllBytesAsync(target, data, ct);
@@ -123,14 +136,30 @@ public static class ContentBackupService
 
             if (Directory.Exists(contentDir) && ContentFiles(contentDir).Count > 0) CopyContent(contentDir, safetyCopyDir);
             Directory.CreateDirectory(contentDir);
+            // ここから content を変える。途中で失敗したら、変える前の内容（メモリ上）に戻す（ContentSyncService.ApplyAsync と同じ）
             var keep = manifest.Files.Select(f => f.Path).ToHashSet(StringComparer.Ordinal);
-            foreach (var existing in ContentFiles(contentDir).Where(f => !keep.Contains(f)))
-                File.Delete(Path.Combine(contentDir, existing.Replace('/', Path.DirectorySeparatorChar)));
-            foreach (var path in keep)
+            var changed = new List<(string Path, byte[]? Before)>();
+            try
             {
-                var target = Path.Combine(contentDir, path.Replace('/', Path.DirectorySeparatorChar));
-                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-                File.Copy(Path.Combine(temp, path.Replace('/', Path.DirectorySeparatorChar)), target, overwrite: true);
+                foreach (var existing in ContentFiles(contentDir).Where(f => !keep.Contains(f)))
+                {
+                    var local = Path.Combine(contentDir, existing.Replace('/', Path.DirectorySeparatorChar));
+                    changed.Add((existing, await File.ReadAllBytesAsync(local, ct)));
+                    File.Delete(local);
+                }
+                foreach (var path in keep)
+                {
+                    var target = Path.Combine(contentDir, path.Replace('/', Path.DirectorySeparatorChar));
+                    changed.Add((path, File.Exists(target) ? await File.ReadAllBytesAsync(target, ct) : null));
+                    JsonFiles.WriteAtomic(target, contents[path]);
+                }
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                var failed = ContentPath.RollBack(contentDir, changed);
+                if (failed.Count > 0)
+                    throw new IOException("元に戻せなかったファイルがあります（変える前の内容は安全の控えにあります）:\n  " + string.Join("\n  ", failed), e);
+                throw;
             }
             return manifest.Files.Count;
         }

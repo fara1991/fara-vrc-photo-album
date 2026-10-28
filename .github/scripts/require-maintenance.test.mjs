@@ -90,8 +90,12 @@ test("run: ALLOW_MISSING_WORKER=1 のときだけ、初回の公開として通�
   assert.match(r.text, /ALLOW_MISSING_WORKER=1 のため/);
 });
 
-test("run: ALLOW_MISSING_WORKER は 1 のときだけ効く（0・空・true では通さない）", async () => {
-  for (const value of ["0", "", "true"]) {
+test("run: ALLOW_MISSING_WORKER は 1 と true（大文字小文字は問わない）で通り、それ以外では通さない", async () => {
+  for (const value of ["1", "true", "TRUE", " True "]) {
+    const r = await runWith(async () => new Response("", { status: 404 }), { ...ENV, ALLOW_MISSING_WORKER: value });
+    assert.equal(r.code, 0, `ALLOW_MISSING_WORKER=${JSON.stringify(value)} で通らなかった`);
+  }
+  for (const value of ["0", "", "yes", "false"]) {
     const r = await runWith(async () => new Response("", { status: 404 }), { ...ENV, ALLOW_MISSING_WORKER: value });
     assert.equal(r.code, 1, `ALLOW_MISSING_WORKER=${JSON.stringify(value)} で通してしまった`);
   }

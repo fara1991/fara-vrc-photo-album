@@ -45,10 +45,15 @@ function publishWeb() {
   const log = join(tmpdir(), `album-publish-${process.pid}.log`);
   for (let attempt = 1; ; attempt++) {
     console.log(`> dotnet ${args.join(" ")}`);
-    const result = spawnSync("dotnet", [...args, `-flp:logfile=${log};verbosity=minimal`], { cwd: root, stdio: "inherit" });
+    let result;
+    let text;
+    try {
+      result = spawnSync("dotnet", [...args, `-flp:logfile=${log};verbosity=minimal`], { cwd: root, stdio: "inherit" });
+      text = existsSync(log) ? readFileSync(log, "utf8") : "";
+    } finally {
+      rmSync(log, { force: true });                                          // 例外になっても、ログの一時ファイルは残さない
+    }
     if (result.error) throw result.error;
-    const text = existsSync(log) ? readFileSync(log, "utf8") : "";
-    rmSync(log, { force: true });
     if (result.status === 0) return;
     if (attempt < PUBLISH_ATTEMPTS && isIllinkCrash(text)) {
       console.log(`ILLink（サイズを小さくする処理）が落ちました。環境の一時的な問題なので、やり直します（${attempt + 1}/${PUBLISH_ATTEMPTS}）`);

@@ -41,6 +41,8 @@ public sealed class AlbumStore(HttpClient http)
             await Task.WhenAll(settings, posts, tags, archive);
             if (settings.Result is null || posts.Result is null) return false;
             Settings = settings.Result;
+            // Build と同じ範囲（1〜100）に直す。0 以下だと一覧のページ数の計算が例外になり、画面が開けないため（既定は Build と同じ 12）
+            if (Settings.PostsPerPage is < 1 or > 100) Settings.PostsPerPage = 12;
             Posts = posts.Result;
             if (tags.Result is not null) _tags = Task.FromResult<List<TagSummary>?>(tags.Result);   // 読めなかったときは、タグの一覧のページが取り直す
             TagNames = TagNamesOf(tags.Result);

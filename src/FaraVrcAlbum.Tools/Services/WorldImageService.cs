@@ -46,6 +46,14 @@ public static class WorldImageService
         return http;
     }
 
+    /// <summary>
+    /// 1 つのワールドの取得・保存で、想定内の失敗（通信・応答の形・画像の変換・R2・ファイル）。これだけを「そのワールドの問題」として次へ進む。
+    /// それ以外（NullReference などバグ）は握らず投げる（黙って続けないため）。
+    /// </summary>
+    public static bool IsPerWorldFailure(Exception e) =>
+        e is HttpRequestException or TaskCanceledException or JsonException or InvalidDataException or IOException or UnauthorizedAccessException
+            or Amazon.Runtime.AmazonServiceException or Amazon.Runtime.AmazonClientException;
+
     /// <summary>通信の失敗の理由。「SSL 接続を確立できません」のような外側の文だけでは原因が分からないので、内側の例外（接続が切られた・証明書など）の文も並べる。</summary>
     internal static string Describe(Exception e)
     {
@@ -399,7 +407,7 @@ public static class WorldImageService
                 await StoreImageAsync(editor, store, item.Id, item.Key, bytes, ct);
                 done++;
             }
-            catch (Exception e) when (!ct.IsCancellationRequested)
+            catch (Exception e) when (!ct.IsCancellationRequested && IsPerWorldFailure(e))
             {
                 problems.Add($"{item.Name}: 画像を保存できませんでした（{Describe(e)}）");        // 1 件の失敗で止めず、次へ進む（この件は次の実行でやり直せる）
             }

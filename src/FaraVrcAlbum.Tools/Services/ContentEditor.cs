@@ -16,19 +16,29 @@ public sealed class FileSnapshot
         if (!_before.ContainsKey(path)) _before[path] = File.Exists(path) ? File.ReadAllBytes(path) : null;
     }
 
+    /// <summary>控えに戻す。1 つ戻せなくても残りは戻し、戻せなかったものを一覧にして最後に投げる（ContentPath.RollBack と同じ）。</summary>
     public void Restore()
     {
+        var failed = new List<string>();
         foreach (var (path, bytes) in _before)
         {
-            if (bytes is null)
+            try
             {
-                if (File.Exists(path)) File.Delete(path);
+                if (bytes is null)
+                {
+                    if (File.Exists(path)) File.Delete(path);
+                }
+                else
+                {
+                    JsonFiles.WriteAtomic(path, bytes);
+                }
             }
-            else
+            catch (Exception r)
             {
-                JsonFiles.WriteAtomic(path, bytes);
+                failed.Add($"{path}: {r.Message}");
             }
         }
+        if (failed.Count > 0) throw new IOException("元に戻せなかったファイルがあります:\n  " + string.Join("\n  ", failed));
     }
 
     /// <summary>
@@ -105,15 +115,5 @@ public sealed class ContentEditor
     }
 
     /// <summary>ContentLoader で全体を検査する（ビルドと同じ）。問題があれば一覧にして例外。</summary>
-    public void ValidateOrThrow()
-    {
-        try
-        {
-            ContentLoader.Load(ContentDir);
-        }
-        catch (ContentException e)
-        {
-            throw new InvalidDataException("content/ の検査に失敗しました:\n  " + string.Join("\n  ", e.Problems));
-        }
-    }
+    public void ValidateOrThrow() => LoadContent();
 }

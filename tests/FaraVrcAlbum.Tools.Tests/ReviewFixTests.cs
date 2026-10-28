@@ -67,6 +67,19 @@ public sealed class ReviewFixTests : IDisposable
         Assert.Empty(store.Objects);
     }
 
+    [Fact]
+    public async Task AFailedLedgerSaveDoesNotLeaveThePhotoMarkedRemovedInMemory()
+    {
+        var ledger = _fixture.Ledger((RepoFixture.Key1, "1111", LedgerStates.Uploaded, "2026-10-23T21:33:12+09:00"));
+        var store = new MemoryObjectStore();
+        var plan = RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/");
+        var badLedgerPath = Path.Combine(_dir.Path, "ledger-is-a-folder");       // 台帳の保存先がフォルダなので、保存は失敗する
+        Directory.CreateDirectory(badLedgerPath);
+
+        await Assert.ThrowsAnyAsync<Exception>(() => RemoveService.ApplyAsync(plan, Prod, ledger, badLedgerPath, store, DateTimeOffset.UtcNow));
+        Assert.Equal(LedgerStates.Uploaded, ledger.BySha["1111"].State);         // 保存されていないのに removed と見えない
+    }
+
     private static HttpResponseMessage Ok(HttpRequestMessage request, string contentType, string cacheControl, int width, int height) =>
         FakeImages.Response(request, contentType, cacheControl, FakeImages.WebpHeader(width, height));
 

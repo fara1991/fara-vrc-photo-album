@@ -76,10 +76,21 @@ public static class RemoveService
             }
         }
 
-        // 台帳を removed にする（R2 の削除は済んでいる）
+        // 台帳を removed にする（R2 の削除は済んでいる）。保存に失敗したら、メモリの状態も元に戻す（保存されていないのに removed と見えないように）
+        var previousState = plan.Entry.State;
+        var previousRemovedAt = plan.Entry.RemovedAt;
         plan.Entry.State = LedgerStates.Removed;
         plan.Entry.RemovedAt = now.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
-        ledger.Save(ledgerPath);
+        try
+        {
+            ledger.Save(ledgerPath);
+        }
+        catch
+        {
+            plan.Entry.State = previousState;
+            plan.Entry.RemovedAt = previousRemovedAt;
+            throw;
+        }
     }
 
     /// <summary>

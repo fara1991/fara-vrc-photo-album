@@ -195,9 +195,10 @@ public static class WorldFetchService
                     stopped = true;
                     break;
                 }
-                catch (Exception e) when (!ct.IsCancellationRequested)
+                catch (Exception e) when (!ct.IsCancellationRequested && WorldImageService.IsPerWorldFailure(e))
                 {
-                    // 通信・応答の形・画像の変換（NetVips → InvalidDataException）・R2 への保存など、このワールドだけの失敗は 1 件の問題にして次へ進む
+                    // 通信・応答の形・画像の変換（NetVips → InvalidDataException）・R2 への保存など、このワールドだけの失敗は 1 件の問題にして次へ進む。
+                    // バグ（NullReference など）は握らず投げる
                     failure = WorldImageService.Describe(e);
                 }
 

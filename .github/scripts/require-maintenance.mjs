@@ -9,7 +9,8 @@
 //   notice … 通す（お知らせを出している）
 //   true   … 通す（すでにメンテナンス中。公開をやり直すとき）
 //   false・未設定・そのほか … 止める
-//   Worker がまだ無い（初回の公開。404）… 通す
+//   Worker が無い（404）… 止める。名前やアカウント ID の打ち間違いでも 404 になるので、初回の公開とは見なさない。
+//                         初回の本番の公開（Worker をまだ作っていないとき）だけ、ALLOW_MISSING_WORKER=1（または true）で通す
 //   確認できなかった（通信・権限の問題）… 止める（確かめずに公開しない）
 // 変数は、ダッシュボードで「テキスト」にしておく（シークレットは値を読めないため、確かめられない）。
 
@@ -19,6 +20,11 @@ export function readMaintenanceValue(bindings) {
   if (!binding) return "";
   if (binding.type === "plain_text" && typeof binding.text === "string") return binding.text.trim();
   return binding.type === "secret_text" ? "(secret)" : "";
+}
+
+/** 環境変数の真偽（"1" / "true"。大文字小文字は問わない）。 */
+export function isTrue(value) {
+  return ["1", "true"].includes(String(value ?? "").trim().toLowerCase());
 }
 
 /** ログに出す値。改行などを取り、長さを切る（値に改行が入っていても、::error:: の行を偽装されないように）。 */
@@ -76,7 +82,7 @@ export async function run({ workerName, env, fetchImpl, log = console.log, error
   if (settings.missing) {
     // 404 は「まだ無い（初回）」とも「名前の打ち間違い」とも区別できない。確認を飛ばせば、メンテナンスの表示を確かめずに本番を出してしまうので、
     // 既定では止める。初回の本番の公開だけ、明示的に ALLOW_MISSING_WORKER=1 を付けて通す
-    if (String(env.ALLOW_MISSING_WORKER ?? "").trim() === "1") {
+    if (isTrue(env.ALLOW_MISSING_WORKER)) {
       log(`Worker ${workerName} がまだありません（初回の公開）。ALLOW_MISSING_WORKER=1 のため、確認を飛ばして公開します`);
       return 0;
     }

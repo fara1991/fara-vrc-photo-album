@@ -5,9 +5,7 @@
 
 @* noindex は静的 HTML の head にある（Build）。ここで HeadContent を足すと robots の meta が 2 つになるので NoIndex="false" *@
 @* 連絡先は Twitter のユーザー名（@○○）を必須にする（kit v0.4.0 の ContactRequired / ContactFormat）。Discord は連絡先にしない（プライバシーポリシー） *@
-@* kit の ReportFormView の見出しは h3 だけ（h1 が無いと axe の page-has-heading-one、h1 の次が h3 だと heading-order に違反する）ので、視覚的に隠した h1・h2 を足す（kit 側で h1 にするのが本筋） *@
-<h1 class="visually-hidden">作者へ報告</h1>
-<h2 class="visually-hidden">報告フォーム</h2>
+@* 題名の h1 は kit の ReportFormView が出す（既定の HeadingLevel = 1）。ここでは見出しを足さない（足すと h1 が二重になる。全ページ h1 は 1 つ。テストで確かめる） *@
 <ReportFormView From="@From" NoIndex="false" UnavailableNote="お急ぎの場合は、作者の SNS からお願いします。"
                 ContactRequired="true" ContactFormat="ReportContactFormat.XHandle" ContactLabel="Twitter のユーザー名（@@○○）"
                 ContactPlaceholder="@@example" ContactHint="返信先として、Twitter のユーザー名を @@ から書いてください（英数字とアンダースコア 1〜15 文字）。Discord では受け付けていません。" />

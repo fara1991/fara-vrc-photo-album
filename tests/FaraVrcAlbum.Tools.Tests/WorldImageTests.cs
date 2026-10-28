@@ -45,7 +45,7 @@ public class WorldImageTests
         for (var i = 0; i < 3; i++) await WorldImageService.FetchInfoAsync(http, RepoFixture.WorldOld);
 
         Assert.Equal(2, waits);
-        Assert.All(agents, a => Assert.Equal("FaraVrcAlbum/1.0 (Fara; game_fara@outlook.com)", a));
+        Assert.All(agents, a => Assert.Equal("FaraVrcAlbum/1.0 (Fara; https://github.com/fara1991/fara-vrc-photo-album)", a));
         Assert.Equal(60, WorldImageService.Interval.TotalSeconds);
     }
 

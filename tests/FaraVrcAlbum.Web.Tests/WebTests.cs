@@ -134,6 +134,20 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
     }
 
     [Fact]
+    public void TheFooterShowsTheFourSocialLinksInTheSameOrderAsTheOtherSites()
+    {
+        // フッターの SNS は、GitHub・X・Twitch・Discord の 4 つ（fara-labs・pokemon と同じ並び・同じ URL）。欠けると、ここで落ちる
+        var cut = RenderLayout();
+
+        var links = cut.FindAll("footer a.fsk-footer-social");
+        Assert.Equal(4, links.Count);
+        Assert.Equal(["GitHub", "Twitter", "Twitch", "Discord"], links.Select(a => a.GetAttribute("aria-label")).ToArray());
+        Assert.Equal(
+            ["https://github.com/fara1991", "https://twitter.com/game_fara", "https://twitch.tv/game_fara", "https://discord.com/invite/B38eCSYyk5"],
+            links.Select(a => a.GetAttribute("href")).ToArray());
+    }
+
+    [Fact]
     public void StorageKeysAreTheSiteSpecificOnes()
     {
         Assert.Equal("fara-vrc-album.settings", SiteInfo.StorageKey);

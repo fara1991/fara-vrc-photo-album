@@ -108,12 +108,14 @@ public static class JsonFiles
     public static string Normalize(string text) => text.Replace("\r\n", "\n", StringComparison.Ordinal).TrimEnd('\n') + "\n";
 
     /// <summary>一時ファイルに書いてから置き換える（書き込み中に落ちても、元のファイルは壊れない）。</summary>
-    public static void WriteAtomic(string path, string text)
+    public static void WriteAtomic(string path, string text) => WriteAtomic(path, new System.Text.UTF8Encoding(false).GetBytes(Normalize(text)));
+
+    /// <summary>バイト列を一時ファイルに書いてから置き換える（書き込み中に落ちても、元のファイルは壊れない）。</summary>
+    public static void WriteAtomic(string path, byte[] data)
     {
-        var directory = Path.GetDirectoryName(Path.GetFullPath(path))!;
-        Directory.CreateDirectory(directory);
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
         var temp = path + ".tmp";
-        File.WriteAllText(temp, Normalize(text), new System.Text.UTF8Encoding(false));
+        File.WriteAllBytes(temp, data);
         File.Move(temp, path, overwrite: true);
     }
 }

@@ -1,0 +1,1104 @@
+/* Fara Photo Album のスタイル（1 ファイル）。色は :root の CSS 変数。kit の fara-site-kit.css の上に重ねる。
+   写真が主役になるよう、背景は中立（暗め）。ヘッダーは kit の紫のバー。 */
+
+:root {
+  --album-gap: 1rem;
+  --album-radius: 0.5rem;
+  --album-card-bg: #ffffff;
+  --album-card-border: rgba(0, 0, 0, 0.12);
+  --album-muted: #5b5370;
+}
+
+html[data-bs-theme="dark"] {
+  --album-card-bg: #17121f;
+  --album-card-border: rgba(255, 255, 255, 0.12);
+  --album-muted: #b4aac8;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ヘッダーの高さ: kit の既定 3.5rem（56px）。名前は文字（サイト名）で、画像は各ページの本文の最初（.album-banner）。kit は .fsk-header と .mud-toolbar の高さを 3.5rem で決め、
+   MudBlazor は --mud-appbar-height（本文の上の余白・ドロワーの上端・お知らせの帯の位置）で使う。同じ値に上書きして、変数 1 つで全部をそろえる（--mud-appbar-height は MudBlazor のテーマが :root に出すので、html:root で勝たせる）。
+   tests/js/header-css.test.mjs が値を固定している。 */
+:root {
+  --album-header-h: 3.5rem;
+}
+
+html:root,
+.fsk-page.mud-layout {
+  --mud-appbar-height: var(--album-header-h);
+}
+
+.fsk-header.mud-appbar {
+  height: var(--album-header-h);
+}
+
+.fsk-header .mud-toolbar {
+  height: var(--album-header-h);
+  min-height: var(--album-header-h);
+}
+
+.fsk-search-sheet {
+  top: var(--album-header-h);
+}
+
+/* ページ全体がスクロールするスマホで、アンカー（#photo-3 など）がヘッダーの下に隠れないようにする */
+html {
+  scroll-padding-top: calc(var(--album-header-h) + 0.5rem);
+}
+
+/* 各ページの本文の最初の画像（SiteBanner。960×240 の WebP）。本文の幅いっぱいに出し、縦横比 4:1 で場所を空ける（画像が来る前から高さが決まる = CLS が出ない）。
+   静的 HTML（main.entry-static）にも同じものが入る。 */
+.album-banner {
+  margin: 0 0 1rem;
+  line-height: 0;
+}
+
+.album-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 1;
+  object-fit: cover;
+  border-radius: var(--album-radius, 8px);
+}
+
+/* kit の .fsk-header :focus-visible は outline-color だけを決める。MudBlazor の reset で outline-style が none になり、ヘッダーの名前のリンクにキーボードのフォーカス枠が出ないので、ここで枠を付ける */
+.fsk-header .fsk-brand:focus-visible {
+  outline: 2px solid #e9d5ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* MudBlazor の reset はサイト全体の a の outline を消す。本文領域・フッターのリンクすべてに枠を戻す（記事の本文リンク・ギャラリーの写真リンクを含む）。kit 側で戻すのが本筋（kit の docs/new-site-checklist.md） */
+#fsk-main a:focus-visible,
+.album-card-link:focus-visible,
+.album-card-tags a:focus-visible,
+.album-prevnext-link:focus-visible,
+.album-breadcrumb a:focus-visible,
+.album-pager-link:focus-visible,
+.album-gallery a:focus-visible,
+.album-post-body a:focus-visible,
+.fsk-footer a:focus-visible,
+.fsk-nav a:focus-visible {
+  outline: 2px solid var(--fsk-brand);
+  outline-offset: 2px;
+}
+
+.album-drawer-theme {
+  padding: 0.75rem 1rem;
+}
+
+@media (min-width: 768px) {
+  .album-drawer-theme {
+    display: none;
+  }
+}
+
+.album-heading {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  margin: 0 0 0.75rem;
+}
+
+.album-subheading {
+  font-size: 1.15rem;
+  line-height: 1.4;
+  margin: 0 0 0.5rem;
+}
+
+.album-note,
+.album-empty,
+.album-post-meta,
+.album-card-meta,
+.album-pager-status {
+  color: var(--album-muted);
+}
+
+.album-lead {
+  margin: 0 0 1rem;
+  color: var(--album-muted);
+}
+
+.album-external {
+  margin-left: 0.5rem;
+  font-size: 0.8em;
+}
+
+.album-tag {
+  color: inherit;
+}
+
+/* サイドバーのアーカイブ（公開月別）。PC でサイドバーを細くしている間は、アイコンだけの列に月の文字が入らないので出さない（kit の .fsk-nav-section と同じ条件） */
+.album-archive {
+  margin-top: 0.5rem;
+}
+
+.fsk-sidebar.mud-drawer--closed:not(:hover) .album-archive,
+.fsk-sidebar.mud-drawer-mini:not(.mud-drawer--open):not(:hover) .album-archive {
+  display: none;
+}
+
+/* 年ごとの折りたたみ（ネイティブの details）と月のリンク。見た目は kit の .mud-nav-link に合わせる（44px 以上のタップ領域） */
+.album-archive-summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1rem;
+  color: #ece6f7;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: 4px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.album-archive-summary::-webkit-details-marker {
+  display: none;
+}
+
+.album-archive-summary::after {
+  content: "";
+  margin-left: auto;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.album-archive-year[open] > .album-archive-summary::after {
+  transform: rotate(-135deg);
+}
+
+.album-archive-summary:hover,
+.album-archive-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.album-archive-months {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.album-archive-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1rem 0 2.5rem;
+  color: #ece6f7;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.album-archive-link.active {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.album-archive-summary:focus-visible,
+.album-archive-link:focus-visible {
+  outline: 2px solid #e9d5ff;
+  outline-offset: -2px;
+}
+
+/* ---- 一覧（カードの格子: PC 3 列・タブレット 2 列・スマホ 1 列。sizes の 360px / 45vw / 92vw と同じ切り替え 1200px・600px） ---- */
+.album-home,
+.album-list {
+  padding: 1rem 0;
+}
+
+.album-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--album-gap);
+}
+
+@media (min-width: 600px) {
+  .album-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .album-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.album-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--album-card-bg);
+  border: 1px solid var(--album-card-border);
+  border-radius: var(--album-radius);
+  overflow: hidden;
+}
+
+/* 写真の枠は 3:2 に固定（縦横比のちがう写真でも、カードの高さがそろう。中身は中央を切り抜く。枠の大きさは画像の読み込みで変わらない = CLS なし） */
+.album-card-media {
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: rgba(127, 127, 127, 0.18);
+}
+
+.album-card-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ワールドのページの、VRChat のワールドの情報（項目名: 値 を折り返して並べる） */
+.album-world-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+}
+
+.album-world-info div {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.album-world-info dt {
+  color: var(--album-muted);
+}
+
+.album-world-info dd {
+  margin: 0;
+}
+
+/* 長い説明文: 最初の 3 行だけ見せて、「続きを見る」で全文（JS なし。FoldedText.razor） */
+.album-more {
+  position: relative;
+  margin: 0 0 0.5rem;
+}
+
+.album-more-text--clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.album-more-toggle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.album-more-toggle:checked ~ .album-more-text--clamped {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  overflow: visible;
+}
+
+.album-more-label {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--album-link, inherit);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.album-more-close {
+  display: none;
+}
+
+.album-more-toggle:checked ~ .album-more-label .album-more-open {
+  display: none;
+}
+
+.album-more-toggle:checked ~ .album-more-label .album-more-close {
+  display: inline;
+}
+
+.album-more-toggle:focus-visible ~ .album-more-label {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.album-world-description {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* 情報（項目・説明・「時点の情報です」）と、そのあとの「このワールド／服で撮った写真です」の間は、少し空ける */
+.album-lead--after-info {
+  margin-top: 1.5rem;
+}
+
+/* 服の一覧のカード: BOOTH の商品の画像（正方形）を、切らずに見せる */
+.album-card-media--outfit {
+  aspect-ratio: 1 / 1;
+}
+
+.album-card-media--outfit img {
+  object-fit: contain;
+}
+
+/* 服のページの先頭: BOOTH の商品の画像（正方形。押すと商品ページ）。枠を先に取る = CLS なし */
+.album-outfit-hero {
+  display: block;
+  width: min(100%, 300px);
+  margin: 0 0 1rem;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: var(--album-radius);
+  background: rgba(127, 127, 127, 0.18);
+}
+
+.album-outfit-hero img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ワールドの一覧のカード: VRChat のワールドの画像は 4:3 なので、切らずに見せる */
+.album-card-media--world {
+  aspect-ratio: 4 / 3;
+}
+
+/* ワールドのページの先頭: ワールドの画像を大きく（4:3 の枠を先に取る = CLS なし）。押すと VRChat のワールドページ（本文の「VRChat でワールドを見る」と同じ） */
+.album-world-hero {
+  display: block;
+  /* 横長の画面でも 1 画面に収まる大きさまで（高さ 70vh 分の幅）。名前は画像の下に左寄せ */
+  width: min(100%, calc(70vh * 4 / 3));
+  margin: 0 0 1rem;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--album-radius);
+  background: rgba(127, 127, 127, 0.18);
+}
+
+.album-world-hero img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.album-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.6rem 0.75rem 0.75rem;
+}
+
+.album-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.album-card-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 題のリンクをカード全体に広げる（リンクの入れ子にしないため）。タグのリンクはその上に出す */
+.album-card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.album-card-link:hover {
+  text-decoration: underline;
+}
+
+.album-card-meta {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.album-card-tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.album-card-tags a {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  color: var(--album-muted);
+}
+
+/* 写真だけのカード（ワールドの一覧）。リンクが写真全体 */
+.album-card--photo .album-card-link--photo {
+  display: block;
+}
+
+.album-card--photo .album-card-link--photo::after {
+  content: none;
+}
+
+.album-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.album-pager-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.75rem;
+}
+
+.album-taglist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+
+.album-loading {
+  padding: 1rem 0;
+}
+
+/* ---- 記事（本文の幅は 56rem = 約 900px。写真の sizes の 900px と同じ） ---- */
+.album-breadcrumb,
+.album-post,
+.album-prevnext,
+.album-related {
+  width: 100%;
+  max-width: 56rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.album-breadcrumb {
+  padding-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--album-muted);
+}
+
+.album-breadcrumb ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0;
+}
+
+.album-breadcrumb li + li::before {
+  content: "›";
+  margin: 0 0.5rem;
+}
+
+.album-breadcrumb a {
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+}
+
+.album-post {
+  padding: 0.5rem 0 1rem;
+}
+
+.album-post-body {
+  margin-bottom: 0.5rem;
+}
+
+/* 写真の前の文章・おわりの文章（写真の並びの間に入る） */
+.album-post-text,
+.album-post-afterword {
+  margin-top: 1.25rem;
+}
+
+.album-post-meta a {
+  color: inherit;
+}
+
+/* 写真のギャラリー（CSS だけ。各 li の --ar = 幅 / 高さ）。1 枚 = 大きく、2 枚 = 横並び（高さをそろえる）、3 枚以上 = 均等高さの行（最後の行は広げすぎない）、スマホは 1 列 */
+.album-gallery {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem 0.5rem;
+}
+
+.album-gallery-item {
+  min-width: 0;
+}
+
+.album-gallery--1 .album-gallery-item {
+  flex: 0 1 100%;
+  max-width: calc(var(--ar) * 78vh);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.album-gallery--2 {
+  flex-wrap: nowrap;
+}
+
+.album-gallery--2 .album-gallery-item {
+  flex: var(--ar) 1 0%;
+}
+
+.album-gallery--n .album-gallery-item {
+  flex: calc(var(--ar) * 100) 1 calc(var(--ar) * 16rem);
+}
+
+/* 最後の行の写真が、行いっぱいに広がらないようにする（とても大きな flex-grow の空き要素が、余った幅を取る） */
+.album-gallery--n::after {
+  content: "";
+  flex: 1000000 1 0%;
+}
+
+@media (max-width: 767.98px) {
+  .album-gallery,
+  .album-gallery--2 {
+    flex-wrap: wrap;
+  }
+
+  .album-gallery .album-gallery-item,
+  .album-gallery--2 .album-gallery-item,
+  .album-gallery--n .album-gallery-item {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .album-gallery--n::after {
+    display: none;
+  }
+}
+
+.album-gallery figure {
+  margin: 0;
+}
+
+.album-photo-link {
+  display: block;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  cursor: zoom-in;
+  line-height: 0;
+}
+
+.album-photo-link img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.album-gallery figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.9rem;
+  padding-top: 0.35rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--album-muted);
+}
+
+.album-caption-text {
+  flex: 1 1 100%;
+}
+
+.album-caption-world a:not(.album-external),
+.album-caption-outfits a {
+  color: inherit;
+}
+
+
+/* 前後の記事・関連する記事 */
+.album-prevnext {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.album-prevnext-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 44px;
+  padding: 0.6rem 0.85rem;
+  color: inherit;
+  text-decoration: none;
+  background: var(--album-card-bg);
+  border: 1px solid var(--album-card-border);
+  border-radius: var(--album-radius);
+}
+
+.album-prevnext-link--older {
+  grid-column: 1;
+}
+
+.album-prevnext-link--newer {
+  grid-column: 2;
+  text-align: right;
+}
+
+.album-prevnext-link:hover .album-prevnext-title {
+  text-decoration: underline;
+}
+
+.album-prevnext-label {
+  font-size: 0.8rem;
+  color: var(--album-muted);
+}
+
+.album-prevnext-title {
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+@media (max-width: 599.98px) {
+  .album-prevnext {
+    grid-template-columns: 1fr;
+  }
+
+  .album-prevnext-link--older,
+  .album-prevnext-link--newer {
+    grid-column: 1;
+    text-align: left;
+  }
+}
+
+.album-related {
+  margin-top: 2rem;
+  padding-bottom: 1rem;
+}
+
+.album-related .album-lead {
+  margin-bottom: 0.75rem;
+}
+
+/* ---- ライトボックス（js/lightbox.js が作る <dialog>。背景は常に暗色。画面いっぱい） ---- */
+html.album-lb-open,
+html.album-lb-open body {
+  overflow: hidden;
+}
+
+.album-lb {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #f3edff;
+  background: #07040d;
+  overscroll-behavior: contain;
+  touch-action: pan-y pinch-zoom;
+}
+
+.album-lb[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.album-lb::backdrop {
+  background: #07040d;
+}
+
+.album-lb-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+.album-lb-count {
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  color: #d9ccf0;
+}
+
+.album-lb-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  font: inherit;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.album-lb-button:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.album-lb-button:focus-visible,
+.album-lb a:focus-visible {
+  outline: 3px solid #e9d5ff;
+  outline-offset: 2px;
+}
+
+.album-lb-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+.album-lb-figure {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.album-lb-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.25rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.album-lb-figure[data-loading] .album-lb-image {
+  opacity: 0.35;
+}
+
+.album-lb-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: -1.25rem 0 0 -1.25rem;
+  box-sizing: border-box;
+  border: 0.3rem solid #a855f7;
+  border-right-color: transparent;
+  border-radius: 50%;
+  visibility: hidden;
+}
+
+.album-lb-figure[data-loading] .album-lb-spinner {
+  visibility: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .album-lb-figure[data-loading] .album-lb-spinner {
+    animation: album-lb-spin 0.75s linear infinite;
+  }
+
+  .album-lb-image {
+    transition: opacity 0.15s ease;
+  }
+}
+
+@keyframes album-lb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.album-lb-caption {
+  flex: 0 0 auto;
+  max-height: 30vh;
+  overflow-y: auto;
+  padding: 0.5rem 1rem;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #d9ccf0;
+  text-align: center;
+}
+
+.album-lb-caption a {
+  color: #e9d5ff;
+}
+
+.album-lb-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.1rem 1rem;
+}
+
+.album-lb-info .album-caption-text {
+  flex: 1 1 100%;
+  color: #fff;
+}
+
+.album-lb-open-original {
+  display: inline-block;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 767.98px) {
+  .album-lb-stage {
+    padding: 0;
+  }
+
+  /* スマホは左右のボタンを画像の上に重ねる（スワイプでも移動できる） */
+  .album-lb-stage .album-lb-button {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    margin-top: -22px;
+    width: 44px;
+    height: 44px;
+    background: rgba(7, 4, 13, 0.55);
+  }
+
+  .album-lb-prev {
+    left: 0.5rem;
+  }
+
+  .album-lb-next {
+    right: 0.5rem;
+  }
+}
+
+/* ヘッダーの右端（テーマの切り替え）。検索欄を置かないので、ブランドの画像の右に空きができる分は、切り替えを右へ寄せる */
+.fsk-header .fsk-theme-switch {
+  margin-left: auto;
+}
+
+/* キャプションの項目名（ワールド）。外部のリンク（VRChat）には「新しいタブ」の印 */
+.album-caption-world::before {
+  content: "ワールド: ";
+}
+
+.album-external::after,
+.album-world-link::after,
+.album-outfit-link::after {
+  content: " ↗";
+}
+
+@media (max-width: 599.98px) {
+  /* パンくずの最後（記事の題）は、スマホでは次の行に出す（長い題が「›」の途中で折り返さないように） */
+  .album-breadcrumb li:last-child {
+    flex: 1 1 100%;
+  }
+
+  .album-breadcrumb li:last-child::before {
+    display: none;
+  }
+}
+
+/* 起動前（JS が動くまで）の静的 HTML の本文は、起動後の本文の領域（ヘッダーの下・サイドバーの右）と同じ位置に置く。起動の前後で本文が動かない（CLS）ようにするため。
+   JS が無いとき（index.html の noscript）は、余白を普通の幅に戻す */
+main.entry-static {
+  box-sizing: border-box;
+  padding: calc(var(--album-header-h) + 1.1rem) 1rem 1rem;
+}
+
+@media (min-width: 768px) {
+  main.entry-static {
+    padding-left: calc(var(--mud-drawer-width-left, 230px) + 1rem);
+  }
+}
+
+/* 記事・一覧の読み込み中の空き。スマホはページ全体がスクロールし、フッターが本文のあとに出る。本文が来るまでフッターを画面の外に置き、本文が来たときに跳ねさせない */
+.album-pending {
+  display: none;
+}
+
+@media (max-width: 767.98px) {
+  .album-pending {
+    display: block;
+    min-height: 100dvh;
+  }
+}
+
+/* MudBlazor は、幅 600px 未満の縦向きで、本文の上の余白とドロワーの上端を --mud-appbar-height の 7/8 にする（標準の 56px のヘッダーが 49px 分しか避けない）。
+   このサイトはヘッダーの高さ（スマホ 72px）をそのまま使う（本文がヘッダーの下に潜らない） */
+.fsk-page .mud-main-content {
+  padding-top: var(--album-header-h);
+}
+
+/* 静的 HTML（起動前・JS なし）の文字は、起動後（kit のテーマ: Zen Kaku Gothic New・14px・色）と同じにする。起動の前後で行の高さ・色が変わらない（CLS・boot-diff）ようにするのと、
+   JS が無いときも読めるようにするため（背景は index.html の既定のダーク） */
+main.entry-static {
+  font-family: "Zen Kaku Gothic New", system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.43;
+  color: #1e1433;
+}
+
+html[data-bs-theme="dark"] main.entry-static {
+  color: #f3edff;
+}
+
+/* リンクは色だけで見分けさせない（MudBlazor の reset はリンクの色・下線を消す）。本文・キャプション・パンくず・メタ情報のリンクは下線を付ける。
+   カードの題・前後の記事・ページ送りは、囲み・見出しの形で分かるので付けない */
+.album-post-body a,
+main.entry-static .album-post-body a {
+  color: var(--fsk-brand);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.album-external,
+.album-caption-world a,
+.album-caption-outfits a,
+.album-post-meta a,
+.album-breadcrumb a,
+.album-card-tags a,
+.album-lead a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+main.entry-static a {
+  color: inherit;
+}
+
+/* ボタン（ハンバーガー・アーカイブの年・テーマの切り替え）のキーボードのフォーカス枠。MudBlazor の reset が枠を消すので、ここで戻す（リンクと同じ） */
+.fsk-header button:focus-visible,
+.fsk-header .fsk-theme-switch:focus-within {
+  outline: 2px solid #e9d5ff;
+  outline-offset: 2px;
+}
+
+.fsk-sidebar button:focus-visible,
+.fsk-sidebar .mud-nav-link:focus-visible {
+  outline: 2px solid #e9d5ff;
+  outline-offset: -2px;
+}
+
+.fsk-footer button:focus-visible {
+  outline: 2px solid var(--fsk-brand);
+  outline-offset: 2px;
+}
+
+/* タップ領域（計画書 §4: 44px 以上。WCAG 2.2 の target-size）。行の中にあるリンク（キャプション・パンくず・日付・タグ）は、行の高さは変えずに、上下の padding を負の margin で相殺して、押せる範囲だけを 44px 以上に広げる。
+   インライン要素なので padding は行の高さに影響しない。隣の行のリンクと押せる範囲が重なって「隠れる」ことのないよう、キャプション・メタ情報の行間は広め（line-height 2）にする（axe の target-size は、重なりを避けた押せる範囲 24px 以上を求める）。
+   文章の途中のリンク（本文・リード文）は、WCAG のインラインの例外なので広げない。 */
+.album-caption-world a,
+.album-caption-outfits a,
+.album-post-meta a,
+.album-breadcrumb a,
+.album-lb-caption a {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  margin-top: -12px;
+  margin-bottom: -12px;
+}
+
+/* 小さい文字（0.8em）の「VRChat ↗」は、文字の高さが低いぶん padding を多くして 44px にする */
+.album-external,
+.album-caption-world a.album-external,
+.album-lb-caption a.album-external {
+  padding-top: 17px;
+  padding-bottom: 17px;
+  margin-top: -17px;
+  margin-bottom: -17px;
+}
+
+.album-gallery figcaption,
+.album-lb-caption,
+.album-post-meta,
+.album-breadcrumb ol {
+  line-height: 2;
+}
+
+/* タグ（カードの中）は flex の項目なので、min-height で 44px にする（カードの中の余白で吸収） */
+.album-card-tags {
+  gap: 0 0.6rem;
+}
+
+.album-card-tags a {
+  min-height: 44px;
+  margin-top: -8px;
+  margin-bottom: -8px;
+}
+
+.album-breadcrumb a {
+  display: inline;
+  min-height: 0;
+}
+
+/* 報告ページ（kit の ReportFormView）: 文中のリンクは色だけで見分けさせない（axe link-in-text-block） */
+.fsk-report-card p a {
+  text-decoration: underline;
+}
+
+/* 報告ページの注意書き（kit の MudAlert。ライトテーマの警告色 #d68100 は白地でコントラスト 3:1 しかない。axe の color-contrast）。文字だけ濃い色にする */
+html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
+  color: #8a5300;
+}
+
+/* 記事の題は、公開月のアーカイブへのリンク（見た目は題のまま。重ねると下線） */
+.album-heading-link {
+  color: inherit;
+  text-decoration: none;
+}
+.album-heading-link:hover,
+.album-heading-link:focus-visible {
+  text-decoration: underline;
+}
+
+/* 本文の文字の揃え（編集アプリの左揃え・中央揃え・右揃え。Markdown の :::center など） */
+.album-align-left { text-align: left; }
+.album-align-center { text-align: center; }
+.album-align-right { text-align: right; }
+.album-post-body ins { text-decoration: underline; }

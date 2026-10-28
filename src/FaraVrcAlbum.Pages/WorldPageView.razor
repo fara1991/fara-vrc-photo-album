@@ -1,0 +1,105 @@
+@* ワールドのページ（/worlds/{uuid}、/worlds/{uuid}/page/{n}）。先頭にワールドの画像を大きく、その下にワールド名と VRChat のワールドの情報、その下にそのワールドで撮った写真の一覧。
+   ワールドの作者へのクレジットとして、VRChat のワールドページへのリンクを必ず出す（https://vrchat.com/home/world/{wrld_id}/info）。
+   画像は VRChat から取って写真と同じ R2 に置いたもの（閲覧時に VRChat へは接続しない）。情報は GitHub Actions が 1 日 1 回取る（今いる人数は出さない）。 *@
+<div class="album-list fsk-page-column fsk-page-column--wide">
+    @if (Image is not null)
+    {
+        <a class="album-world-hero" href="@VrchatLinks.World(Id)" target="_blank" rel="noopener noreferrer nofollow" aria-label="@($"VRChat で {Name} を見る（新しいタブ）")">
+            <img src="@SiteRules.ImageUrl(BaseUrl, Image.Key, 1024)" srcset="@($"{SiteRules.ImageUrl(BaseUrl, Image.Key, 512)} 512w, {SiteRules.ImageUrl(BaseUrl, Image.Key, 1024)} 1024w")"
+                 sizes="(max-width: 960px) 100vw, 960px" width="@Image.W" height="@Image.H" alt="@($"{Name} のワールドの画像")"
+                 loading="@(Page == 1 ? "eager" : "lazy")" fetchpriority="@(Page == 1 ? "high" : "auto")" decoding="async" />
+        </a>
+    }
+    <h1 class="album-heading"><a class="album-external" href="@VrchatLinks.World(Id)" target="_blank" rel="noopener noreferrer nofollow" aria-label="@($"VRChat で {Name} を見る（新しいタブ）")">@Name</a></h1>
+    @if (Stats is not null)
+    {
+        <dl class="album-world-info">
+            @if (Stats.AuthorName.Length > 0)
+            {
+                <div><dt>作者</dt><dd>@Stats.AuthorName</dd></div>
+            }
+            <div><dt>訪問数</dt><dd>@Stats.Visits.ToString("N0", Invariant)</dd></div>
+            <div><dt>お気に入り</dt><dd>@Stats.Favorites.ToString("N0", Invariant)</dd></div>
+            <div><dt>定員</dt><dd>@(Stats.Capacity) 人（推奨 @(Stats.RecommendedCapacity) 人）</dd></div>
+            @if (Date(Stats.PublicationDate) is { } published)
+            {
+                <div><dt>公開日</dt><dd>@published</dd></div>
+            }
+            @if (Date(Stats.UpdatedAt) is { } updated)
+            {
+                <div><dt>更新日</dt><dd>@updated</dd></div>
+            }
+            @if (Stats.Tags.Count > 0)
+            {
+                <div><dt>タグ</dt><dd>@string.Join("、", Stats.Tags)</dd></div>
+            }
+        </dl>
+        @if (Stats.Description.Length > 0)
+        {
+            <FoldedText Text="@Stats.Description" Id="world" />
+        }
+        <p class="album-note">@(Date(StatsFetchedAt) is { } at ? $"{at}時点の" : "")VRChat の情報です。</p>
+    }
+    <p class="album-lead album-lead--after-info">
+        このワールドで撮った写真です（@Total 枚）。
+        <a class="album-external" href="@VrchatLinks.World(Id)" target="_blank" rel="noopener noreferrer nofollow">VRChat でワールドを見る</a>
+    </p>
+    @if (Photos.Count == 0)
+    {
+        <p class="album-empty">写真がありません。</p>
+    }
+    else
+    {
+        <ul class="album-grid album-grid--photos">
+            @for (var i = 0; i < Photos.Count; i++)
+            {
+                var photo = Photos[i];
+                <li class="album-card album-card--photo">
+                    <a class="album-card-link album-card-link--photo" href="@SiteRules.PostHref(photo.Slug)">
+                        <div class="album-card-media">
+                            <PhotoImg Photo="photo.ToPhotoInfo()" BaseUrl="@BaseUrl" Alt="@($"{Name} で撮った写真（{(Page - 1) * PerPage + i + 1}）")" Eager="@(i == 0)" />
+                        </div>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+    <Pager Page="Page" PageCount="PageCount" HrefFor="@(n => SiteRules.WorldHref(Id, n))" />
+</div>
+
+@code {
+    /// <summary>wrld_ + UUID。</summary>
+    [Parameter, EditorRequired] public string Id { get; set; } = "";
+
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+
+    /// <summary>R2 に置いたワールドの画像。無ければ画像を出さない。</summary>
+    [Parameter] public WorldImage? Image { get; set; }
+
+    /// <summary>VRChat から取ったワールドの情報。無ければ出さない。</summary>
+    [Parameter] public WorldStats? Stats { get; set; }
+
+    /// <summary>Stats を取得した日時（ISO 8601）。</summary>
+    [Parameter] public string? StatsFetchedAt { get; set; }
+
+    private static readonly System.Globalization.CultureInfo Invariant = System.Globalization.CultureInfo.InvariantCulture;
+
+    /// <summary>ISO 8601 → 「2026年10月26日」（JST）。読めなければ null。</summary>
+    private static string? Date(string? iso) =>
+        DateTimeOffset.TryParse(iso, Invariant, System.Globalization.DateTimeStyles.None, out var value) ? SiteRules.FormatDate(value) : null;
+
+    /// <summary>このページの写真（新しい記事の順）。</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<PhotoRef> Photos { get; set; } = Array.Empty<PhotoRef>();
+
+    /// <summary>ワールド全体の写真の枚数。</summary>
+    [Parameter] public int Total { get; set; }
+
+    [Parameter, EditorRequired] public string BaseUrl { get; set; } = "";
+
+    [Parameter] public int Page { get; set; } = 1;
+
+    [Parameter] public int PageCount { get; set; } = 1;
+
+    /// <summary>1 ページの写真の数（alt の通し番号に使う）。</summary>
+    [Parameter] public int PerPage { get; set; } = 12;
+}

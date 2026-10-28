@@ -1,0 +1,129 @@
+<Application x:Class="FaraVrcAlbum.Desktop.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:FaraVrcAlbum.Desktop.ViewModels;assembly=FaraVrcAlbum.Desktop.Core"
+             xmlns:views="clr-namespace:FaraVrcAlbum.Desktop.Views"
+             xmlns:conv="clr-namespace:FaraVrcAlbum.Desktop.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+  <Application.Resources>
+   <ResourceDictionary>
+    <!-- fara-bot-moderator と同じ MaterialDesign（ライト・紫系。読み込む順も同じ） -->
+    <ResourceDictionary.MergedDictionaries>
+      <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.light.xaml"/>
+      <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesign2.defaults.xaml"/>
+      <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/materialdesigncolor.purple.xaml"/>
+      <ResourceDictionary Source="pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/materialdesigncolor.deeppurple.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- 色は固定の明るい配色（MaterialDesign のライト）。ダーク・ライトへの追従は未対応（docs/album-desktop.md の既知の制限） -->
+    <SolidColorBrush x:Key="Accent" Color="#673AB7"/>  <!-- deep purple 500（下の主色と同じ） -->
+    <SolidColorBrush x:Key="DangerBrush" Color="#B42318"/>
+    <SolidColorBrush x:Key="Muted" Color="#6B6B6B"/>
+    <SolidColorBrush x:Key="PanelBrush" Color="#F3EEF8"/>
+
+    <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+    <conv:InvertBoolConverter x:Key="InvertBool"/>
+    <conv:ThumbnailConverter x:Key="Thumbnail"/>
+    <conv:PreviewImageConverter x:Key="PreviewImage"/>
+    <conv:AlignConverter x:Key="AlignToTextAlignment"/>
+
+    <Style TargetType="TextBlock" x:Key="Heading">
+      <Setter Property="FontSize" Value="18"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+
+    <Style TargetType="TextBlock" x:Key="Note">
+      <Setter Property="Foreground" Value="{StaticResource Muted}"/>
+      <Setter Property="TextWrapping" Value="Wrap"/>
+      <Setter Property="Margin" Value="0,4,0,4"/>
+    </Style>
+
+    <Style TargetType="TextBlock" x:Key="Label">
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+    </Style>
+
+    <!-- ふつうのボタンは枠線つき、主な操作（Primary）は塗りつぶし、危険な操作は赤の塗りつぶし -->
+    <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignOutlinedButton}">
+      <Setter Property="Padding" Value="14,6"/>
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="MinWidth" Value="96"/>
+      <Setter Property="MinHeight" Value="32"/>
+    </Style>
+
+    <Style TargetType="Button" x:Key="Primary" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+      <Setter Property="Padding" Value="14,6"/>
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="MinWidth" Value="96"/>
+      <Setter Property="MinHeight" Value="32"/>
+    </Style>
+
+    <Style TargetType="Button" x:Key="DangerButton" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+      <Setter Property="Padding" Value="14,6"/>
+      <Setter Property="Margin" Value="0,0,8,8"/>
+      <Setter Property="MinWidth" Value="96"/>
+      <Setter Property="MinHeight" Value="32"/>
+      <Setter Property="Background" Value="{StaticResource DangerBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}"/>
+      <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+      <Setter Property="Padding" Value="6,4"/>
+      <Setter Property="Margin" Value="0,0,0,8"/>
+      <Setter Property="MinHeight" Value="28"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <Style TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignComboBox}">
+      <Setter Property="Padding" Value="6,4"/>
+      <Setter Property="Margin" Value="0,0,0,8"/>
+      <Setter Property="MinHeight" Value="28"/>
+    </Style>
+
+    <Style TargetType="DataGrid" BasedOn="{StaticResource MaterialDesignDataGrid}">
+      <Setter Property="AutoGenerateColumns" Value="False"/>
+      <Setter Property="IsReadOnly" Value="True"/>
+      <Setter Property="CanUserAddRows" Value="False"/>
+      <Setter Property="SelectionMode" Value="Extended"/>
+      <!-- 表は罫線で区切る（縦横とも）。見出しを押すと並び替え -->
+      <Setter Property="GridLinesVisibility" Value="All"/>
+      <Setter Property="HorizontalGridLinesBrush" Value="#E2DAEC"/>
+      <Setter Property="VerticalGridLinesBrush" Value="#E2DAEC"/>
+      <Setter Property="BorderBrush" Value="#CDBEE0"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="HeadersVisibility" Value="Column"/>
+      <Setter Property="CanUserSortColumns" Value="True"/>
+      <Setter Property="CanUserResizeColumns" Value="True"/>
+      <Setter Property="CanUserReorderColumns" Value="False"/>
+      <Setter Property="AlternatingRowBackground" Value="#FAF7FD"/>
+      <Setter Property="materialDesign:DataGridAssist.CellPadding" Value="8,6"/>
+      <Setter Property="materialDesign:DataGridAssist.ColumnHeaderPadding" Value="8,8"/>
+    </Style>
+
+    <!-- 画面の本体（ViewModel → View の対応） -->
+    <DataTemplate DataType="{x:Type vm:IngestViewModel}">
+      <views:IngestView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:PostEditorViewModel}">
+      <views:PostEditorView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:AvatarOutfitViewModel}">
+      <views:AvatarOutfitView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:ManageViewModel}">
+      <views:ManageView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:PublishViewModel}">
+      <views:PublishView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:SyncViewModel}">
+      <views:SyncView/>
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+      <views:SettingsView/>
+    </DataTemplate>
+   </ResourceDictionary>
+  </Application.Resources>
+</Application>

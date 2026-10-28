@@ -1,0 +1,83 @@
+@inherits LayoutComponentBase
+@inject MaintenanceInfo Maintenance
+@inject AlbumStore Store
+@inject NavigationManager Nav
+
+@* 共通のレイアウト（fara-site-kit の SiteLayout）: ヘッダー・サイドバー（PC は Mini、スマホは一時的なメニュー）・本文・フッター・お知らせの帯。
+   ヘッダーの名前（ブランド）は、kit 既定の文字（サイト名『Fara Photo Album』。appsettings.json の SiteName。<title>・og:site_name・RSS・フッター・プライバシーポリシーと同じ）。h1 にはしない（h1 は各ページの題）。
+   画像（文字『Fara』入り）は、各ページの本文の最初に、本文の幅いっぱいに出す（SiteBanner。静的 HTML にも同じものを入れる。app.css の .album-banner・docs/header-image.md）。
+   サイドバーには、ナビの下に公開月別のアーカイブ（年ごとの折りたたみ。archive.json）。 *@
+<SiteLayout Body="@BodyWithBanner" Maintenance="Maintenance" MobilePageScroll="true">
+    <DrawerContent>
+        <SiteNavMenu Groups="MainGroups" />
+        @if (Store.Archive.Count > 0)
+        {
+            @* 公開月別のアーカイブ（新しい月が上。最新の年は開く）。PC のサイドバーを細くしている間は出さない（app.css） *@
+            @* 公開月別のアーカイブ。MudNavGroup は入れ子の <nav>（ラベルなし）を出し、axe の landmark-unique に違反するので、ネイティブの <details> で作る（<nav> は 1 つ・ラベル付き） *@
+            <nav class="album-archive" aria-label="アーカイブ（公開月別）">
+                <div class="fsk-nav-section">アーカイブ</div>
+                @for (var y = 0; y < Store.Archive.Count; y++)
+                {
+                    var year = Store.Archive[y];
+                    <details class="album-archive-year" open="@(y == 0 || year.Months.Any(m => IsCurrent(year.Year, m.Month)))">
+                        <summary class="album-archive-summary">@($"{year.Year}年（{year.Count}）")</summary>
+                        <ul class="album-archive-months">
+                            @foreach (var month in year.Months)
+                            {
+                                var current = IsCurrent(year.Year, month.Month);
+                                <li><a class="album-archive-link@(current ? " active" : "")" href="@SiteRules.ArchiveHref(year.Year, month.Month)" aria-current="@(current ? "page" : null)">@($"{month.Month}月（{month.Count}）")</a></li>
+                            }
+                        </ul>
+                    </details>
+                }
+            </nav>
+        }
+        @* サポート（作者へ報告・プライバシーポリシー）。アーカイブの下。ナビの <nav> が 2 つになるので、名前（aria-label）で区別する *@
+        <MudNavMenu Class="fsk-nav" aria-label="サポート">
+            <div class="fsk-nav-section">サポート</div>
+            @foreach (var item in SupportItems)
+            {
+                <MudNavLink Href="@item.Href" Match="NavLinkMatch.Prefix" Icon="@item.Icon">@item.Label</MudNavLink>
+            }
+        </MudNavMenu>
+        @* ライト／ダークの切り替え（スマホ。PC はヘッダーのスイッチ。.album-drawer-theme は app.css が PC では隠す） *@
+        <div class="album-drawer-theme">
+            <ThemeSwitch AsButton="true" />
+        </div>
+    </DrawerContent>
+    <HeaderEnd>
+        <ThemeSwitch />
+    </HeaderEnd>
+</SiteLayout>
+
+@code {
+    /// <summary>本文の最初に画像を足したもの。</summary>
+    private RenderFragment BodyWithBanner => @<text><SiteBanner />@Body</text>;
+
+    /// <summary>いま開いているページが、この月のアーカイブ（/archive/yyyy/MM とそのページ送り）か。</summary>
+    private bool IsCurrent(int year, int month)
+    {
+        var path = Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0];
+        var href = SiteRules.ArchiveHref(year, month);
+        return path == href || path.StartsWith(href + "/", StringComparison.Ordinal);
+    }
+
+    /// <summary>メインのメニュー（見出しなし）。ホーム・ワールド・服・タグ。</summary>
+    private static readonly IReadOnlyList<SiteNavGroup> MainGroups = new[]
+    {
+        new SiteNavGroup(null, new[]
+        {
+            new SiteNavItem("", "ホーム", Icons.Material.Filled.Home),
+            new SiteNavItem("worlds", "ワールド", Icons.Material.Filled.Public),
+            new SiteNavItem("outfits", "服", Icons.Material.Filled.Checkroom),
+            new SiteNavItem("tags", "タグ", Icons.Material.Filled.Sell),
+        }),
+    };
+
+    /// <summary>サポートのメニュー。アーカイブの下に出す。</summary>
+    private static readonly IReadOnlyList<SiteNavItem> SupportItems = new[]
+    {
+        new SiteNavItem("report", "作者へ報告", Icons.Material.Filled.MailOutline),
+        new SiteNavItem("privacy", "プライバシーポリシー", Icons.Material.Filled.PrivacyTip),
+    };
+}

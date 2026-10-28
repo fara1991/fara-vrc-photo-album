@@ -1,0 +1,48 @@
+@inject AlbumStore Store
+
+@* タグ別の記事の一覧。タグの表示名は data/tags.json（読み込み前は slug）。タグが無い・範囲外のページは 404 の画面。 *@
+@if (!loaded)
+{
+    @* 読み込み中は、画面の高さの空きだけを置く（静的 HTML の本文が消えてフッターが上に跳ねたあと、本文で下へ動く = スマホの CLS を防ぐ） *@
+    <div class="album-pending" aria-hidden="true"></div>
+}
+else if (tag is null || Page < 1 || Page > pageCount)
+{
+    <PageTitle>見つかりません | @Store.Settings.SiteName</PageTitle>
+    <NotFoundView HomeHref="./" NoIndex="false" />
+}
+else
+{
+    <PageTitle>@Heading@(Page > 1 ? $"（{Page} ページ目）" : "") | @Store.Settings.SiteName</PageTitle>
+    <ListPageView Heading="@Heading"
+                  Lead="@(string.IsNullOrWhiteSpace(tag.Description) ? $"「{tag.Name}」のタグが付いた記事の一覧です（{tag.PostCount} 件）。" : tag.Description)"
+                  Posts="@SiteRules.Slice(posts, Page, Store.Settings.PostsPerPage)" BaseUrl="@Store.Settings.ImageBaseUrl" TagNames="Store.TagNames"
+                  Page="Page" PageCount="pageCount" HrefFor="@(n => SiteRules.TagHref(Slug, n))" />
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    [Parameter] public int Page { get; set; } = 1;
+
+    private TagSummary? tag;
+    private IReadOnlyList<PostSummary> posts = Array.Empty<PostSummary>();
+    private int pageCount = 1;
+    private bool loaded;
+
+    private string Heading => $"タグ: {tag?.Name}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loaded = false;
+        tag = null;
+        if (SiteRules.IsValidSlug(Slug))
+        {
+            var tags = await Store.GetTagsAsync();
+            tag = tags?.FirstOrDefault(t => t.Slug == Slug);
+        }
+        posts = tag is null ? Array.Empty<PostSummary>() : Store.PostsOfTag(Slug);
+        pageCount = SiteRules.PageCount(posts.Count, Store.Settings.PostsPerPage);
+        loaded = true;
+    }
+}

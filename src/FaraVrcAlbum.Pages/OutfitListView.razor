@@ -1,0 +1,37 @@
+@* 服の一覧（/outfits）。写真で着ている服を、写真の多い順に。
+   カードの画像は、BOOTH の商品の画像（アプリが BOOTH Library Manager から取り込んだもの。https）。無い服は、画像を出さない（自分の撮った写真は出さない）。 *@
+<div class="album-list fsk-page-column fsk-page-column--wide">
+    <h1 class="album-heading">服</h1>
+    <p class="album-lead">写真で着ている服の一覧です。</p>
+    @if (Outfits.Count == 0)
+    {
+        <p class="album-empty">まだ服がありません。</p>
+    }
+    else
+    {
+        <ul class="album-grid">
+            @for (var i = 0; i < Outfits.Count; i++)
+            {
+                var outfit = Outfits[i];
+                <li class="album-card">
+                    @if (!string.IsNullOrWhiteSpace(outfit.Thumbnail))
+                    {
+                        <div class="album-card-media album-card-media--outfit">
+                            <img src="@outfit.Thumbnail" alt="" width="300" height="300" loading="@(i == 0 ? "eager" : "lazy")" decoding="async" referrerpolicy="no-referrer" />
+                        </div>
+                    }
+                    <div class="album-card-body">
+                        <h2 class="album-card-title"><a class="album-card-link" href="@SiteRules.OutfitHref(outfit.Id)">@outfit.Name</a></h2>
+                        <p class="album-card-meta">@(string.IsNullOrWhiteSpace(outfit.Shop) ? "" : outfit.Shop + "・")@outfit.PhotoCount 枚</p>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<OutfitSummary> Outfits { get; set; } = Array.Empty<OutfitSummary>();
+
+    [Parameter] public string BaseUrl { get; set; } = "";
+}

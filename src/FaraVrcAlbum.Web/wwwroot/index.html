@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- SEO-HEAD:START -->
+    <title>Fara Photo Album</title>
+    <!-- SEO-HEAD:END -->
+    <base href="/" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1" />
+    <link rel="alternate" type="application/rss+xml" title="Fara Photo Album" href="feed.xml" />
+    <!--
+        この index.html は、dotnet publish の出力としてテンプレートになる。Build（src/FaraVrcAlbum.Build）が、
+        SEO-HEAD / SEO-BODY の区切りの間に、ページごとの head と本文を差し込んで、ページごとの HTML を書き出す。
+        CSP（_headers）でインラインの script は止まるので、script は外部ファイルだけにする（インラインの style は、読み込み表示の CSS だけ）。
+        本サイトの全ページは WebAssembly を使うので、avatar の WASM-ONLY / STATIC-ONLY の区切りは使わない。
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
+    <link href="_content/FaraSiteKit.Razor/css/fara-site-kit.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <!-- テーマは描画の前に反映する（data-storage-key・data-sidebar-key は SiteInfo.StorageKey・SidebarKey と同じ値） -->
+    <script src="_content/FaraSiteKit.Razor/js/theme-init.js" data-storage-key="fara-vrc-album.settings" data-sidebar-key="fara-vrc-album.sidebar-hidden"></script>
+    <!-- 保存されたテーマが無い・読めないときの既定をダーク（写真向き）にする。theme-init.js は light にするので、直後に直す -->
+    <script src="js/theme-default.js"></script>
+    <!-- 起動までの読み込み表示の CSS（起動の前から当てる。60 秒の保険は、kit の boot-indicator.js の RELEASE_MS と同じ秒数） -->
+    <style>
+        html, body { background: #f7f4fd; }
+        html[data-bs-theme="dark"], html[data-bs-theme="dark"] body { background: #0c0616; }
+        #boot-indicator {
+            position: fixed; inset: 0; z-index: 2147483000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem;
+            box-sizing: border-box; padding: 1.5rem;
+            background: #f7f4fd; color: #3b2a5c;
+            font-family: "Zen Kaku Gothic New", "Yu Gothic", system-ui, sans-serif;
+            animation: boot-indicator-release 0s linear 60s forwards;
+        }
+        @keyframes boot-indicator-release { to { visibility: hidden; } }
+        html[data-bs-theme="dark"] #boot-indicator { background: #0c0616; color: #e9e3f5; }
+        .boot-indicator-spinner {
+            width: 3rem; height: 3rem; box-sizing: border-box;
+            border: 0.3rem solid #7c3aed; border-right-color: transparent; border-radius: 50%;
+            animation: boot-indicator-spin 0.75s linear infinite;
+        }
+        html[data-bs-theme="dark"] .boot-indicator-spinner { border-color: #a855f7; border-right-color: transparent; }
+        .boot-indicator-label { font-size: 0.95rem; font-weight: 700; line-height: 1.6; text-align: center; max-width: 24rem; }
+        .boot-indicator-label:empty::before { content: "読み込み中…"; }
+        .boot-indicator-label a { color: #7c3aed; font-weight: 700; text-decoration: underline; pointer-events: auto; }
+        html[data-bs-theme="dark"] .boot-indicator-label a { color: #a855f7; }
+        #boot-indicator[data-state="slow"] .boot-indicator-spinner { animation: none; }
+        @keyframes boot-indicator-spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) {
+            .boot-indicator-spinner { animation: none; }
+        }
+    </style>
+    <noscript><style>#boot-indicator { display: none; } main.entry-static { padding: 1rem !important; }</style></noscript>
+</head>
+<body>
+    <!-- 起動までの読み込み表示。#app の外に置く（Blazor が #app の中身を置き換えても残るので、boot-indicator.js が起動後に外す）。
+         静的な本文（class="entry-static"）は、このオーバーレイの下に DOM として残す（検索エンジン・JavaScript が無い環境のため） -->
+    <div id="boot-indicator" class="boot-indicator">
+        <div class="boot-indicator-spinner" aria-hidden="true"></div>
+        <span class="boot-indicator-label" role="status" aria-live="polite" aria-label="読み込み中"></span>
+    </div>
+    <div id="app">
+        <!-- SEO-BODY:START -->
+        <!-- SEO-BODY:END -->
+    </div>
+
+    <div id="blazor-error-ui">
+        エラーが発生しました。ページを再読み込みしてください。
+        <a href="" class="reload">再読み込み</a>
+        <a class="dismiss">🗙</a>
+    </div>
+    <script src="js/startup.js"></script>
+    <script src="js/lightbox.js"></script>
+    <script src="_content/FaraSiteKit.Razor/js/boot-indicator.js"></script>
+    <script src="_content/FaraSiteKit.Razor/js/fara-site-kit.js"></script>
+    <script src="_content/FaraSiteKit.Razor/js/scroll-progress.js"></script>
+    <script src="_content/FaraSiteKit.Razor/js/report.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+</body>
+</html>

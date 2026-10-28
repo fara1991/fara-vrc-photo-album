@@ -1,0 +1,37 @@
+@inject AlbumStore Store
+
+@* ワールド（wrld_ を除いた UUID）で撮った写真の一覧。ワールドが無い・UUID の形式が不正・範囲外のページは 404 の画面。 *@
+@if (!loaded)
+{
+    @* 読み込み中は、画面の高さの空きだけを置く（静的 HTML の本文が消えてフッターが上に跳ねたあと、本文で下へ動く = スマホの CLS を防ぐ） *@
+    <div class="album-pending" aria-hidden="true"></div>
+}
+else if (world is null || Page < 1 || Page > pageCount)
+{
+    <PageTitle>見つかりません | @Store.Settings.SiteName</PageTitle>
+    <NotFoundView HomeHref="./" NoIndex="false" />
+}
+else
+{
+    <PageTitle>@world.Name の写真@(Page > 1 ? $"（{Page} ページ目）" : "") | @Store.Settings.SiteName</PageTitle>
+    <WorldPageView Id="@world.Id" Name="@world.Name" Image="@world.Image" Stats="@world.Stats" StatsFetchedAt="@world.StatsFetchedAt" Photos="@SiteRules.Slice(world.Photos, Page, Store.Settings.PostsPerPage)"
+                   Total="world.Photos.Count" BaseUrl="@Store.Settings.ImageBaseUrl" Page="Page" PageCount="pageCount" PerPage="Store.Settings.PostsPerPage" />
+}
+
+@code {
+    [Parameter] public string Uuid { get; set; } = "";
+
+    [Parameter] public int Page { get; set; } = 1;
+
+    private WorldPage? world;
+    private int pageCount = 1;
+    private bool loaded;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        loaded = false;
+        world = await Store.GetWorldAsync(Uuid);
+        pageCount = SiteRules.PageCount(world?.Photos.Count ?? 0, Store.Settings.PostsPerPage);
+        loaded = true;
+    }
+}

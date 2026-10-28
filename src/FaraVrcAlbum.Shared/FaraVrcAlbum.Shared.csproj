@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ブラウザ（Web）とビルド（Build・Content）で共用するモデル・JSON の読み書き・URL の規則。
+    Markdig・画像のライブラリは入れない（WebAssembly のサイズを増やさないため。docs/ の設計）。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FaraVrcAlbum</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
+  </PropertyGroup>
+
+</Project>

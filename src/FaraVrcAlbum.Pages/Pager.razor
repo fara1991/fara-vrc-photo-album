@@ -1,0 +1,24 @@
+@* ページ送り（前へ・次へ）。1 ページしかないときは何も出さない。href は相対パス（HrefFor が決める。ホームは "./"、2 ページ目以降は "…/page/N"）。 *@
+@if (PageCount > 1)
+{
+    <nav class="album-pager" aria-label="ページ送り">
+        @if (Page > 1)
+        {
+            <a class="album-pager-link" rel="prev" href="@HrefFor(Page - 1)">新しい方へ</a>
+        }
+        <span class="album-pager-status">@Page / @PageCount</span>
+        @if (Page < PageCount)
+        {
+            <a class="album-pager-link" rel="next" href="@HrefFor(Page + 1)">古い方へ</a>
+        }
+    </nav>
+}
+
+@code {
+    [Parameter] public int Page { get; set; } = 1;
+
+    [Parameter] public int PageCount { get; set; } = 1;
+
+    /// <summary>n ページ目の相対リンク（例: SiteRules.HomeHref、n => SiteRules.TagHref(slug, n)）。</summary>
+    [Parameter, EditorRequired] public Func<int, string> HrefFor { get; set; } = SiteRules.HomeHref;
+}

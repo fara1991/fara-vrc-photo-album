@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- CLI `album`（手元だけで動く。画像の変換・R2 へのアップロード・記事 JSON の下書き・削除）。 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FaraVrcAlbum.Tools</RootNamespace>
+    <AssemblyName>album</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FaraVrcAlbum.Shared\FaraVrcAlbum.Shared.csproj" />
+    <ProjectReference Include="..\FaraVrcAlbum.Content\FaraVrcAlbum.Content.csproj" />
+    <ProjectReference Include="..\FaraVrcAlbum.Images\FaraVrcAlbum.Images.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FaraVrcAlbum.Tools.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="4.0.104.6" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+@page "/outfits/{Id}/page/{Page:int}"
+
+<OutfitContent Id="@Id" Page="Page" />
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+
+    [Parameter] public int Page { get; set; }
+}

@@ -1,0 +1,59 @@
+<Window x:Class="FaraVrcAlbum.Desktop.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="使い方"
+        Width="820" Height="680" MinWidth="560" MinHeight="400"
+        WindowStartupLocation="CenterOwner"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+    <Window.Resources>
+        <Style TargetType="TextBlock" x:Key="H2">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Accent}"/>
+            <Setter Property="Margin" Value="0,14,0,4"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="P">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="21"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+    </Window.Resources>
+    <DockPanel>
+        <Border DockPanel.Dock="Bottom" Padding="12,8" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0">
+            <Button Content="閉じる" IsCancel="True" HorizontalAlignment="Right" Click="Close_Click" Margin="0"/>
+        </Border>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20,12">
+            <StackPanel MaxWidth="720" HorizontalAlignment="Left" Margin="28,0,12,0">
+                <TextBlock Text="このアプリの使い方" Style="{StaticResource Heading}"/>
+                <TextBlock Style="{StaticResource P}"
+                           Text="VRChat で撮った写真を、写真ブログに載せるためのアプリです。写真は、上のタブの左から順に進めて載せます。"/>
+
+                <TextBlock Text="はじめに（最初の 1 回だけ）" Style="{StaticResource H2}"/>
+                <TextBlock Style="{StaticResource P}" Text="1. メニューの「設定」を開き、Cloudflare R2 のアカウント ID・アクセスキー ID・シークレットアクセスキーと、R2 のバケット名を入れて保存します（バケット名が空のあいだは、写真の保存先に接続できません）。"/>
+                <TextBlock Style="{StaticResource P}" Text="2. VRChat 写真格納フォルダは、VRChat が写真を保存するいつもの場所（ピクチャの下の VRChat）です。設定では変えません。"/>
+
+                <TextBlock Text="写真を載せる流れ" Style="{StaticResource H2}"/>
+                <TextBlock Style="{StaticResource P}" Text="1.「取り込み」で月を選び、載せたい写真にチェックを付けて「アップロード」を押します。枚数を確かめるダイアログで「はい」を選ぶと、Cloudflare R2 にアップロードされます（写真はコピーも移動もせず、そのまま残ります。アップロード済みの写真には「✓ アップロード済み」と出ます）。"/>
+                <TextBlock Style="{StaticResource P}" Text="2.「記事」で日付を選びます。作成済みの日付はそのまま編集でき、未作成の日付は、その日にアップロードした写真が入った新しい記事（非公開）の編集になります。題（既定は日付）や文章・タグを書いて保存します。"/>
+                <TextBlock Style="{StaticResource P}" Text="3.「公開する」を押すと、公開する記事になります（サイトには、「公開」タブで公開（確認用・本番）したあとに出ます）。「非公開にする」「記事を削除する」もこの画面で行えます。表紙と SNS で共有したときの画像は、本文の最初の写真に自動で設定されます。"/>
+                <TextBlock Style="{StaticResource P}" Text="4. 変更を GitHub に送ると、サイトに反映されます。"/>
+
+                <TextBlock Text="各画面でできること" Style="{StaticResource H2}"/>
+                <TextBlock Style="{StaticResource P}"><Run FontWeight="SemiBold" Text="取り込み："/><Run Text="VRChat 写真格納フォルダの写真を月ごとに一覧にし、載せる写真を選んでアップロードします。写真を選ぶと右に大きく表示されます。撮影日時・ワールド・状態（未登録・アップロード済み・削除済み）が分かります。"/></TextBlock>
+                <TextBlock Style="{StaticResource P}"><Run FontWeight="SemiBold" Text="記事："/><Run Text="日付ごとに記事を作って編集します。本文の上のボタンで、太字・斜体・見出し・リンクなどを付けられます。右のプレビューで、サイトでの見た目の目安を確かめられます。本文の写真の下には、日付・服・ワールドの行が自動で入ります（分からない行は出ません）。写真のアバターは、fara-vrc-photo-server が撮影時に記録したものが、自動で入ります。"/></TextBlock>
+                <TextBlock Style="{StaticResource P}"><Run FontWeight="SemiBold" Text="アバター・服："/><Run Text="まず左で服を登録し、次に右でアバターを登録して、着ている服を 1 つ選びます。服はお店の名前と商品ページの URL つきで、BOOTH Library Manager から読み込めます。アバターは、Unity のフォルダの prefab 名から読み込めます。チェックして、まとめて削除もできます。アバター名はサイトには表示されません。"/></TextBlock>
+                <TextBlock Style="{StaticResource P}"><Run FontWeight="SemiBold" Text="管理："/><Run Text="サイトの写真が正しく表示できるかの確認、アップロード済みの写真が記事で使われているかの点検、写真の削除ができます。削除は元に戻せません。"/></TextBlock>
+                <TextBlock Style="{StaticResource P}"><Run FontWeight="SemiBold" Text="設定（メニュー）："/><Run Text="Cloudflare R2 への接続の情報と、PC のフォルダを設定します。秘密の値は「●」で隠れていて、「押している間 表示」を押している間だけ見えます。"/></TextBlock>
+
+                <TextBlock Text="大事なこと" Style="{StaticResource H2}"/>
+                <TextBlock Style="{StaticResource P}" Text="・アップロード・記事の作成と保存・削除などの変更は、必ず確認のダイアログが出ます。「いいえ」を選ぶと何もしません。"/>
+                <TextBlock Style="{StaticResource P}" Text="・写っている方の名前は、サイトに載せません。写っている方から削除を頼まれたら、「管理」の「写真の削除」で削除します。"/>
+                <TextBlock Style="{StaticResource P}" Text="・VRChat 写真格納フォルダの写真は、このアプリでは変更しません。"/>
+
+                <TextBlock Text="キーボード" Style="{StaticResource H2}"/>
+                <TextBlock Style="{StaticResource P}" Text="Alt+1〜4: 画面の切り替え ／ Ctrl+,: 設定 ／ F1: この使い方 ／ Alt: メニュー ／ 取り込みの一覧で Space: チェックの切り替え ／ 記事の本文で Ctrl+B: 太字・Ctrl+I: 斜体"/>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

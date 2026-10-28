@@ -1,0 +1,9 @@
+@* 本文を持たないページ（/report）の静的 HTML。Blazor が起動すると置き換わる。写真は含めない。 *@
+<div class="album-loading">
+    <h1 class="album-heading">@Title</h1>
+    <p>読み込み中です。表示されないときは、JavaScript を有効にして再読み込みしてください。</p>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+}

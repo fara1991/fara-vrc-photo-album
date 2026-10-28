@@ -1,0 +1,35 @@
+@* プライバシーポリシー（雛形。公開前に原文を見直す）。写っている方からの削除依頼の方法を書く（誰でも・Twitter か報告ページ・対応の目安 7 日以内・Discord は連絡先にしない）。 *@
+<div class="fsk-page-column fsk-page-column--wide album-privacy">
+    <h1 class="album-heading">プライバシーポリシー</h1>
+    <p class="album-note">このページは雛形です。公開前に内容を見直します。</p>
+
+    <h2>取得する情報</h2>
+    <ul>
+        <li>「作者へ報告」フォームに入力された内容（Cloudflare の Worker を通じて作者に届きます）</li>
+        <li>アクセス解析（Cloudflare Web Analytics。Cookie を使わない集計です）</li>
+        <li>この端末の localStorage に、表示テーマの設定だけを保存します</li>
+    </ul>
+
+    <h2>写真について</h2>
+    <ul>
+        <li>写真は VRChat で撮ったものです。ワールドの名前・リンクを、ワールドの作者へのクレジットとして表示します。</li>
+    </ul>
+
+    <h2>写っている方からの削除・修正の依頼</h2>
+    <ul>
+        <li>写っている方は、<strong>どなたでも</strong>、写真の削除や修正を依頼できます。</li>
+        <li>連絡先は <a href="@SiteRules.AuthorXUrl" target="_blank" rel="noopener noreferrer">Twitter（@SiteRules.AuthorXHandle）</a>か、<a href="report">作者へ報告（報告ページ）</a>です。</li>
+        <li>対応の目安は、受付から <strong>7 日以内</strong>です。</li>
+        <li><strong>Discord では受け付けていません</strong>（Discord は連絡先にしません）。上の Twitter か報告ページからお願いします。</li>
+        <li>対応では、該当の写真を取り下げ、画像の配信元のキャッシュも削除します。検索エンジンに残った表示は、時間がかかることがあります。</li>
+    </ul>
+
+    <h2>写真の配信</h2>
+    <p>写真は Cloudflare R2（@ImageHost）から配信します。</p>
+    <p>ワールドの画像と情報（作者・訪問数など）は、VRChat が公開している情報を作者が取得して載せています。画像も写真と同じ配信元から配信し、ページを見るときに VRChat へは接続しません。</p>
+</div>
+
+@code {
+    /// <summary>写真の配信元のホスト名。</summary>
+    [Parameter] public string ImageHost { get; set; } = "vrc-photos.fara-labs.com";
+}

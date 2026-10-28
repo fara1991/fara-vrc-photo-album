@@ -1,0 +1,24 @@
+@* タグの一覧（/tags）。記事の多い順。 *@
+<div class="album-list fsk-page-column fsk-page-column--wide">
+    <h1 class="album-heading">タグ</h1>
+    @if (Tags.Count == 0)
+    {
+        <p class="album-empty">まだタグがありません。</p>
+    }
+    else
+    {
+        <ul class="album-taglist">
+            @foreach (var tag in Tags)
+            {
+                <li>
+                    <a href="@SiteRules.TagHref(tag.Slug)">@tag.Name</a>
+                    <span class="album-card-meta"> (@tag.PostCount)</span>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<TagSummary> Tags { get; set; } = Array.Empty<TagSummary>();
+}

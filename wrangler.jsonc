@@ -1,0 +1,68 @@
+{
+  // Cloudflare Workers（静的アセット + 小さな Worker）で公開する設定。
+  // 公開するのは Blazor WebAssembly の静的サイト（dist。node tools/site.mjs が、環境ごとの出力を置く。公開は手元からだけ）。
+  //   本番:   wrangler deploy --env=""        → https://vrc-album.fara-labs.com/      （Deploy ワークフロー・master への push）
+  //   確認用: wrangler deploy --env develop   → https://vrc-album-dev.fara-labs.com/  （Deploy ワークフロー・develop への push。Cloudflare Access で守る）
+  // 写真は R2 の別ドメイン（https://vrc-photos.fara-labs.com）から配信する。Worker を通らない（docs/cloudflare-setup.md）。
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fara-vrc-album",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  // ダッシュボードで足した変数（MAINTENANCE_MODE・MAINTENANCE_MESSAGE など）を、公開（wrangler deploy）のたびに消さない
+  "keep_vars": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // /posts/foo → posts/foo.html、/posts/foo/ → /posts/foo へリダイレクト
+    "html_handling": "auto-trailing-slash",
+    // 存在しないパスは 404.html を 404 ステータスで返す
+    "not_found_handling": "404-page",
+    // 配列指定: ここに書いたパスだけ Worker を先に通し、「!」で始まるものは通さない（静的アセットを直接返す。Workers の呼び出しを数えない）。
+    // 通す = HTML のページ・/api/*（メンテナンスの 503、報告、/api/maintenance）・/data/*（人名を含む JSON もメンテナンス中は止める）。
+    // 通さない = 起動に要る静的な部品だけ（WebAssembly 一式・MudBlazor/kit の静的ファイル・CSS/JS/画像）。
+    // 「/*」+ 除外の形にするのは、拡張子の無い URL（/posts/foo）を確実に Worker に通すため（"/*.html" は /posts/foo に一致しない）。
+    // 検証の結果は docs/cloudflare-setup.md（tests/js/wrangler-config.test.mjs が設定の形を固定する）。
+    "run_worker_first": [
+      "/*",
+      "!/_framework/*",
+      "!/_content/*",
+      "!/css/*",
+      "!/js/*",
+      "!/images/*",
+      "!/favicon.svg"
+    ]
+  },
+  // workers.dev と preview の URL は使わない（Access / WAF / メンテナンス画面をすり抜けないように）
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "vrc-album.fara-labs.com", "custom_domain": true }
+  ],
+  "env": {
+    "develop": {
+      // Worker 名（ダッシュボードで変更した名前に合わせる）
+      "name": "fara-vrc-album-dev",
+      // keep_vars はトップレベルだけ有効（env の中に書くと wrangler が警告する。環境にも効く）
+      "assets": {
+        "directory": "./dist",
+        "binding": "ASSETS",
+        "html_handling": "auto-trailing-slash",
+        "not_found_handling": "404-page",
+        "run_worker_first": [
+          "/*",
+          "!/_framework/*",
+          "!/_content/*",
+          "!/css/*",
+          "!/js/*",
+          "!/images/*",
+          "!/favicon.svg"
+        ]
+      },
+      "workers_dev": false,
+      "preview_urls": false,
+      "routes": [
+        { "pattern": "vrc-album-dev.fara-labs.com", "custom_domain": true }
+      ]
+    }
+  }
+}

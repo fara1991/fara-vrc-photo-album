@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 合成画像（実写真は使わない）の試験用ヘルパーは Images.Tests と共用 -->
+    <Compile Include="..\FaraVrcAlbum.Images.Tests\TestSupport.cs" Link="Shared\TestSupport.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FaraVrcAlbum.Shared\FaraVrcAlbum.Shared.csproj" />
+    <ProjectReference Include="..\..\src\FaraVrcAlbum.Content\FaraVrcAlbum.Content.csproj" />
+    <ProjectReference Include="..\..\src\FaraVrcAlbum.Images\FaraVrcAlbum.Images.csproj" />
+    <ProjectReference Include="..\..\src\FaraVrcAlbum.Tools\FaraVrcAlbum.Tools.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <!--
+    サイトの画面（Blazor WebAssembly + MudBlazor）。記事・データは Content を参照せず、Build が書いた data/*.json と静的 HTML を読む。
+    レイアウト・テーマ・フッター・報告フォームなどの共通部品は fara-site-kit（external/fara-site-kit。v0.3.5 に固定）。
+    ページの部品は Pages（Razor クラスライブラリ）。Build の HtmlRenderer（本文入りの静的 HTML）と共用する。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FaraVrcAlbum.Web</RootNamespace>
+    <!-- .br / .gz の事前圧縮ファイルは作らない。Cloudflare（静的アセット）は配信時に圧縮するので使われず、Build が書き換えた index.html などの古い .br / .gz が残って紛らわしいため -->
+    <CompressionEnabled>false</CompressionEnabled>
+    <!-- ICU を載せない。日付は自前で書式化する（SiteRules.FormatDate） -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.13" PrivateAssets="all" />
+    <!-- kit の FaraSiteKit.Razor と同じ版（ずれると MudBlazor が二重になる） -->
+    <PackageReference Include="MudBlazor" Version="9.11.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FaraVrcAlbum.Shared\FaraVrcAlbum.Shared.csproj" />
+    <ProjectReference Include="..\FaraVrcAlbum.Pages\FaraVrcAlbum.Pages.csproj" />
+    <ProjectReference Include="..\..\external\fara-site-kit\src\FaraSiteKit.Core\FaraSiteKit.Core.csproj" />
+    <ProjectReference Include="..\..\external\fara-site-kit\src\FaraSiteKit.Razor\FaraSiteKit.Razor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FaraVrcAlbum.Web.Tests" />
+  </ItemGroup>
+
+</Project>

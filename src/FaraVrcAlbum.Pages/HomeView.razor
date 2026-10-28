@@ -1,0 +1,39 @@
+@* 新着一覧のページ（/ と /page/N）の本文。トップは、視覚的に隠した h1（サイト名『Fara Photo Album』）+ サイトの説明（リード文。改行で行を分ける）。ヘッダーの名前と同じ文字なので、何のサイトかはこの説明で伝える。ヒーロー画像は置かない。 *@
+<div class="album-home fsk-page-column fsk-page-column--wide">
+    @if (Page <= 1)
+    {
+        <h1 class="visually-hidden">@SiteName</h1>
+        <p class="album-lead">@for (var i = 0; i < LeadLines.Length; i++)
+        {
+            if (i > 0) { <br /> }
+            @LeadLines[i]
+        }</p>
+    }
+    else
+    {
+        <h1 class="album-heading">新着の記事（@Page ページ目）</h1>
+    }
+    <PostListView Posts="Posts" BaseUrl="@BaseUrl" TagNames="TagNames" />
+    <Pager Page="Page" PageCount="PageCount" HrefFor="@SiteRules.HomeHref" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string SiteName { get; set; } = "";
+
+    /// <summary>このページの記事（新しい順）。</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<PostSummary> Posts { get; set; } = Array.Empty<PostSummary>();
+
+    [Parameter, EditorRequired] public string BaseUrl { get; set; } = "";
+
+    /// <summary>サイトの説明（トップページのリード文。改行は行を分ける）。</summary>
+    [Parameter] public string Lead { get; set; } = SiteRules.HomeLead;
+
+    private string[] LeadLines => Lead.Replace("\r\n", "\n").Split('\n');
+
+    /// <summary>タグの slug → 表示名。</summary>
+    [Parameter] public IReadOnlyDictionary<string, string>? TagNames { get; set; }
+
+    [Parameter] public int Page { get; set; } = 1;
+
+    [Parameter] public int PageCount { get; set; } = 1;
+}

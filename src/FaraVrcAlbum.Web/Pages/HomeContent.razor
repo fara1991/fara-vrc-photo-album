@@ -1,0 +1,23 @@
+@inject AlbumStore Store
+
+@* 新着一覧（/ と /page/N 共通）。範囲外のページ（/page/0・/page/99）は 404 の画面。 *@
+<PageTitle>@Title</PageTitle>
+
+@if (Page < 1 || Page > Store.PageCount)
+{
+    <NotFoundView HomeHref="./" NoIndex="false" />
+}
+else
+{
+    <HomeView SiteName="@Store.Settings.SiteName"
+              Posts="@SiteRules.Slice(Store.Posts, Page, Store.Settings.PostsPerPage)"
+              BaseUrl="@Store.Settings.ImageBaseUrl" TagNames="Store.TagNames"
+              Page="Page" PageCount="Store.PageCount" />
+}
+
+@code {
+    [Parameter] public int Page { get; set; } = 1;
+
+    // 静的 HTML の title（Build の PageCatalog）と同じ規則
+    private string Title => Page <= 1 ? Store.Settings.SiteName : $"新着の記事（{Page} ページ目） | {Store.Settings.SiteName}";
+}

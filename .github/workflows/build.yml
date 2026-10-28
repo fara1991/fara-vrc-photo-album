@@ -1,0 +1,85 @@
+name: Build and test
+
+# Fara Photo Album のビルドとテスト。Pull Request と、develop・master への push で動く。公開はしない（Cloudflare のシークレットも使わない）。
+# サイトの公開は GitHub Actions では行わない（手元のデスクトップアプリ／tools/site.mjs から行う）。
+# 本物の記事（content/）は Git に入れていない（リポジトリを公開するため）。ここでは、架空のサンプル（samples/content）でビルドと検査を通す。
+# 成果物（artifact）は保存しない。
+
+on:
+  # PR の間は pull_request の 1 回だけ動かす（作業ブランチへの push では動かさない）。develop・master に入ったときは push で動く
+  push:
+    branches: [develop, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      # external/fara-site-kit（共通部品。Web・Build・Worker が使う）を取得する
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Build.Tests が kit の Node ツール（build/build-pages.mjs）を実際に呼ぶ。wrangler の版は package.json で固定
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: dotnet build -c Release --nologo
+
+      - name: Test
+        run: dotnet test -c Release --no-build --nologo
+
+      # 報告の受け口・メンテナンスの判定は共通部品（external/fara-site-kit/worker）。Worker の入口（worker/index.js）・公開の関門・wrangler.jsonc の形・ブラウザ用 JS のテストと一緒に動かす
+      - name: Node tests (worker, kit worker, deploy gates, browser scripts)
+        run: npm test
+
+      - name: Publish web (WebAssembly)
+        run: dotnet publish src/FaraVrcAlbum.Web -c Release --nologo -o publish
+
+      # 本番用と確認用の両方の出力を作って確かめる（公開のワークフローは、どちらか一方だけを作る）
+      - name: Build static pages (production)
+        run: |
+          cp -r publish/wwwroot site-production
+          dotnet run --project src/FaraVrcAlbum.Build -c Release --no-launch-profile -- --template publish/wwwroot/index.html --out site-production --env production --content samples/content
+
+      - name: Build static pages (develop)
+        run: |
+          cp -r publish/wwwroot site-develop
+          dotnet run --project src/FaraVrcAlbum.Build -c Release --no-launch-profile -- --template publish/wwwroot/index.html --out site-develop --env develop --content samples/content
+
+      # 出力が、その環境のものか（本番: noindex なし・sitemap あり・canonical が vrc-album.fara-labs.com / 確認用: その逆）
+      - name: Verify the outputs (production, develop)
+        env:
+          ALBUM_ALLOW_SAMPLE: "1"   # サンプルの記事が入っていても通す（公開用のビルドでは通さない関門）
+        run: |
+          node .github/scripts/verify-site.mjs site-production production
+          node .github/scripts/verify-site.mjs site-develop develop
+
+      # wrangler の設定（本番・確認用）が通ること。dry-run は公開しない（Cloudflare の認証も使わない）。assets は ./dist
+      - name: Wrangler dry-run (production)
+        run: |
+          rm -rf dist && cp -r site-production dist
+          npx wrangler deploy --dry-run --env=
+
+      - name: Wrangler dry-run (develop)
+        run: |
+          rm -rf dist && cp -r site-develop dist
+          npx wrangler deploy --dry-run --env develop

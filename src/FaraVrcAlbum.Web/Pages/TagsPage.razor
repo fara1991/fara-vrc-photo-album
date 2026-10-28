@@ -1,0 +1,24 @@
+@page "/tags"
+@inject AlbumStore Store
+
+<PageTitle>タグ | @Store.Settings.SiteName</PageTitle>
+
+@if (tags is not null)
+{
+    <TagListView Tags="tags" />
+}
+else if (failed)
+{
+    <NotFoundView HomeHref="./" NoIndex="false" Title="読み込めませんでした" Lead="タグの一覧を読み込めませんでした。しばらくしてから、もう一度お試しください。" />
+}
+
+@code {
+    private List<TagSummary>? tags;
+    private bool failed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        tags = await Store.GetTagsAsync();
+        failed = tags is null;
+    }
+}

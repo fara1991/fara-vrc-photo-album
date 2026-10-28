@@ -45,7 +45,7 @@ internal static class DataWriter
             var outfitPage = new OutfitPage
             {
                 Id = outfitId, Name = master.Name, Shop = master.Shop, Url = master.Url,
-                Thumbnail = master.Thumbnail, Description = master.Description, Tags = master.Tags is { Count: > 0 } ? master.Tags : null,
+                Thumbnail = master.Thumbnail, Description = OutfitDescription.Summarize(master.Description), Tags = master.Tags is { Count: > 0 } ? master.Tags : null,
                 PublishedAt = master.PublishedAt, UpdatedAt = master.UpdatedAt, FetchedAt = master.FetchedAt,
                 Photos = model.OutfitPhotos(outfitId),
             };

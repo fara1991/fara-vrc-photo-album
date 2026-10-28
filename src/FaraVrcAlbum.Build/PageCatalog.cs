@@ -186,7 +186,7 @@ internal static class PageCatalog
                     ["Shop"] = master.Shop,
                     ["Url"] = master.Url,
                     ["Thumbnail"] = master.Thumbnail,
-                    ["Description"] = master.Description,
+                    ["Description"] = OutfitDescription.Summarize(master.Description),
                     ["Tags"] = master.Tags,
                     ["PublishedAt"] = master.PublishedAt,
                     ["UpdatedAt"] = master.UpdatedAt,

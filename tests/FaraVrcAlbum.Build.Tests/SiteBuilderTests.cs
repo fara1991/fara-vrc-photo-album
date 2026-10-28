@@ -396,7 +396,11 @@ public class SiteBuilderTests
         Assert.Contains("<dt>公開日</dt><dd>2025年11月20日</dd>", outfit);
         Assert.Contains("<dt>更新日</dt><dd>2025年12月1日</dd>", outfit);
         Assert.Contains("<dt>タグ</dt><dd>コート、冬服</dd>", outfit);
-        Assert.Contains("あたたかいコートです。", outfit);
+        Assert.DoesNotContain("あたたかいコートです。", outfit);                                      // 前文は出さない（対応アバターと利用規約だけ）
+        Assert.Contains("【対応アバター】", outfit);
+        Assert.Contains("https://example.booth.pm/items/9", outfit);
+        Assert.Contains("【利用規約】", outfit);
+        Assert.Contains("https://example.com/terms", outfit);
         Assert.Contains("2026年10月26日時点の BOOTH の情報です。", outfit);
         Assert.DoesNotContain("商品ページを見る</a>", outfit);
         Assert.Contains("class=\"album-lead album-lead--after-info\">この服を着て撮った写真です（1 枚）。", outfit);

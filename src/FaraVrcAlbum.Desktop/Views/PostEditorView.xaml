@@ -73,7 +73,6 @@
                     <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="題" materialDesign:HintAssist.IsFloating="True"
                              AutomationProperties.Name="記事の題"/>
                     <DockPanel>
-                        <CheckBox DockPanel.Dock="Right" Content="非公開（サイトに出さない）" IsChecked="{Binding IsDraft}" VerticalAlignment="Center" Margin="12,0,0,8"/>
                         <Button DockPanel.Dock="Right" Content="今にする" Command="{Binding PublishNowCommand}" MinWidth="0" Margin="8,0,0,8"/>
                         <TextBox Text="{Binding PublishedAt, UpdateSourceTrigger=PropertyChanged}"
                                  materialDesign:HintAssist.Hint="公開日時（日本時間。例: 2026-10-24 20:00）" materialDesign:HintAssist.IsFloating="True"

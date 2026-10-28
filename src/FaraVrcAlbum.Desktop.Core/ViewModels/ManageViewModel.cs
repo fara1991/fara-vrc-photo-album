@@ -297,20 +297,21 @@ public sealed class ManageViewModel : PageViewModel
     public async Task LoadRemovableAsync()
     {
         var session = Session;
-        var (rows, covers) = await Task.Run(() => (
+        var (rows, covers, used) = await Task.Run(() => (
             session.LoadProductionLedger().BySha.Values
                 .Where(e => e.State == LedgerStates.Uploaded)
                 .OrderBy(e => e.TakenAt, StringComparer.Ordinal).ThenBy(e => e.Key, StringComparer.Ordinal)
                 .Select(e => (e.Key, e.TakenAt, World: e.World?.Name ?? ""))
                 .ToList(),
-            PostService.CoverKeys(session.Editor)));
+            PostService.CoverKeys(session.Editor),
+            PostService.PhotoKeys(session.Editor)));
         Removable.Clear();
         foreach (var row in rows)
         {
-            // 表紙（と SNS 共有用の画像）になっている写真は、削除できない（先に記事の本文の最初の写真を別の写真にする）
+            // 記事（非公開のものも含む）で使われている写真は、削除できない（先に記事から外す。表紙なら、先に本文の最初の写真を別の写真にする）
             var reason = covers.Contains(row.Key)
                 ? "記事の表紙・SNS 共有用の画像に使われています（記事の本文の最初の写真を別の写真にしてから、削除してください）"
-                : null;
+                : used.Contains(row.Key) ? "記事で使われています（記事の写真から外してから、削除してください）" : null;
             Removable.Add(new RemovableItemViewModel(row.Key, row.TakenAt, row.World.Length > 0 ? row.World : "（ワールドなし）", reason));
         }
         Status = $"削除できる写真 {Removable.Count} 枚を読みました。";
@@ -346,7 +347,6 @@ public sealed class ManageViewModel : PageViewModel
             $"写真 {key} を削除すると:",
             $"・写真の保存先からファイル {plan.R2Keys.Count} 個を消します",
             "・写真の記録を「削除済み」にします（同じ写真は、もう取り込めなくなります）",
-            $"・記事 {plan.PostPaths.Count} 件から、この写真を外します",
             "・削除のあと、Cloudflare に残っている古い画像のコピー（キャッシュ）を消してください（消さないと、しばらく古い画像が表示されることがあります）",
         };
         lines.AddRange(PurgeSteps(plan.PurgeUrls));
@@ -363,13 +363,13 @@ public sealed class ManageViewModel : PageViewModel
         var plan = RemoveService.Plan(key, ledger, Session.Editor, Session.Repo.ImageBaseUrl);
         var confirmed = await Dialogs.ConfirmAsync(
             "写真を削除します",
-            $"写真 {key} を写真の保存先から消し、記事（{plan.PostPaths.Count} 件）から外します。\n" +
+            $"写真 {key} を写真の保存先から消します（記事では使われていません）。\n" +
             "元に戻せません。続けますか。",
             "削除する");
         if (!confirmed) return;
 
         using var handle = Session.OpenStore(Session.ProductionBucket);
-        await RemoveService.ApplyAsync(plan, Session.ProductionBucket, ledger, ledgerPath, handle.Store, Session.Editor, DateTimeOffset.UtcNow, ct);
+        await RemoveService.ApplyAsync(plan, Session.ProductionBucket, ledger, ledgerPath, handle.Store, DateTimeOffset.UtcNow, ct);
         RemovePlanText = "削除しました（続けて、次の手順で Cloudflare のキャッシュを消してください）\n" + string.Join("\n", PurgeSteps(plan.PurgeUrls));
         Status = $"削除しました: {key}。サイトへの反映は、アプリの「公開」で公開したあとです。";
         await LoadRemovableAsync();

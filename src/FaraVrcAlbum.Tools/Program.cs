@@ -30,7 +30,7 @@ public static class Program
 
         その他:
           album scan [フォルダ]                元写真を読み取り専用で走査し、月ごとの件数を表示
-          album remove <key> [--apply]        写真の削除（R2・台帳・記事）。既定はドライラン
+          album remove <key> [--apply]        写真の削除（R2・台帳。記事で使われている写真は削除しない）。既定はドライラン
 
         共通のオプション:
           --repo <dir>          リポジトリの場所（既定: カレントから FaraVrcAlbum.sln を探す）

@@ -62,7 +62,7 @@ VRChat の API の使い方（`worlds`・`world-stats` 共通）: User-Agent は
 | `album verify [--ledger]` | 公開 URL（`vrc-photos`）の画像が、記事の JSON と合っているか（200・Content-Type・Cache-Control・WebP の寸法） | なし（公開 URL を読む） |
 
 | `album audit [--bucket]` | R2 の写真のオブジェクトと記事・台帳を突き合わせ、孤児（参照なし・表紙でなくなった写真の `_og.jpg` など）と欠け（記事にあるのに `_2048.webp` が無い、表紙なのに `_og.jpg` が無い）を表示。| なし（読み取りのみ） |
-| `album remove <key> [--apply]` | 写真の削除。順序: (1) 記事の photos[] から外して content/ を検査 → (2) R2 の削除（画像 4 件） → (3) 台帳を removed（ハッシュは残す）。表紙（cover、省略時は先頭の写真）・本文に残っていれば止める。(1) か (2) で失敗したら記事を元に戻し、台帳は uploaded のまま（やり直せる）。(2) の途中で止まったら、同じコマンド（`album remove <key> --apply`）を再実行すると続きから完了する（削除は冪等）。作業ツリーが origin/develop と一致しないときは警告を出す | 既定はドライラン |
+| `album remove <key> [--apply]` | 写真の削除。順序: (1) R2 の削除（画像 4 件） → (2) 台帳を removed（ハッシュは残す）。**記事（非公開のものも含む）の写真の一覧・表紙（cover、省略時は先頭の写真）・本文で使われていれば止める**（先に記事から外す。記事は書き換えない）。(1) で失敗したら台帳は uploaded のまま（やり直せる）。(1) の途中で止まったら、同じコマンド（`album remove <key> --apply`）を再実行すると続きから完了する（削除は冪等）。作業ツリーが origin/develop と一致しないときは警告を出す | 既定はドライラン |
 
 注: 対象は記事の写真（非公開の記事も含む。確認用に出るため）。`--ledger` で記事に無い台帳（uploaded）の写真も加える。対象が 0 件なら理由を出す。画面版は docs/album-desktop.md。
 

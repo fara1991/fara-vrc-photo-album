@@ -5,27 +5,7 @@
 // メンテナンスの切り替えは、Worker の変数 MAINTENANCE_MODE / MAINTENANCE_MESSAGE（docs/cloudflare-setup.md）。
 import { getMaintenance, maintenanceResponse } from "../external/fara-site-kit/worker/maintenance.js";
 import { handleReport } from "../external/fara-site-kit/worker/report.js";
-
-/**
- * ログに出す文の長さ（これより長いものは切る）。
- */
-const ERROR_SUMMARY_MAX = 200;
-
-/**
- * ログに出す例外の要約（名前とメッセージ。秘密らしいものは取り除き、長さを切る）。
- * 取り除くもの: URL（Discord の Webhook の URL など）・Bearer のトークン・token=／token: の値・長い英数字の連続（Webhook のトークンなど）。
- * fara-labs の worker/index.js と同じ実装（kit の共有ヘルパーに寄せるときは、この関数を import に置き換える）。
- */
-export function errorSummary(error) {
-  const name = typeof error?.name === "string" ? error.name : "Error";
-  const message = String(error?.message ?? error ?? "")
-    .replace(/[\u0000-\u001f\u007f]/g, " ")
-    .replace(/https?:\/\/\S+/g, "[url]")
-    .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
-    .replace(/\btoken\s*[=:]\s*\S+/gi, "token=[redacted]")
-    .replace(/[A-Za-z0-9_-]{24,}/g, "[redacted]");
-  return `${name.slice(0, 40)}: ${message.slice(0, ERROR_SUMMARY_MAX)}`;
-}
+import { errorSummary } from "../external/fara-site-kit/worker/error-summary.js";
 
 export default {
   async fetch(request, env) {

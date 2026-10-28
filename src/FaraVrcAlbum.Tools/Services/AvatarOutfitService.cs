@@ -236,20 +236,10 @@ public static class AvatarOutfitService
     /// ファイルを書いて検査する。apply が false のときは、検査のあと必ず元に戻す（プレビュー）。
     /// 検査に失敗したら元に戻して、例外を上に投げる。
     /// </summary>
-    private static void Transact(ContentEditor editor, bool apply, IEnumerable<string> files, Action write)
-    {
-        var snapshot = new FileSnapshot();
-        foreach (var file in files) snapshot.Capture(file);
-        try
+    private static void Transact(ContentEditor editor, bool apply, IEnumerable<string> files, Action write) =>
+        FileSnapshot.Run(files, () =>
         {
             write();
             editor.ValidateOrThrow();
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
-        if (!apply) snapshot.Restore();
-    }
+        }, keep: apply);
 }

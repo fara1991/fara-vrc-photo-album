@@ -111,6 +111,7 @@ public static class WorldFetchService
         var images = 0;
         var statsDone = 0;
         var stopped = false;
+        var stats = new WorldStatsFile();                                                // 情報（world-stats.json）。下の content を読んだときの内容を、ループの間ずっと使う
 
         List<(string Id, string Name, bool NeedImage, bool NeedStats)> targets;
         State state;
@@ -118,6 +119,7 @@ public static class WorldFetchService
         {
             var content = editor.LoadContent();
             state = State.Load(stateFile);
+            stats = content.WorldStats ?? new WorldStatsFile();
             targets = content.Worlds.OrderBy(w => w.Key, StringComparer.Ordinal)
                 .Where(w => ShouldFetch(content, w.Key, w.Value, state, now, retryFailed))
                 .Select(w =>
@@ -170,9 +172,19 @@ public static class WorldFetchService
                     var wantImage = needImage && opened is not null;
                     if (needStats)
                     {
-                        var file = editor.LoadContent().WorldStats ?? new WorldStatsFile();
-                        file.Worlds[id] = info.Stats;
-                        WorldImageService.WriteStats(editor, file, now, keepDate: true);
+                        // 情報は、ループの前に読んだものに、書いた分だけ足して書く（ワールドごとに content 全体を読み直さない）。書けなかったら、足した分も戻す
+                        var had = stats.Worlds.TryGetValue(id, out var previous);
+                        stats.Worlds[id] = info.Stats;
+                        try
+                        {
+                            WorldImageService.WriteStats(editor, stats, now, keepDate: true);
+                        }
+                        catch
+                        {
+                            if (had) stats.Worlds[id] = previous!;
+                            else stats.Worlds.Remove(id);
+                            throw;
+                        }
                         statsDone++;
                         log($"  {name}: 情報を書きました（訪問 {info.Stats.Visits:N0}・お気に入り {info.Stats.Favorites:N0}）");
                     }

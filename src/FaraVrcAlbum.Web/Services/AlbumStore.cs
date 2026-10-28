@@ -24,9 +24,9 @@ public sealed class AlbumStore(HttpClient http)
 
     private static readonly System.Text.RegularExpressions.Regex OutfitIdPattern = new("^[a-z0-9]+(-[a-z0-9]+)*$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
-    private Task<List<TagSummary>?>? _tags;
-    private Task<List<WorldSummary>?>? _worlds;
-    private Task<List<OutfitSummary>?>? _outfits;
+    private readonly ReadOnce<List<TagSummary>> _tags = new();
+    private readonly ReadOnce<List<WorldSummary>> _worlds = new();
+    private readonly ReadOnce<List<OutfitSummary>> _outfits = new();
 
     /// <summary>設定と一覧を読む。読めなければ false（コンソールに理由）。</summary>
     public async Task<bool> LoadAsync()
@@ -41,10 +41,10 @@ public sealed class AlbumStore(HttpClient http)
             await Task.WhenAll(settings, posts, tags, archive);
             if (settings.Result is null || posts.Result is null) return false;
             Settings = settings.Result;
-            // Build と同じ範囲（1〜100）に直す。0 以下だと一覧のページ数の計算が例外になり、画面が開けないため（既定は Build と同じ 12）
+            // 範囲外は、Build（SiteBuilder）が例外で止める（入力の誤りをビルドで気づかせる）。Web は、古い・壊れた data/site.json でも画面を開けるように既定の 12 に戻す（意図の違い）
             if (Settings.PostsPerPage is < 1 or > 100) Settings.PostsPerPage = 12;
             Posts = posts.Result;
-            if (tags.Result is not null) _tags = Task.FromResult<List<TagSummary>?>(tags.Result);   // 読めなかったときは、タグの一覧のページが取り直す
+            if (tags.Result is not null) _tags.Seed(tags.Result);                                 // 読めなかったときは、タグの一覧のページが取り直す
             TagNames = TagNamesOf(tags.Result);
             Archive = SiteRules.ArchiveYears(archive.Result);
             return true;
@@ -76,16 +76,8 @@ public sealed class AlbumStore(HttpClient http)
     /// タグの一覧（読めなければ null）。読めたものは覚えるが、読めなかった（null）ものは覚えず、次に開くとき取り直す
     /// （一度の失敗で、そのあとずっと空になるのを防ぐ）。
     /// </summary>
-    public async Task<List<TagSummary>?> GetTagsAsync()
-    {
-        if (_tags is { } pending)
-        {
-            var known = await pending;
-            if (known is not null) return known;
-        }
-        _tags = TryGetAsync("data/tags.json", SiteJsonContext.Default.ListTagSummary);
-        return await _tags;
-    }
+    public Task<List<TagSummary>?> GetTagsAsync() =>
+        _tags.GetAsync(() => TryGetAsync("data/tags.json", SiteJsonContext.Default.ListTagSummary));
 
     /// <summary>タグの slug → 表示名。同じ slug が 2 つあれば最初のものを使う（例外にして起動を止めない）。</summary>
     private static Dictionary<string, string> TagNamesOf(IEnumerable<TagSummary>? tags)
@@ -96,27 +88,53 @@ public sealed class AlbumStore(HttpClient http)
     }
 
     /// <summary>ワールドの一覧（読めなければ null）。読めたものは覚えるが、読めなかった（null）ものは覚えず、次に開くとき取り直す。</summary>
-    public async Task<List<WorldSummary>?> GetWorldsAsync()
-    {
-        if (_worlds is { } pending)
-        {
-            var known = await pending;
-            if (known is not null) return known;
-        }
-        _worlds = TryGetAsync("data/worlds.json", SiteJsonContext.Default.ListWorldSummary);
-        return await _worlds;
-    }
+    public Task<List<WorldSummary>?> GetWorldsAsync() =>
+        _worlds.GetAsync(() => TryGetAsync("data/worlds.json", SiteJsonContext.Default.ListWorldSummary));
 
     /// <summary>服の一覧（読めなければ null）。読めたものは覚えるが、読めなかった（null）ものは覚えず、次に開くとき取り直す。</summary>
-    public async Task<List<OutfitSummary>?> GetOutfitsAsync()
+    public Task<List<OutfitSummary>?> GetOutfitsAsync() =>
+        _outfits.GetAsync(() => TryGetAsync("data/outfits.json", SiteJsonContext.Default.ListOutfitSummary));
+
+    /// <summary>
+    /// 一度読めた一覧だけ覚える。読めなかった（null）ものは覚えず、次に呼ぶとき取り直す。
+    /// 同時に呼ばれたときは、取得の Task を 1 つだけ作って待ちを共有する（二重に取らず、待機中の Task を置き換えない）。
+    /// </summary>
+    private sealed class ReadOnce<T> where T : class
     {
-        if (_outfits is { } pending)
+        private readonly object _gate = new();
+        private Task<T?>? _task;
+
+        /// <summary>もう読めている値（起動のときに取ったもの）を覚えておく。</summary>
+        public void Seed(T value)
         {
-            var known = await pending;
-            if (known is not null) return known;
+            lock (_gate) _task = Task.FromResult<T?>(value);
         }
-        _outfits = TryGetAsync("data/outfits.json", SiteJsonContext.Default.ListOutfitSummary);
-        return await _outfits;
+
+        public async Task<T?> GetAsync(Func<Task<T?>> load)
+        {
+            Task<T?> task;
+            lock (_gate) task = _task ??= load();
+            try
+            {
+                var value = await task;
+                if (value is null) Forget(task);
+                return value;
+            }
+            catch
+            {
+                Forget(task);
+                throw;
+            }
+        }
+
+        /// <summary>この Task が覚えたものなら、覚えを消す（次に呼ぶとき取り直す）。別の Task に差し替わっていれば触らない。</summary>
+        private void Forget(Task<T?> task)
+        {
+            lock (_gate)
+            {
+                if (ReferenceEquals(_task, task)) _task = null;
+            }
+        }
     }
 
     /// <summary>服 1 つ分（id は服のマスタの id。形式が不正・存在しない・読めないときは null）。</summary>

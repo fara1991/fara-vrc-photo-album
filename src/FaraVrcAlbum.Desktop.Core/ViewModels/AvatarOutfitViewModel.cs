@@ -90,12 +90,15 @@ public sealed class AvatarOutfitViewModel : PageViewModel
     private readonly Func<IReadOnlyDictionary<long, AvatarOutfitService.BoothInfo>> _boothDetails;
     private readonly Func<string, ImportScan>? _outfitScan;
 
+    /// <summary>この画面の BOOTH の注意（消せなかった一時フォルダ）。次に一覧を読み直すとき（Refresh）に出して空にする。ほかの画面の注意は取らない。</summary>
+    private readonly List<string> _boothWarnings = [];
+
     /// <param name="boothDetails">BOOTH の商品 ID → 商品の情報を読む（テストが差し替える）。既定は、BOOTH Library Manager のデータ。</param>
     /// <param name="outfitScan">服のフォルダを読む（テストが差し替える）。既定は、BOOTH Library Manager のフォルダの読み方。</param>
     public AvatarOutfitViewModel(AppState app, IDialogService dialogs, Func<IReadOnlyDictionary<long, AvatarOutfitService.BoothInfo>>? boothDetails = null, Func<string, ImportScan>? outfitScan = null) : base(app, dialogs)
     {
         _outfitScan = outfitScan;
-        _boothDetails = boothDetails ?? (() => BoothLibrary.LoadDetails(Session.Preferences.BoothDatabase is { Length: > 0 } custom ? custom : null));
+        _boothDetails = boothDetails ?? (() => BoothLibrary.LoadDetails(Session.Preferences.BoothDatabase is { Length: > 0 } custom ? custom : null, _boothWarnings));
         Outfits = [];
         Avatars = [];
         OutfitPicks = [OutfitPickViewModel.None];
@@ -253,9 +256,10 @@ public sealed class AvatarOutfitViewModel : PageViewModel
         var keepOutfit = SelectedOutfit?.Id;
         var keepAvatar = SelectedAvatar?.Id;
 
-        var boothThumbnails = Session.IsOffline ? new Dictionary<long, string>() : BoothLibrary.LoadThumbnails(Session.Preferences.BoothDatabase is { Length: > 0 } db ? db : null);
+        var boothThumbnails = Session.IsOffline ? new Dictionary<long, string>() : BoothLibrary.LoadThumbnails(Session.Preferences.BoothDatabase is { Length: > 0 } db ? db : null, _boothWarnings);
         var avatarThumbnails = Session.IsOffline ? AvatarThumbnails.Empty : AvatarThumbnails.Build(Session.AvatarThumbnailFolder, Session.Preferences.AvatarFolder);
-        var boothWarnings = BoothLibrary.TakeWarnings();                              // 消せなかった一時フォルダ（購入履歴を含むコピー）は、下で状態の行に出す
+        var boothWarnings = _boothWarnings.ToList();                                  // この画面の注意（消せなかった一時フォルダ）は、下で状態の行に出して空にする
+        _boothWarnings.Clear();
 
         Outfits.Clear();
         foreach (var (id, entry) in content.Outfits.OrderBy(o => o.Key, StringComparer.Ordinal))
@@ -384,20 +388,12 @@ public sealed class AvatarOutfitViewModel : PageViewModel
             apply =>
             {
                 // 追加（または名前などの編集）と服の紐づけを、どちらも検査してから書く。紐づけの失敗で追加だけが残らないよう、プレビューでは続けて確かめる
-                var snapshot = new FileSnapshot();
-                snapshot.Capture(Path.Combine(editor.ContentDir, AvatarOutfitService.AvatarsFile));
-                try
+                FileSnapshot.Run([Path.Combine(editor.ContentDir, AvatarOutfitService.AvatarsFile)], () =>
                 {
                     if (isNew) AvatarOutfitService.AvatarAdd(editor, true, id, name, aliases, note);
                     else AvatarOutfitService.AvatarEdit(editor, true, id, name, aliases, note);
                     AvatarOutfitService.AvatarLink(editor, true, id, outfits);
-                }
-                catch
-                {
-                    snapshot.Restore();
-                    throw;
-                }
-                if (!apply) snapshot.Restore();
+                }, keep: apply);
             },
             isNew ? "アバターを追加します" : "アバターを直します",
             $"アバター {id}: {name}（サイトには出ません）\n着せている服: {outfitNames}",
@@ -485,22 +481,13 @@ public sealed class AvatarOutfitViewModel : PageViewModel
             apply =>
             {
                 // 登録と、画像・情報の取り込みを、1 つの操作として書く（落ちるか、プレビューなら、全部元に戻す）
-                var file = OutfitsPathOf(editor);
-                var snapshot = new FileSnapshot();
-                snapshot.Capture(file);
-                try
+                FileSnapshot.Run([OutfitsPathOf(editor)], () =>
                 {
                     for (var i = 0; i < names.Count; i++)
                         AvatarOutfitService.OutfitAdd(editor, true, (firstId + i).ToString(), names[i], entries[i].Shop, entries[i].Url, null);
                     if (details.Count > 0)
                         filled = AvatarOutfitService.OutfitFillFromBooth(editor, true, id => details.GetValueOrDefault(id), DateTimeOffset.UtcNow, overwrite: false, onlyIds: newIds);
-                }
-                catch
-                {
-                    snapshot.Restore();
-                    throw;
-                }
-                if (!apply) snapshot.Restore();
+                }, keep: apply);
             },
             "服をまとめて登録します",
             $"フォルダの一覧から、服 {names.Count} 件を登録します。お店と商品ページの URL は、BOOTH の情報から自動で入ります（情報が無いときは、登録後に服を選んで入れられます）。\n" + string.Join("\n", names.Take(15).Select(n => "・" + n)) + (names.Count > 15 ? $"\n…ほか {names.Count - 15} 件" : "")
@@ -554,21 +541,11 @@ public sealed class AvatarOutfitViewModel : PageViewModel
     private static string OutfitsPathOf(ContentEditor editor) => Path.Combine(editor.ContentDir, AvatarOutfitService.OutfitsFile);
 
     /// <summary>複数件を 1 回で書く。ファイルを控えておき、途中で落ちるか、プレビュー（apply なし）なら元に戻す。</summary>
-    private static void AddAll(ContentEditor editor, bool apply, string file, IReadOnlyList<string> names, Action<int, string> add)
-    {
-        var snapshot = new FileSnapshot();
-        snapshot.Capture(file);
-        try
+    private static void AddAll(ContentEditor editor, bool apply, string file, IReadOnlyList<string> names, Action<int, string> add) =>
+        FileSnapshot.Run([file], () =>
         {
             for (var i = 0; i < names.Count; i++) add(i, names[i]);
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
-        if (!apply) snapshot.Restore();
-    }
+        }, keep: apply);
 
     /// <summary>選んだアバター（まとめて）を削除する。写真で使われているものがあれば、何も消さずに理由を出す。</summary>
     private async Task RemoveAvatarsAsync()
@@ -590,20 +567,10 @@ public sealed class AvatarOutfitViewModel : PageViewModel
     }
 
     /// <summary>複数件を 1 回で消す。ファイルを控えておき、途中で落ちるか、プレビュー（apply なし）なら元に戻す。</summary>
-    private static void RemoveAll(ContentEditor editor, bool apply, string file, IReadOnlyList<string> ids, Action<string> remove)
-    {
-        var snapshot = new FileSnapshot();
-        snapshot.Capture(file);
-        try
+    private static void RemoveAll(ContentEditor editor, bool apply, string file, IReadOnlyList<string> ids, Action<string> remove) =>
+        FileSnapshot.Run([file], () =>
         {
             foreach (var id in ids) remove(id);
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
-        if (!apply) snapshot.Restore();
-    }
+        }, keep: apply);
 
 }

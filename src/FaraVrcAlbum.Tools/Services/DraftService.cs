@@ -56,10 +56,7 @@ public static class DraftService
         if (exists && !request.Append) throw new InvalidOperationException($"記事が既にあります（{request.Slug}）。末尾に足すには --append");
         if (!exists && string.IsNullOrWhiteSpace(request.Title)) throw new ArgumentException("新しい記事には --title を指定してください");
 
-        var snapshot = new FileSnapshot();
-        snapshot.Capture(postPath);
-        snapshot.Capture(editor.WorldsPath);
-        try
+        return FileSnapshot.Run([postPath, editor.WorldsPath], () =>
         {
             var post = exists ? ContentEditor.ReadObject(postPath) : NewPost(request, now);
             var present = (post["photos"] as JsonArray)?.Select(p => p?["key"]?.GetValue<string>()).ToHashSet(StringComparer.Ordinal) ?? [];
@@ -86,12 +83,7 @@ public static class DraftService
             ContentEditor.WriteNode(postPath, post);
             editor.ValidateOrThrow();
             return new DraftResult(postPath, added, !exists, messages);
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
+        });
     }
 
     /// <summary>選ぶ写真（uploaded だけ。撮影日時の昇順）。</summary>

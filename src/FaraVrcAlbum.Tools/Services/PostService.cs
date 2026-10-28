@@ -77,9 +77,7 @@ public static class PostService
         RepoContext.RequireProductionBucket(bucket, "表紙の設定");
         var path = editor.PostPath(slug);
         if (!File.Exists(path)) throw new FileNotFoundException($"記事がありません: {slug}");
-        var snapshot = new FileSnapshot();
-        snapshot.Capture(path);
-        try
+        FileSnapshot.Run([path], () =>
         {
             var post = ContentEditor.ReadObject(path);
             if (key is null)
@@ -94,11 +92,6 @@ public static class PostService
             }
             ContentEditor.WriteNode(path, post);
             editor.ValidateOrThrow();
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
+        });
     }
 }

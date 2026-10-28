@@ -9,19 +9,26 @@ namespace FaraVrcAlbum.Tools.Services;
 /// </summary>
 public sealed class FileSnapshot
 {
-    private readonly Dictionary<string, byte[]?> _before = new(StringComparer.Ordinal);
+    // 控えた順に並べる（戻すときは後ろから）
+    private readonly List<(string Path, byte[]? Bytes)> _before = [];
+    private readonly HashSet<string> _captured = new(StringComparer.Ordinal);
 
+    /// <summary>書く前の内容を控える（同じパスは最初の 1 回だけ）。</summary>
     public void Capture(string path)
     {
-        if (!_before.ContainsKey(path)) _before[path] = File.Exists(path) ? File.ReadAllBytes(path) : null;
+        if (_captured.Add(path)) _before.Add((path, File.Exists(path) ? File.ReadAllBytes(path) : null));
     }
 
-    /// <summary>控えに戻す。1 つ戻せなくても残りは戻し、戻せなかったものを一覧にして最後に投げる（ContentPath.RollBack と同じ）。</summary>
-    public void Restore()
+    /// <summary>
+    /// 控えに戻す（後ろから）。1 つ戻せなくても残りは戻し、戻せなかったものの一覧を返す（投げない）。
+    /// 一覧が空なら全部戻った。呼び出し側が、画面ごとの文で知らせたいときに使う。
+    /// </summary>
+    public List<string> TryRestore()
     {
         var failed = new List<string>();
-        foreach (var (path, bytes) in _before)
+        for (var i = _before.Count - 1; i >= 0; i--)
         {
+            var (path, bytes) = _before[i];
             try
             {
                 if (bytes is null)
@@ -38,36 +45,43 @@ public sealed class FileSnapshot
                 failed.Add($"{path}: {r.Message}");
             }
         }
+        return failed;
+    }
+
+    /// <summary>控えに戻す。戻せなかったものがあれば、一覧にして IOException（<see cref="TryRestore"/> を使う）。</summary>
+    public void Restore()
+    {
+        var failed = TryRestore();
         if (failed.Count > 0) throw new IOException("元に戻せなかったファイルがあります:\n  " + string.Join("\n  ", failed));
     }
 
     /// <summary>
-    /// paths の内容を控えてから action を実行する。例外になったら控えに戻して、同じ例外を投げ直す
-    /// （戻すことも失敗したら、両方の理由を含む IOException にする）。action の中で検査（ValidateOrThrow）まで行う。
+    /// paths の内容を控えてから action を実行する。例外になったら控えに戻して、同じ例外を投げ直す（型も変えない）。
+    /// 戻すことも失敗したら、元の例外（と戻せなかった一覧）を含む IOException にし、元の例外は InnerException に残す。
+    /// action の中で検査（ValidateOrThrow）まで行う。keep が false のときは、成功しても必ず控えに戻す（プレビュー）。
     /// </summary>
-    public static void Run(IEnumerable<string> paths, Action action) => Run(paths, () => { action(); return 0; });
+    public static void Run(IEnumerable<string> paths, Action action, bool keep = true) =>
+        Run(paths, () => { action(); return 0; }, keep);
 
-    /// <summary><see cref="Run(IEnumerable{string}, Action)"/> の戻り値つき。</summary>
-    public static T Run<T>(IEnumerable<string> paths, Func<T> action)
+    /// <summary><see cref="Run(IEnumerable{string}, Action, bool)"/> の戻り値つき。</summary>
+    public static T Run<T>(IEnumerable<string> paths, Func<T> action, bool keep = true)
     {
         var snapshot = new FileSnapshot();
         foreach (var path in paths) snapshot.Capture(path);
+        T result;
         try
         {
-            return action();
+            result = action();
         }
         catch (Exception e)
         {
-            try
-            {
-                snapshot.Restore();
-            }
-            catch (Exception r)
-            {
-                throw new IOException($"失敗しましたが、元に戻すこともできませんでした（{r.Message}）。記事の内容を手で確かめてください", e);
-            }
+            var failed = snapshot.TryRestore();
+            if (failed.Count > 0)
+                throw new IOException($"失敗しましたが（{e.Message}）、元に戻すこともできませんでした: {string.Join("; ", failed)}。記事の内容を手で確かめてください", e);
             throw;
         }
+        if (!keep) snapshot.Restore();
+        return result;
     }
 }
 

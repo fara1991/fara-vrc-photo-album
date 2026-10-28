@@ -138,25 +138,25 @@ public static class ContentBackupService
             Directory.CreateDirectory(contentDir);
             // ここから content を変える。途中で失敗したら、変える前の内容（メモリ上）に戻す（ContentSyncService.ApplyAsync と同じ）
             var keep = manifest.Files.Select(f => f.Path).ToHashSet(StringComparer.Ordinal);
-            var changed = new List<(string Path, byte[]? Before)>();
+            var snapshot = new FileSnapshot();                                             // 変える前の内容を控える（戻すのは FileSnapshot）
             try
             {
                 foreach (var existing in ContentFiles(contentDir).Where(f => !keep.Contains(f)))
                 {
                     var local = Path.Combine(contentDir, existing.Replace('/', Path.DirectorySeparatorChar));
-                    changed.Add((existing, await File.ReadAllBytesAsync(local, ct)));
+                    snapshot.Capture(local);
                     File.Delete(local);
                 }
                 foreach (var path in keep)
                 {
                     var target = Path.Combine(contentDir, path.Replace('/', Path.DirectorySeparatorChar));
-                    changed.Add((path, File.Exists(target) ? await File.ReadAllBytesAsync(target, ct) : null));
+                    snapshot.Capture(target);
                     JsonFiles.WriteAtomic(target, contents[path]);
                 }
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                var failed = ContentPath.RollBack(contentDir, changed);
+                var failed = snapshot.TryRestore();
                 if (failed.Count > 0)
                     throw new IOException("元に戻せなかったファイルがあります（変える前の内容は安全の控えにあります）:\n  " + string.Join("\n  ", failed), e);
                 throw;

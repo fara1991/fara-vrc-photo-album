@@ -239,11 +239,11 @@ public sealed class PublishViewModel : PageViewModel
         var confirmed = target == PublishTarget.Production
             ? await Dialogs.ConfirmAsync(
                 "本番へ公開します",
-                $"今の記事の中身を、本番（{ProductionUrl}）へ公開します。確認用（dev）で確かめた内容です（ワールドの画像・情報は、本番では取りません。確認用で取ったものを公開します）。\n公開の前に、メンテナンスの表示（MAINTENANCE_MODE）が notice か true かを確かめます。そうでなければ公開しません。",
+                $"今の記事の中身を、本番（{ProductionUrl}）へ公開します。確認用（dev）で確かめた内容です（ワールドの画像・情報は、本番では取りません。確認用で取ったものを公開します）。\n公開の前に、メンテナンスの表示（MAINTENANCE_MODE）が notice か true かを確かめます。そうでなければ公開しません。\n公開の前に、「同期」タブで content が R2 と揃っているか確かめてください（公開前のガードは Git の作業ツリーだけを見ます。content/ は Git の外です）。",
                 "本番へ公開する")
             : await Dialogs.ConfirmAsync(
                 "確認用（dev）へ公開します",
-                $"今の記事の中身を、確認用のサイト（{DevUrl}）へ公開します。ビルドから行うので、数分かかります。",
+                $"今の記事の中身を、確認用のサイト（{DevUrl}）へ公開します。ビルドから行うので、数分かかります。\n公開の前に、「同期」タブで content が R2 と揃っているか確かめてください（公開前のガードは Git の作業ツリーだけを見ます。content/ は Git の外です）。",
                 "確認用へ公開する");
         if (!confirmed) return;
 

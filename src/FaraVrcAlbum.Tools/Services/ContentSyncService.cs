@@ -139,24 +139,26 @@ public static class ContentSyncService
         if (downloads.Count > 0 || localDeletes.Count > 0)
         {
             Directory.CreateDirectory(contentDir);
-            var changed = new List<(string Path, byte[]? Before)>();
+            var snapshot = new FileSnapshot();                                             // 変える前の内容を控える（戻すのは FileSnapshot）
             try
             {
-                foreach (var (path, data, before) in downloads)
+                foreach (var (path, data, _) in downloads)
                 {
-                    JsonFiles.WriteAtomic(LocalPath(contentDir, path), data);
-                    changed.Add((path, before));
+                    var local = LocalPath(contentDir, path);
+                    snapshot.Capture(local);
+                    JsonFiles.WriteAtomic(local, data);
                 }
-                foreach (var (path, before) in localDeletes)
+                foreach (var (path, _) in localDeletes)
                 {
-                    File.Delete(LocalPath(contentDir, path));
-                    changed.Add((path, before));
+                    var local = LocalPath(contentDir, path);
+                    snapshot.Capture(local);
+                    File.Delete(local);
                 }
                 ContentLoader.Load(contentDir);                                            // 変えたあとの content が、記事として読めるか（落ちたら例外）
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                var failed = ContentPath.RollBack(contentDir, changed);
+                var failed = snapshot.TryRestore();
                 if (failed.Count > 0)
                     throw new IOException("ローカルを元に戻せなかったファイルがあります（R2 は変えていません。変える前の内容は local/sync-backups にあります）:\n  " + string.Join("\n  ", failed), e);
                 if (e is ContentException or InvalidDataException)

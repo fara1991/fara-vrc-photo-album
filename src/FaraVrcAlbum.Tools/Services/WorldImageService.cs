@@ -307,20 +307,13 @@ public static class WorldImageService
         if (!keepDate || string.IsNullOrEmpty(file.FetchedAt))
             file.FetchedAt = now.ToOffset(PhotoKeys.Jst).ToString("yyyy-MM-dd'T'HH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture);
         var path = Path.Combine(editor.ContentDir, "world-stats.json");
-        var snapshot = new FileSnapshot();
-        snapshot.Capture(path);
-        try
+        FileSnapshot.Run([path], () =>
         {
             var sorted = new WorldStatsFile { FetchedAt = file.FetchedAt };
             foreach (var key in file.Worlds.Keys.Order(StringComparer.Ordinal)) sorted.Worlds[key] = file.Worlds[key];
             JsonFiles.WriteAtomic(path, JsonSerializer.Serialize(sorted, JsonFiles.Options));
             editor.ValidateOrThrow();
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
+        });
     }
 
     // ------------------------------------------------------------------ album worlds（画像を R2 へ）
@@ -430,9 +423,7 @@ public static class WorldImageService
     /// <summary>worlds.json の 1 つのワールドの image を書く（ほかの項目・順序は保つ）。書いたあと、ビルドと同じ検査を通す（通らなければ元に戻す）。</summary>
     public static void WriteImage(ContentEditor editor, string worldId, WorldImage image)
     {
-        var snapshot = new FileSnapshot();
-        snapshot.Capture(editor.WorldsPath);
-        try
+        FileSnapshot.Run([editor.WorldsPath], () =>
         {
             var worlds = ContentEditor.ReadObject(editor.WorldsPath);
             if (worlds[worldId] is not JsonObject master) throw new InvalidDataException($"worlds.json に {worldId} がありません");
@@ -440,11 +431,6 @@ public static class WorldImageService
             master["image"] = new JsonObject { ["key"] = image.Key, ["w"] = image.W, ["h"] = image.H };
             ContentEditor.WriteNode(editor.WorldsPath, worlds);
             editor.ValidateOrThrow();
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
+        });
     }
 }

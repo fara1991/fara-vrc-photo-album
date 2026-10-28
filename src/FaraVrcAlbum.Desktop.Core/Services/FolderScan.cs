@@ -39,16 +39,18 @@ public static class FolderScan
         var ids = folders.Select(BoothLibrary.ItemIdOfFolder).Where(id => id is not null).Select(id => id!.Value).ToHashSet();
         if (ids.Count == 0) return new ImportScan(TopLevelNames(folder).Select(n => new ImportEntry(n)).ToList(), "（BOOTH の商品フォルダ（b + 数字）ではないので、フォルダ名をそのまま出しています）");
 
-        var items = BoothLibrary.Load(boothDatabase);
+        var warnings = new List<string>();                                               // この読み取りの注意（消せなかった一時フォルダ）。Note に出す
+        var items = BoothLibrary.Load(boothDatabase, warnings);
+        var notes = string.Concat(warnings.Select(w => " " + w));
         if (items is null)
-            return new ImportScan(TopLevelNames(folder).Select(n => new ImportEntry(n)).ToList(), "（BOOTH Library Manager のデータが読めないので、フォルダ名をそのまま出しています）");
+            return new ImportScan(TopLevelNames(folder).Select(n => new ImportEntry(n)).ToList(), "（BOOTH Library Manager のデータが読めないので、フォルダ名をそのまま出しています）" + notes);
         var byId = items.ToDictionary(i => i.Id);
         var outfits = ids.Where(byId.ContainsKey).Select(id => byId[id])
             .Where(i => i.ParentCategory == BoothLibrary.OutfitParentCategory && i.SubCategory == BoothLibrary.OutfitSubCategory)
             .OrderBy(i => i.Name, StringComparer.Ordinal)
             .Select(i => new ImportEntry(BoothLibrary.ToDisplayName(i.Name), BoothLibrary.ToDisplayName(i.ShopName), BoothLibrary.ToDisplayName(i.ShopName), i.Url))
             .ToList();
-        return new ImportScan(outfits, $"（BOOTH の商品 {ids.Count} 件のうち、「{BoothLibrary.OutfitParentCategory}」→「{BoothLibrary.OutfitSubCategory}」だけを出しています）");
+        return new ImportScan(outfits, $"（BOOTH の商品 {ids.Count} 件のうち、「{BoothLibrary.OutfitParentCategory}」→「{BoothLibrary.OutfitSubCategory}」だけを出しています）" + notes);
     }
 
     /// <summary>次の id（今ある数字の id の最大 + 1。数字でない id は無視する）。</summary>

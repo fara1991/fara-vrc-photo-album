@@ -45,6 +45,7 @@ Fara Photo Album（VRChat の写真ブログ。本番 https://vrc-album.fara-lab
 
 - **公開（dev・本番）は、記事の中身をサイトにするだけ**。ワールドの画像・情報（VRChat）は、公開とは別のボタン「サイトの画像情報を更新する」（公開タブ）で事前に行う（`WorldFetchService`・`PublishViewModel`）。**服の画像・情報（BOOTH Library Manager）は、「アバター・服」タブの「フォルダから服を読む」ウィンドウの「インポート」で取り込む**（未登録は登録と同時に・登録済みは差分（足りない項目だけ）か、「上書き」で再インポート。`AvatarOutfitService.OutfitFillFromBooth` の overwrite / onlyIds。`FolderImportViewModel.RegisteredViaImport`）。公開タブの出力の欄は、行が増えたら自動で下までスクロールする取れなかったワールドは `local/world-fetch-state.json` に記録して 24 時間待つ。VRChat へは約 60 秒おき・429 で止める・UA を名乗る。接続は IPv4 優先（`WorldImageService.ConnectIpv4FirstAsync`。この PC は files.vrchat.cloud への IPv6 だけ切られる）
 - **記事は「公開」か「非公開」**（JSON の `draft`）。非公開はどの環境にも出さない。「記事」画面の「公開する」「非公開にする」「記事を削除する」で切り替え・削除（削除は `local/deleted-posts` に残す。写真（R2）は消さない）
+- **公開の前に、アプリの「同期」タブで content が R2 と揃っているか確かめる。公開前のガードは Git の作業ツリーだけを見る（content/ は Git 外）**（`tools/publish-guard.mjs`。docs/album-desktop.md の「公開」の節）
 - **「同期」タブ**（`ContentSyncService`・`SyncViewModel`）: `content/` の JSON をローカルと R2 の控え用バケットの `sync/` で比べ、ファイルごとに送る・取り込む・消す（相手側に無いファイルだけ）を選ぶ。上書き・消す前の内容は `local/sync-backups` に残し、ローカルを変えたあとの content が読めなければ元に戻す。履歴用のスナップショット（`snapshots/`）は別
 - **R2 の一覧は、該当が無いと S3Objects が null**（AWS SDK）。`S3ObjectStore.ObjectsOf` で空として扱う
 - 終わったことは `IDialogService.InformAsync` の完了ダイアログで知らせる（同期・取得）

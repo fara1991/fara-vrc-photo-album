@@ -126,7 +126,7 @@ function gitOut(args) {
 function gitState() {
   const porcelain = spawnSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
   return {
-    porcelain: porcelain.status === 0 ? porcelain.stdout : "failed",                  // 読めないときは「変更あり」として止める
+    porcelain: porcelain.status === 0 ? porcelain.stdout : null,                      // 読めないときは null（checkWorkTree が止める）
     head: gitOut(["rev-parse", "HEAD"]),
     remoteHead: gitOut(["rev-parse", "--verify", "--quiet", "origin/master"]),
   };

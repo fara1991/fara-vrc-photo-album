@@ -4,28 +4,59 @@ using FaraVrcAlbum.Images;
 
 namespace FaraVrcAlbum.Tools.Services;
 
-/// <summary>書き込み前の内容（元に戻すため）。null は「無かった」を表す。</summary>
+/// <summary>
+/// 書き込み前の内容（元に戻すため）。バイト列のまま控えるので、BOM・改行・文字コードも元どおりに戻る。null は「無かった」を表す。
+/// </summary>
 public sealed class FileSnapshot
 {
-    private readonly Dictionary<string, string?> _before = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, byte[]?> _before = new(StringComparer.Ordinal);
 
     public void Capture(string path)
     {
-        if (!_before.ContainsKey(path)) _before[path] = File.Exists(path) ? File.ReadAllText(path) : null;
+        if (!_before.ContainsKey(path)) _before[path] = File.Exists(path) ? File.ReadAllBytes(path) : null;
     }
 
     public void Restore()
     {
-        foreach (var (path, text) in _before)
+        foreach (var (path, bytes) in _before)
         {
-            if (text is null)
+            if (bytes is null)
             {
                 if (File.Exists(path)) File.Delete(path);
             }
             else
             {
-                File.WriteAllText(path, text, new System.Text.UTF8Encoding(false));
+                JsonFiles.WriteAtomic(path, bytes);
             }
+        }
+    }
+
+    /// <summary>
+    /// paths の内容を控えてから action を実行する。例外になったら控えに戻して、同じ例外を投げ直す
+    /// （戻すことも失敗したら、両方の理由を含む IOException にする）。action の中で検査（ValidateOrThrow）まで行う。
+    /// </summary>
+    public static void Run(IEnumerable<string> paths, Action action) => Run(paths, () => { action(); return 0; });
+
+    /// <summary><see cref="Run(IEnumerable{string}, Action)"/> の戻り値つき。</summary>
+    public static T Run<T>(IEnumerable<string> paths, Func<T> action)
+    {
+        var snapshot = new FileSnapshot();
+        foreach (var path in paths) snapshot.Capture(path);
+        try
+        {
+            return action();
+        }
+        catch (Exception e)
+        {
+            try
+            {
+                snapshot.Restore();
+            }
+            catch (Exception r)
+            {
+                throw new IOException($"失敗しましたが、元に戻すこともできませんでした（{r.Message}）。記事の内容を手で確かめてください", e);
+            }
+            throw;
         }
     }
 }

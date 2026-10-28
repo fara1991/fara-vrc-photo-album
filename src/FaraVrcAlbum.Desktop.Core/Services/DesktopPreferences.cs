@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -50,18 +51,34 @@ public sealed class DesktopPreferences(string path)
 
     private void Set(string name, string value)
     {
-        var node = Read() ?? new JsonObject();
+        // 壊れた設定の上に新しい内容を書くと、他の設定（BOOTH の DB の場所・素材フォルダなど）まで消えるため、
+        // 壊れていたら先に別名へ退避してから書く（退避先は残る。手で戻せる）
+        var node = ReadForWrite();
         if (string.IsNullOrEmpty(value)) node.Remove(name);
         else node[name] = value;
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(Path))!);
         File.WriteAllText(Path, node.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + "\n");
     }
 
-    private JsonObject? Read()
+    /// <summary>書き込み用。ファイルが無ければ空、壊れていれば Path.broken-&lt;日時&gt; に移してから空を返す。</summary>
+    private JsonObject ReadForWrite()
+    {
+        if (!File.Exists(Path)) return new JsonObject();
+        var current = ParseObject(File.ReadAllText(Path));
+        if (current is not null) return current;
+        var aside = Path + ".broken-" + DateTime.Now.ToString("yyyyMMdd-HHmmss-fff", System.Globalization.CultureInfo.InvariantCulture);
+        File.Move(Path, aside, overwrite: false);
+        Debug.WriteLine($"DesktopPreferences: 壊れた設定を退避しました: {aside}");
+        return new JsonObject();
+    }
+
+    private JsonObject? Read() => File.Exists(Path) ? ParseObject(File.ReadAllText(Path)) : null;
+
+    private static JsonObject? ParseObject(string text)
     {
         try
         {
-            return File.Exists(Path) ? JsonNode.Parse(File.ReadAllText(Path)) as JsonObject : null;
+            return JsonNode.Parse(text) as JsonObject;
         }
         catch (JsonException)
         {

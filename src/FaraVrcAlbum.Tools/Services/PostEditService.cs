@@ -47,21 +47,14 @@ public static class PostEditService
     {
         var path = editor.PostPath(slug);
         if (!File.Exists(path)) throw new FileNotFoundException($"記事がありません: {slug}");
-        var snapshot = new FileSnapshot();
-        snapshot.Capture(path);
-        try
+        FileSnapshot.Run([path], () =>
         {
             var post = ContentEditor.ReadObject(path);
             if (draft) post["draft"] = true;
             else post.Remove("draft");
             ContentEditor.WriteNode(path, post);
             editor.ValidateOrThrow();
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
+        });
     }
 
     /// <summary>
@@ -72,20 +65,13 @@ public static class PostEditService
     {
         var path = editor.PostPath(slug);
         if (!File.Exists(path)) throw new FileNotFoundException($"記事がありません: {slug}");
-        var snapshot = new FileSnapshot();
-        snapshot.Capture(path);
         Directory.CreateDirectory(backupDir);
         File.Copy(path, Path.Combine(backupDir, slug + ".json"), overwrite: true);
-        try
+        FileSnapshot.Run([path], () =>
         {
             File.Delete(path);
             editor.ValidateOrThrow();
-        }
-        catch
-        {
-            snapshot.Restore();
-            throw;
-        }
+        });
     }
 
     public static PostEditModel Load(ContentEditor editor, string slug)

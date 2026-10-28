@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FaraVrcAlbum.Content;
 using FaraVrcAlbum.Images;
 using FaraVrcAlbum.Models;
 using FaraVrcAlbum.Tools.Cli;
@@ -71,8 +72,7 @@ public static class WorldFetchService
         int worlds = 0, images = 0, stats = 0, waiting = 0;
         foreach (var (id, entry) in content.Worlds)
         {
-            var needImage = entry.Image is null;
-            var needStats = content.WorldStats?.Worlds.ContainsKey(id) != true;
+            var (needImage, needStats) = Needs(content, id, entry);
             if (!needImage && !needStats) continue;
             if (!retryFailed && state.IsWaiting(id, now))
             {
@@ -84,6 +84,17 @@ public static class WorldFetchService
             if (needStats) stats++;
         }
         return new Pending(worlds, images, stats, waiting);
+    }
+
+    /// <summary>このワールドで足りないもの（画像・情報）。どちらも揃っていれば両方 false。</summary>
+    private static (bool NeedImage, bool NeedStats) Needs(ContentSet content, string id, WorldMasterEntry entry) =>
+        (entry.Image is null, content.WorldStats?.Worlds.ContainsKey(id) != true);
+
+    /// <summary>今回取る対象か（足りないものがあり、前に失敗して待っている最中でない。retryFailed なら待ちは見ない）。</summary>
+    private static bool ShouldFetch(ContentSet content, string id, WorldMasterEntry entry, State state, DateTimeOffset now, bool retryFailed)
+    {
+        var (needImage, needStats) = Needs(content, id, entry);
+        return (needImage || needStats) && (retryFailed || !state.IsWaiting(id, now));
     }
 
     public sealed record Result(int Images, int Stats, IReadOnlyList<string> Problems, bool Stopped);
@@ -108,10 +119,14 @@ public static class WorldFetchService
             var content = editor.LoadContent();
             state = State.Load(stateFile);
             targets = content.Worlds.OrderBy(w => w.Key, StringComparer.Ordinal)
-                .Select(w => (Id: w.Key, Name: w.Value.Name, NeedImage: w.Value.Image is null, NeedStats: content.WorldStats?.Worlds.ContainsKey(w.Key) != true))
-                .Where(t => (t.NeedImage || t.NeedStats) && (retryFailed || !state.IsWaiting(t.Id, now)))
+                .Where(w => ShouldFetch(content, w.Key, w.Value, state, now, retryFailed))
+                .Select(w =>
+                {
+                    var (needImage, needStats) = Needs(content, w.Key, w.Value);
+                    return (Id: w.Key, Name: w.Value.Name, NeedImage: needImage, NeedStats: needStats);
+                })
                 .ToList();
-            var waiting = content.Worlds.Count(w => (w.Value.Image is null || content.WorldStats?.Worlds.ContainsKey(w.Key) != true) && !retryFailed && state.IsWaiting(w.Key, now));
+            var waiting = content.Worlds.Count(w => (Needs(content, w.Key, w.Value) is (true, _) or (_, true)) && !retryFailed && state.IsWaiting(w.Key, now));
             if (waiting > 0) log($"前に取れなかったワールド {waiting} 件は、{RetryAfter.TotalHours:0} 時間たつまで問い合わせません（「前に失敗したワールドも、もう一度取得する」で取れます）");
         }
         catch (Exception e) when (e is not OperationCanceledException)
@@ -180,8 +195,9 @@ public static class WorldFetchService
                     stopped = true;
                     break;
                 }
-                catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException or InvalidDataException && !ct.IsCancellationRequested)
+                catch (Exception e) when (!ct.IsCancellationRequested)
                 {
+                    // 通信・応答の形・画像の変換（NetVips → InvalidDataException）・R2 への保存など、このワールドだけの失敗は 1 件の問題にして次へ進む
                     failure = WorldImageService.Describe(e);
                 }
 
@@ -191,7 +207,7 @@ public static class WorldFetchService
                     var text = $"  {name}（{id}）: {failure}";
                     log(text);
                     problems.Add(text);
-                    state.Failures[id] = new State.Failure { At = now.ToString("o"), Reason = failure.Length > 300 ? failure[..300] : failure };
+                    state.Failures[id] = new State.Failure { At = now.ToString("o"), Reason = WorldImageService.Limit(failure, 300) };
                 }
                 TrySave(state, stateFile, log);
             }
@@ -205,15 +221,11 @@ public static class WorldFetchService
         return new Result(images, statsDone, problems, stopped);
     }
 
-    /// <summary>画像を読み、WebP（512・1024）にして R2 に置き、worlds.json の image を書く。</summary>
+    /// <summary>画像を読み、WebP（512・1024）にして R2 に置き、worlds.json の image を書く（ApplyImagesAsync と同じ処理）。</summary>
     private static async Task PutImageAsync(ContentEditor editor, HttpClient http, IObjectStore store, string id, string imageUrl, CancellationToken ct)
     {
         var bytes = await WorldImageService.DownloadAsync(http, imageUrl, ct);
-        var key = VrchatLinks.WorldImageKey(id, imageUrl);
-        var encoded = WorldImageEncoder.Encode(bytes);
-        foreach (var variant in encoded.Variants)
-            await store.PutAsync(key + variant.Suffix, variant.Data, variant.ContentType, ObjectHeaders.ImmutableImage, ct);
-        WorldImageService.WriteImage(editor, id, new WorldImage { Key = key, W = encoded.W, H = encoded.H });
+        await WorldImageService.StoreImageAsync(editor, store, id, VrchatLinks.WorldImageKey(id, imageUrl), bytes, ct);
     }
 
     private static void TrySave(State state, string stateFile, Action<string> log)

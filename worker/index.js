@@ -7,6 +7,9 @@ import { getMaintenance, maintenanceResponse } from "../external/fara-site-kit/w
 import { handleReport } from "../external/fara-site-kit/worker/report.js";
 import { errorSummary } from "../external/fara-site-kit/worker/error-summary.js";
 
+// 報告の 1 日の送信回数の制限（送信元ごと・3 回まで）の Durable Object。wrangler.jsonc の REPORT_LIMITER が指す（docs/usage.md の 2.2）
+export { ReportRateLimiter } from "../external/fara-site-kit/worker/report-rate-limit.js";
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);

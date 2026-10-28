@@ -76,6 +76,18 @@ test("assets: dist・ASSETS・auto-trailing-slash・404-page（本番・確認�
   }
 });
 
+test("報告の回数制限の Durable Object（REPORT_LIMITER → ReportRateLimiter）は、本番と確認用の両方にある（環境は継承されない）", () => {
+  for (const env of [config, develop]) {
+    assert.deepEqual(env.durable_objects, { bindings: [{ name: "REPORT_LIMITER", class_name: "ReportRateLimiter" }] });
+    assert.deepEqual(env.migrations, [{ tag: "v1", new_sqlite_classes: ["ReportRateLimiter"] }]);
+  }
+});
+
+test("Worker は ReportRateLimiter を export している（バインディングの class_name と一致）", () => {
+  const source = readFileSync(new URL("../../worker/index.js", import.meta.url), "utf8");
+  assert.match(source, /export \{ ReportRateLimiter \} from "\.\.\/external\/fara-site-kit\/worker\/report-rate-limit\.js";/);
+});
+
 test("package.json の wrangler は固定（^ や ~ を付けない）", () => {
   const pkg = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"));
   assert.match(pkg.devDependencies.wrangler, /^\d+\.\d+\.\d+$/);

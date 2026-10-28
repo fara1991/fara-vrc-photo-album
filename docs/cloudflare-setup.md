@@ -69,6 +69,15 @@ Fara Photo Album は Cloudflare Workers（静的アセットのみ + 小さな W
 - kit の `tools/maintenance-sites.json` への本サイトの追加 PR（develop のみ）は、**本サイトの `deploy-develop.yml` が develop に入ってからマージする**（kit が起動するのは確認用の `deploy-develop.yml`）（kit の PR 本文にも書いてある）。
 - `SITES_DISPATCH_TOKEN`（PAT）の対象リポジトリに `fara-vrc-photo-album` を追加（kit の `set-maintenance-all.yml` が使う）。
 
+### G. 報告の 1 日の送信回数の制限（kit v0.8.0・opt-in）
+
+- 報告（`/api/report`）は、送信元（`CF-Connecting-IP`）ごとに **1 日 3 回まで**。4 回目は 429 で、報告ページに上限の文を出す。
+- 仕組み: `worker/index.js` が `ReportRateLimiter`（kit の `worker/report-rate-limit.js`・Durable Object）を export し、`wrangler.jsonc` の `durable_objects`（バインディング `REPORT_LIMITER`）と `migrations`（`new_sqlite_classes`）が指す。**本番（トップレベル）と `env.develop` の両方に書く**（環境は継承されない）。
+- 保存は、送信元の識別子（秘密鍵つきのハッシュ）と回数だけ。JST の 0 時に消す。プライバシーポリシー（`PrivacyView`・`docs/privacy-and-takedown.md`）に書いてある。
+- **秘密鍵（`TURNSTILE_SECRET`）を変えると、計数はリセットされる**（識別子がすべて変わる）。
+- 確認: `wrangler deploy --dry-run`（本番と develop）。確認用（vrc-album-dev）で、同じ IP から 4 回送って、4 回目が 429 になるかを見る。
+- 外すとき: `worker/index.js` の export と `REPORT_LIMITER` のバインディングを消すと、制限は働かなくなる。migrations は消さない（削除の migration は Durable Object のデータを消すため、Cloudflare の docs を確かめてから行う）。
+
 ## `run_worker_first` の配列指定（M0 の検証結果）
 
 既存の 4 サイトは `run_worker_first = true`（全リクエストが Worker を通る。Workers 無料枠は 1 日 10 万）。本サイトは **配列指定** にした。

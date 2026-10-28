@@ -628,6 +628,10 @@ html {
   display: block;
   width: 100%;
   height: auto;
+  /* 読み込めない写真は、枠の行の高さ 0 を受けると alt の文字が上端で切れるので、行の高さを戻し、枠の比率を決める
+     （auto 3 / 2 は、写真の元の比率があればそれを使い、読めないときだけ 3:2 にする） */
+  aspect-ratio: auto 3 / 2;
+  line-height: 1.5;
 }
 
 .album-gallery figcaption {
@@ -1102,3 +1106,11 @@ html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
 .album-align-center { text-align: center; }
 .album-align-right { text-align: right; }
 .album-post-body ins { text-decoration: underline; }
+
+/* スマホのタップ領域（44px 以上）: メニューの項目（kit の既定は 41px）・ヘッダーのメニューボタン（40px）・テーマ切替（ライトモードの文字の行） */
+.mud-drawer .mud-nav-link { min-height: 44px; }
+.mud-appbar .mud-icon-button { width: 44px; height: 44px; }
+.fsk-theme-switch { min-height: 44px; }
+
+/* 注記の文字（kit の small.fsk-muted は 11.3px）は 12px 以上 */
+small.fsk-muted { font-size: 12px; }

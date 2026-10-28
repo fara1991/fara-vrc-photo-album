@@ -1,7 +1,7 @@
 @* ワールドのページ（/worlds/{uuid}、/worlds/{uuid}/page/{n}）。先頭にワールドの画像を大きく、その下にワールド名と VRChat のワールドの情報、その下にそのワールドで撮った写真の一覧。
    ワールドの作者へのクレジットとして、VRChat のワールドページへのリンクを必ず出す（https://vrchat.com/home/world/{wrld_id}/info）。
    画像は VRChat から取って写真と同じ R2 に置いたもの（閲覧時に VRChat へは接続しない）。情報は手元のアプリ・CLI が取る（今いる人数は出さない）。 *@
-<div class="album-list fsk-page-column fsk-page-column--wide">
+<div class="album-list fbc-page-column fbc-page-column--wide">
     @if (Image is not null)
     {
         <a class="album-world-hero" href="@VrchatLinks.World(Id)" target="_blank" rel="noopener noreferrer nofollow" aria-label="@($"VRChat で {Name} を見る（新しいタブ）")">

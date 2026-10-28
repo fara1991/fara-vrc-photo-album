@@ -1,7 +1,7 @@
-// ESLint（flat config）。共通の中身は kit の tools/lint/eslint.config.shared.mjs（external/fara-site-kit）。
+// ESLint（flat config）。共通の中身は kit の tools/lint/eslint.config.shared.mjs（external/fara-blazor-component）。
 // 既定の `shared` は使わない: Node のグローバルを **/*.{js,mjs,cjs} に当ててしまい、画面の JS（wwwroot/js）の no-undef が効かなくなるため。
 // 対象ごとに環境（node / browser）を分けて当てる。
-import { createSharedConfig, sharedIgnores } from "./external/fara-site-kit/tools/lint/eslint.config.shared.mjs";
+import { createSharedConfig, sharedIgnores } from "./external/fara-blazor-component/tools/lint/eslint.config.shared.mjs";
 
 export default [
   {

@@ -1,7 +1,7 @@
 using System.Net;
 using Bunit;
-using FaraSiteKit.Core;
-using FaraSiteKit.Razor;
+using FaraBlazorComponent.Core;
+using FaraBlazorComponent.Razor;
 using FaraVrcAlbum.Models;
 using FaraVrcAlbum.Web.Layout;
 using FaraVrcAlbum.Web.Services;
@@ -16,7 +16,7 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
     public WebTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
-        Services.AddFaraSiteKit(options => SiteInfo.Configure(options, new SiteSettings { SiteName = "Fara Photo Album", Author = "Fara", ImageBaseUrl = "https://vrc-photos.fara-labs.com/", PostsPerPage = 12 }));
+        Services.AddFaraBlazorComponent(options => SiteInfo.Configure(options, new SiteSettings { SiteName = "Fara Photo Album", Author = "Fara", ImageBaseUrl = "https://vrc-photos.fara-labs.com/", PostsPerPage = 12 }));
         Services.AddSingleton(MaintenanceInfo.Off);
     }
 
@@ -38,7 +38,7 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
         var store = Store(handler);
         Assert.True(store.LoadAsync().GetAwaiter().GetResult());
         Services.AddSingleton(store);
-        JSInterop.Setup<bool>("faraSiteKit.watchMobile", _ => true).SetResult(false);
+        JSInterop.Setup<bool>("faraBlazorComponent.watchMobile", _ => true).SetResult(false);
         return Render<MainLayout>(p => p.Add(c => c.Body, (RenderFragment)(b => b.AddMarkupContent(0, "<p class=\"body-text\">本文</p>"))));
     }
 
@@ -47,7 +47,7 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
     {
         var cut = RenderLayout();
 
-        var brand = cut.Find(".fsk-header a.fsk-brand");
+        var brand = cut.Find(".fbc-header a.fbc-brand");
         Assert.Equal("./", brand.GetAttribute("href"));
         Assert.Equal("ホームへ", brand.GetAttribute("title"));
         Assert.Equal("Fara Photo Album", brand.TextContent.Trim());         // ヘッダーの名前は文字（サイト名）
@@ -60,8 +60,8 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
         Assert.Equal("high", img.GetAttribute("fetchpriority"));
         Assert.Null(img.GetAttribute("loading"));                            // 遅延読み込みにしない
         Assert.True(cut.Markup.IndexOf("album-banner", StringComparison.Ordinal) < cut.Markup.IndexOf("body-text", StringComparison.Ordinal));
-        Assert.Single(cut.FindAll("a.fsk-brand"));          // kit の文字リンクが重ならない
-        Assert.Empty(cut.FindAll(".fsk-header h1"));        // ヘッダーの表示名は h1 にしない
+        Assert.Single(cut.FindAll("a.fbc-brand"));          // kit の文字リンクが重ならない
+        Assert.Empty(cut.FindAll(".fbc-header h1"));        // ヘッダーの表示名は h1 にしない
         Assert.Contains("Fara Photo Album", cut.Find("footer").TextContent);     // フッターのサイト名も同じ
     }
 
@@ -120,8 +120,8 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
 
         Assert.Contains(cut.FindAll("footer a"), a => (a.GetAttribute("href") ?? "").StartsWith("report"));
         Assert.Contains(cut.FindAll("footer a"), a => a.GetAttribute("href") == "privacy");
-        Assert.NotEmpty(cut.FindAll(".fsk-theme-switch"));
-        Assert.Contains("body-text", cut.Find(".fsk-content").InnerHtml);
+        Assert.NotEmpty(cut.FindAll(".fbc-theme-switch"));
+        Assert.Contains("body-text", cut.Find(".fbc-content").InnerHtml);
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
         Services.AddSingleton(new MaintenanceInfo(MaintenanceState.Notice, "更新します"));   // 後から足した登録が優先される
         var cut = RenderLayout();
 
-        Assert.Contains("更新します", cut.Find(".fsk-notice-text").TextContent);
+        Assert.Contains("更新します", cut.Find(".fbc-notice-text").TextContent);
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
         // フッターの SNS は、GitHub・X・Twitch・Discord の 4 つ（fara-labs・pokemon と同じ並び・同じ URL）。欠けると、ここで落ちる
         var cut = RenderLayout();
 
-        var links = cut.FindAll("footer a.fsk-footer-social");
+        var links = cut.FindAll("footer a.fbc-footer-social");
         Assert.Equal(4, links.Count);
         Assert.Equal(["GitHub", "Twitter", "Twitch", "Discord"], links.Select(a => a.GetAttribute("aria-label")).ToArray());
         Assert.Equal(

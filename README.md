@@ -1,6 +1,6 @@
 # fara-vrc-photo-album
 
-**Fara Photo Album**: VRChat で撮った写真のブログ（本番 https://vrc-album.fara-labs.com/ ・確認用 https://vrc-album-dev.fara-labs.com/）。C# / .NET 10 の Blazor WebAssembly + MudBlazor（共通部品は [fara-site-kit](https://github.com/fara1991/fara-site-kit)）で作った静的サイトを Cloudflare Workers に公開します。写真は R2（https://vrc-photos.fara-labs.com/）から配信します。
+**Fara Photo Album**: VRChat で撮った写真のブログ（本番 https://vrc-album.fara-labs.com/ ・確認用 https://vrc-album-dev.fara-labs.com/）。C# / .NET 10 の Blazor WebAssembly + MudBlazor（共通部品は [fara-blazor-component](https://github.com/fara1991/fara-blazor-component)）で作った静的サイトを Cloudflare Workers に公開します。写真は R2（https://vrc-photos.fara-labs.com/）から配信します。
 
 現在は **M0（リポジトリ・骨組み・デプロイの関門）** です。記事の一覧・記事ページ・メンテナンス表示・プライバシー・報告まで。ライトボックス・ワールド・タグ・アーカイブ・検索なし・画像のアップロードツールは後続のマイルストーンで足します。
 
@@ -15,7 +15,7 @@ fara-vrc-photo-album/
 ├── appsettings.json                  サイト名・画像の基準 URL・1 ページの件数
 ├── content/posts/                    ★ 記事（Git 管理外。手元と R2 の控えで持つ）
 ├── samples/content/                  CI 用の架空のサンプル記事（Git 管理）
-├── external/fara-site-kit/           共通部品（submodule。v0.8.0）
+├── external/fara-blazor-component/           共通部品（submodule。v1.0.0）
 ├── src/
 │   ├── FaraVrcAlbum.Shared/          モデル・規則・日付（ブラウザとビルドで共用）
 │   ├── FaraVrcAlbum.Content/         ビルド時のみ: content の検証・Markdown
@@ -52,7 +52,7 @@ feature/xxx ──PR──▶ develop ──PR──▶ master ──(自動)─
 ## ローカルで動かす
 
 ```bash
-git submodule update --init       # 初回のみ（external/fara-site-kit）
+git submodule update --init       # 初回のみ（external/fara-blazor-component）
 npm ci                            # 初回のみ（wrangler）
 dotnet test                       # Content / Build / Web
 npm test                          # Worker・公開の関門・wrangler.jsonc・ブラウザ用 JS

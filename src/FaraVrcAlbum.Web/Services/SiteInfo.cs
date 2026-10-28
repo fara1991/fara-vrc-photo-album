@@ -1,10 +1,10 @@
-using FaraSiteKit.Core;
+using FaraBlazorComponent.Core;
 using FaraVrcAlbum.Models;
 
 namespace FaraVrcAlbum.Web.Services;
 
 /// <summary>
-/// このサイトの名前・作者・保存のキー・確認用ホスト。共通部品（fara-site-kit。フッター・報告フォームなど）が読む SiteOptions に、起動時に入れる（Program.cs）。
+/// このサイトの名前・作者・保存のキー・確認用ホスト。共通部品（fara-blazor-component。フッター・報告フォームなど）が読む SiteOptions に、起動時に入れる（Program.cs）。
 /// 他のサイト（pokemon・avatar・bot・portfolio）と、フッターの形を同じにする。
 /// </summary>
 public static class SiteInfo

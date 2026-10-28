@@ -15,7 +15,7 @@ internal static class RepoRoot
 }
 
 /// <summary>
-/// 使い捨てのリポジトリ（appsettings.json・tools/site.json・content/）を作って、Build を実際に実行する（node と external/fara-site-kit が要る）。
+/// 使い捨てのリポジトリ（appsettings.json・tools/site.json・content/）を作って、Build を実際に実行する（node と external/fara-blazor-component が要る）。
 /// テンプレートは、本物の src/FaraVrcAlbum.Web/wwwroot/index.html（SEO の区切りが空のもの。dotnet publish の出力と同じ区切り）。
 /// 「今」は固定（2026-10-25 JST）。人物は持たない（撮影者・写っている人の項目は無い）。
 /// </summary>
@@ -97,7 +97,7 @@ public sealed class BuildFixture : IDisposable
         if (Directory.Exists(output)) Directory.Delete(output, recursive: true);
         Directory.CreateDirectory(output);
         // dotnet publish の出力の代わり: 起動に要る静的ファイルのうち、このテストが見るもの（data/ は Build が書く）
-        SiteBuilder.Run(new BuildOptions(Repo, template, output, env, Path.Combine(_repoRoot, "external", "fara-site-kit"), Now: now ?? Now, ContentDir: contentDir));
+        SiteBuilder.Run(new BuildOptions(Repo, template, output, env, Path.Combine(_repoRoot, "external", "fara-blazor-component"), Now: now ?? Now, ContentDir: contentDir));
         return output;
     }
 

@@ -2,7 +2,7 @@
 
   <!--
     公開用の静的ファイル一式を作るコマンド。content/ の記事から、本文入りの静的 HTML・データの JSON・404.html・_redirects・_headers などを書き出す。
-    ページごとの head・robots.txt・sitemap.xml・_headers・404.html は、fara-site-kit の build/build-pages.mjs（Node）に任せる。
+    ページごとの head・robots.txt・sitemap.xml・_headers・404.html は、fara-blazor-component の build/build-pages.mjs（Node）に任せる。
     本文の HTML は Pages（Razor クラスライブラリ）を HtmlRenderer で描く（Web と同じ部品。二重実装しない）。
   -->
   <PropertyGroup>

@@ -1,7 +1,7 @@
 using System.Net;
 using Bunit;
-using FaraSiteKit.Core;
-using FaraSiteKit.Razor;
+using FaraBlazorComponent.Core;
+using FaraBlazorComponent.Razor;
 using FaraVrcAlbum.Models;
 using FaraVrcAlbum.Web.Pages;
 using FaraVrcAlbum.Web.Services;
@@ -46,7 +46,7 @@ public sealed class RouteContentTests : BunitContext, IAsyncLifetime
         var store = new AlbumStore(http);
         Assert.True(store.LoadAsync().GetAwaiter().GetResult());
         Services.AddSingleton(store);
-        Services.AddFaraSiteKit(options => SiteInfo.Configure(options, store.Settings));
+        Services.AddFaraBlazorComponent(options => SiteInfo.Configure(options, store.Settings));
         Services.AddSingleton(MaintenanceInfo.Off);
     }
 

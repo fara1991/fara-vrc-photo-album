@@ -45,7 +45,7 @@ test("HTML のページ（拡張子なしの URL を含む）・API・データ�
 });
 
 test("起動に要る静的な部品だけ Worker を通さない（Workers の呼び出しを数えない）", () => {
-  for (const path of ["/_framework/blazor.webassembly.js", "/_framework/dotnet.native.abc123.wasm", "/_content/MudBlazor/MudBlazor.min.css", "/_content/FaraSiteKit.Razor/js/boot-indicator.js", "/css/app.css", "/js/startup.js", "/images/header-43454dfe.webp", "/favicon.svg"]) {
+  for (const path of ["/_framework/blazor.webassembly.js", "/_framework/dotnet.native.abc123.wasm", "/_content/MudBlazor/MudBlazor.min.css", "/_content/FaraBlazorComponent.Razor/js/boot-indicator.js", "/css/app.css", "/js/startup.js", "/images/header-43454dfe.webp", "/favicon.svg"]) {
     assert.ok(!throughWorker(config.assets.run_worker_first, path), `${path} は Worker を通さないはず`);
   }
 });
@@ -85,7 +85,7 @@ test("報告の回数制限の Durable Object（REPORT_LIMITER → ReportRateLim
 
 test("Worker は ReportRateLimiter を export している（バインディングの class_name と一致）", () => {
   const source = readFileSync(new URL("../../worker/index.js", import.meta.url), "utf8");
-  assert.match(source, /export \{ ReportRateLimiter \} from "\.\.\/external\/fara-site-kit\/worker\/report-rate-limit\.js";/);
+  assert.match(source, /export \{ ReportRateLimiter \} from "\.\.\/external\/fara-blazor-component\/worker\/report-rate-limit\.js";/);
 });
 
 test("package.json の wrangler は固定（^ や ~ を付けない）", () => {

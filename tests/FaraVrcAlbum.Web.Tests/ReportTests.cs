@@ -1,6 +1,6 @@
 using Bunit;
-using FaraSiteKit.Core;
-using FaraSiteKit.Razor;
+using FaraBlazorComponent.Core;
+using FaraBlazorComponent.Razor;
 using FaraVrcAlbum.Models;
 using FaraVrcAlbum.Web.Pages;
 using FaraVrcAlbum.Web.Services;
@@ -18,7 +18,7 @@ public sealed class ReportTests : BunitContext, IAsyncLifetime
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton(new HttpClient { BaseAddress = new Uri("https://album.test/") });
         Services.AddSingleton(new AlbumStore(new HttpClient { BaseAddress = new Uri("https://album.test/") }));
-        Services.AddFaraSiteKit(options => SiteInfo.Configure(options, new SiteSettings { SiteName = "Fara Photo Album", Author = "Fara", ImageBaseUrl = "https://i.test/" }));
+        Services.AddFaraBlazorComponent(options => SiteInfo.Configure(options, new SiteSettings { SiteName = "Fara Photo Album", Author = "Fara", ImageBaseUrl = "https://i.test/" }));
         Services.AddSingleton(MaintenanceInfo.Off);
         Services.AddSupplyValueFromQueryProvider();
     }

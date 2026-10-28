@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Fara Photo Album（VRChat の写真ブログ。本番 https://vrc-album.fara-labs.com/ ・確認用 https://vrc-album-dev.fara-labs.com/）。.NET 10 / Blazor WebAssembly + MudBlazor（共通部品は fara-site-kit。`external/fara-site-kit` の submodule、v0.8.0 に固定）の静的サイトを Cloudflare Workers（静的アセット + 小さな Worker）に公開する。写真は R2 の独自ドメイン（https://vrc-photos.fara-labs.com/）から配信する。設計は計画書（作業者の手元: `Temp/plan-vrc-album/plan.md`）。Cloudflare の手作業は docs/cloudflare-setup.md。
+Fara Photo Album（VRChat の写真ブログ。本番 https://vrc-album.fara-labs.com/ ・確認用 https://vrc-album-dev.fara-labs.com/）。.NET 10 / Blazor WebAssembly + MudBlazor（共通部品は fara-blazor-component。`external/fara-blazor-component` の submodule、v1.0.0 に固定）の静的サイトを Cloudflare Workers（静的アセット + 小さな Worker）に公開する。写真は R2 の独自ドメイン（https://vrc-photos.fara-labs.com/）から配信する。設計は計画書（作業者の手元: `Temp/plan-vrc-album/plan.md`）。Cloudflare の手作業は docs/cloudflare-setup.md。
 
 ## ブランチ運用（必ず守る）
 

@@ -3,7 +3,7 @@
 @inject AlbumStore Store
 @inject NavigationManager Nav
 
-@* 共通のレイアウト（fara-site-kit の SiteLayout）: ヘッダー・サイドバー（PC は Mini、スマホは一時的なメニュー）・本文・フッター・お知らせの帯。
+@* 共通のレイアウト（fara-blazor-component の SiteLayout）: ヘッダー・サイドバー（PC は Mini、スマホは一時的なメニュー）・本文・フッター・お知らせの帯。
    ヘッダーの名前（ブランド）は、kit 既定の文字（サイト名『Fara Photo Album』。appsettings.json の SiteName。<title>・og:site_name・RSS・フッター・プライバシーポリシーと同じ）。h1 にはしない（h1 は各ページの題）。
    画像（文字『Fara』入り）は、各ページの本文の最初に、本文の幅いっぱいに出す（SiteBanner。静的 HTML にも同じものを入れる。app.css の .album-banner・docs/header-image.md）。
    サイドバーには、ナビの下に公開月別のアーカイブ（年ごとの折りたたみ。archive.json）。 *@
@@ -15,7 +15,7 @@
             @* 公開月別のアーカイブ（新しい月が上。最新の年は開く）。PC のサイドバーを細くしている間は出さない（app.css） *@
             @* 公開月別のアーカイブ。MudNavGroup は入れ子の <nav>（ラベルなし）を出し、axe の landmark-unique に違反するので、ネイティブの <details> で作る（<nav> は 1 つ・ラベル付き） *@
             <nav class="album-archive" aria-label="アーカイブ（公開月別）">
-                <div class="fsk-nav-section">アーカイブ</div>
+                <div class="fbc-nav-section">アーカイブ</div>
                 @for (var y = 0; y < Store.Archive.Count; y++)
                 {
                     var year = Store.Archive[y];
@@ -33,8 +33,8 @@
             </nav>
         }
         @* サポート（作者へ報告・プライバシーポリシー）。アーカイブの下。ナビの <nav> が 2 つになるので、名前（aria-label）で区別する *@
-        <MudNavMenu Class="fsk-nav" aria-label="サポート">
-            <div class="fsk-nav-section">サポート</div>
+        <MudNavMenu Class="fbc-nav" aria-label="サポート">
+            <div class="fbc-nav-section">サポート</div>
             @foreach (var item in SupportItems)
             {
                 <MudNavLink Href="@item.Href" Match="NavLinkMatch.Prefix" Icon="@item.Icon">@item.Label</MudNavLink>

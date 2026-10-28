@@ -62,7 +62,7 @@ export const cspViolations = (page) => page.evaluate(() => window.__csp || []);
 
 /** 起動の完了を待つ（kit の boot-indicator.js が #boot-indicator を外し、SiteLayout が描かれる）。 */
 export async function waitBooted(page, timeout = 60000) {
-  await page.waitForSelector(".fsk-page", { timeout });
+  await page.waitForSelector(".fbc-page", { timeout });
   await page.waitForFunction(() => !document.getElementById("boot-indicator"), null, { timeout });
 }
 

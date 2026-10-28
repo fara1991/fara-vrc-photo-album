@@ -211,7 +211,6 @@ public static class Commands
         Console.WriteLine("  R2 のオブジェクト:");
         foreach (var r2Key in plan.R2Keys) Console.WriteLine($"    {r2Key}");
         Console.WriteLine($"  台帳: uploaded → removed（ハッシュは残す。再登録は拒否）");
-        Console.WriteLine($"  記事の photos[] から外す: {plan.PostPaths.Count} 件（{string.Join(", ", plan.PostPaths.Select(Path.GetFileName))}）");
         if (!args.Has("apply"))
         {
             Console.WriteLine("ドライランです。実行するには --apply。実行後、次の URL のキャッシュを Cloudflare で削除してください（URL 指定の削除）:");
@@ -220,7 +219,7 @@ public static class Commands
         }
 
         using var store = repo.RequireStore(bucket);
-        await RemoveService.ApplyAsync(plan, bucket, ledger, repo.ProductionLedgerPath, store, editor, DateTimeOffset.UtcNow, ct);
+        await RemoveService.ApplyAsync(plan, bucket, ledger, repo.ProductionLedgerPath, store, DateTimeOffset.UtcNow, ct);
         Console.WriteLine("削除しました。次の URL のキャッシュを Cloudflare で削除してください（URL 指定の削除）:");
         foreach (var url in plan.PurgeUrls) Console.WriteLine($"  {url}");
         Console.WriteLine("次は PR（develop 向け）→ 確認用で確認 → 再デプロイ。");

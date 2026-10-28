@@ -28,21 +28,20 @@ public sealed class ReviewFixTests : IDisposable
     [Fact]
     public async Task PhotoRemoveCoverAndSetCoverRefuseTheTestBucketAndWriteNothing()
     {
-        _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key2);
-        var before = File.ReadAllText(_fixture.PostPath("old-post"));
         var ledger = _fixture.Ledger((RepoFixture.Key1, "1111", LedgerStates.Uploaded, "2026-10-23T21:33:12+09:00"));
         var store = new MemoryObjectStore();
-        var plan = RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/");
+        var plan = RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/");      // 記事がまだ無いので、計画は作れる
 
-        await Assert.ThrowsAsync<UsageException>(() => RemoveService.ApplyAsync(plan, Test, ledger, _fixture.LedgerPath, store, _fixture.Editor, DateTimeOffset.UtcNow));
+        await Assert.ThrowsAsync<UsageException>(() => RemoveService.ApplyAsync(plan, Test, ledger, _fixture.LedgerPath, store, DateTimeOffset.UtcNow));
         Assert.Equal(0, store.DeleteCount);
-        Assert.Equal(before, File.ReadAllText(_fixture.PostPath("old-post")));
         Assert.Equal(LedgerStates.Uploaded, ledger.BySha["1111"].State);
 
         var coverPlan = new CoverService.CoverPlan(RepoFixture.Key1, ledger.BySha["1111"], Path.Combine(_dir.Path, "missing.png"), false);
         await Assert.ThrowsAsync<UsageException>(() => CoverService.ApplyAsync(coverPlan, Test, ledger, _fixture.LedgerPath, store));
         Assert.Equal(0, store.PutCount);
 
+        _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key2);
+        var before = File.ReadAllText(_fixture.PostPath("old-post"));
         Assert.Throws<UsageException>(() => PostService.SetCover(_fixture.Editor, Test, "old-post", RepoFixture.Key1));
         Assert.Equal(before, File.ReadAllText(_fixture.PostPath("old-post")));
     }
@@ -50,23 +49,20 @@ public sealed class ReviewFixTests : IDisposable
     [Fact]
     public async Task PartialR2DeleteSaysHowFarItGotAndTheSameCommandFinishesIt()
     {
-        _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key2);
-        var before = File.ReadAllText(_fixture.PostPath("old-post"));
         var ledger = _fixture.Ledger((RepoFixture.Key1, "1111", LedgerStates.Uploaded, "2026-10-23T21:33:12+09:00"));
         var store = new MemoryObjectStore();
         store.OnDelete = key => key.EndsWith("_1280.webp", StringComparison.Ordinal) ? new IOException("通信エラー（試験）") : null;
 
         var ex = await Assert.ThrowsAsync<RemoveService.RemoveIncompleteException>(() => RemoveService.ApplyAsync(
-            RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/"), Prod, ledger, _fixture.LedgerPath, store, _fixture.Editor, DateTimeOffset.UtcNow));
+            RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/"), Prod, ledger, _fixture.LedgerPath, store, DateTimeOffset.UtcNow));
 
         Assert.Contains("件を削除済み", ex.Message);
         Assert.Contains("同じコマンドを再実行", ex.Message);
-        Assert.Equal(before, File.ReadAllText(_fixture.PostPath("old-post")));
         Assert.Equal(LedgerStates.Uploaded, ledger.BySha["1111"].State);
 
         // 障害が直ったあとで同じ削除をやり直すと、完了する（削除は冪等）
         store.OnDelete = null;
-        await RemoveService.ApplyAsync(RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/"), Prod, ledger, _fixture.LedgerPath, store, _fixture.Editor, DateTimeOffset.UtcNow);
+        await RemoveService.ApplyAsync(RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/"), Prod, ledger, _fixture.LedgerPath, store, DateTimeOffset.UtcNow);
         Assert.Equal(LedgerStates.Removed, ledger.BySha["1111"].State);
         Assert.Empty(store.Objects);
     }

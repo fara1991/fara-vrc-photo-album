@@ -131,6 +131,7 @@ public sealed class ManageBoothSettingsTests : IDisposable
     public async Task APhotoUsedAsACoverCannotBeSelectedForRemovalAndTheReasonIsShown()
     {
         await _ws.SeedProductionAsync();
+        File.Delete(Path.Combine(_ws.Layout.RepoRoot, "content", "posts", "demo-draft.json"));                  // 非公開の記事を消して、その写真を「どの記事にも入っていない」にする
         var manage = new ManageViewModel(_ws.App, _ws.Dialogs);
         await manage.LoadRemovableAsync();
         var coverKey = PostService.CoverKeys(_ws.Session.Editor).First();
@@ -146,6 +147,25 @@ public sealed class ManageBoothSettingsTests : IDisposable
         var other = manage.Removable.First(r => r.CanRemove);
         manage.SelectedRemovable = other;
         Assert.Same(other, manage.SelectedRemovable);
+    }
+
+    [Fact]
+    public async Task APhotoUsedInAnArticleCannotBeSelectedForRemovalEvenIfItIsNotTheCover()
+    {
+        await _ws.SeedProductionAsync();
+        var manage = new ManageViewModel(_ws.App, _ws.Dialogs);
+        await manage.LoadRemovableAsync();
+        var covers = PostService.CoverKeys(_ws.Session.Editor);
+        var usedNotCover = PostService.PhotoKeys(_ws.Session.Editor).FirstOrDefault(k => !covers.Contains(k));
+        Assert.NotNull(usedNotCover);                                                    // デモの記事には、表紙でない写真もある
+        var row = manage.Removable.Single(r => r.Key == usedNotCover);
+        Assert.False(row.CanRemove);
+        Assert.Contains("記事で使われています", row.BlockReason);
+
+        manage.SelectedRemovable = row;
+
+        Assert.Null(manage.SelectedRemovable);
+        Assert.Contains("選べません", manage.Status);
     }
 
     [Fact]

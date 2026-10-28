@@ -36,61 +36,48 @@ public sealed class RemoveOrderTests : IDisposable
     }
 
     [Fact]
-    public void OmittedCoverDoesNotBlockAPhotoThatIsNotFirst()
+    public void APhotoThatIsOnlyInThePhotoListIsAlsoBlocked()
     {
-        _fixture.WriteExistingPost("old-post", cover: null);
+        _fixture.WriteExistingPost("old-post", cover: null);                                                // 表紙は先頭の写真（Key1）。Key2 は一覧にあるだけ
         var ledger = _fixture.Ledger((RepoFixture.Key2, "2222", LedgerStates.Uploaded, "2026-10-23T21:40:01+09:00"));
 
-        var plan = RemoveService.Plan(RepoFixture.Key2, ledger, _fixture.Editor, "https://img.example.test/");
-
-        Assert.Single(plan.PostPaths);
+        var error = Assert.Throws<InvalidOperationException>(() => RemoveService.Plan(RepoFixture.Key2, ledger, _fixture.Editor, "https://img.example.test/"));
+        Assert.Contains("記事で使われています", error.Message);
+        Assert.Contains("old-post.json", error.Message);
     }
 
     [Fact]
-    public async Task ValidationFailureRestoresThePostAndLeavesR2AndLedgerAlone()
+    public void ADraftPostCountsAsUsedToo()
     {
         _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key2);
-        RepoFixture.Write(Path.Combine(_fixture.Posts, "broken.json"), "{ \"schema\": 2 }");
-        var before = File.ReadAllText(_fixture.PostPath("old-post"));
-        var ledger = Ledger();
-        var store = await StoreWithPhoto1();
-        var plan = RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/");
+        RepoFixture.Write(_fixture.PostPath("old-post"), File.ReadAllText(_fixture.PostPath("old-post")).Replace("\"draft\": false", "\"draft\": true"));
+        var ledger = _fixture.Ledger((RepoFixture.Key1, "1111", LedgerStates.Uploaded, "2026-10-23T21:33:12+09:00"));
 
-        await Assert.ThrowsAsync<InvalidDataException>(() => RemoveService.ApplyAsync(plan, "fara-vrc-photos", ledger, _fixture.LedgerPath, store, _fixture.Editor, Now));
-
-        Assert.Equal(before, File.ReadAllText(_fixture.PostPath("old-post")));
-        Assert.Equal(4, store.Objects.Count);
-        Assert.Equal(0, store.DeleteCount);
-        Assert.Equal(LedgerStates.Uploaded, ledger.BySha["1111"].State);
-        Assert.False(File.Exists(_fixture.LedgerPath));
+        Assert.Throws<InvalidOperationException>(() => RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/"));
     }
 
     [Fact]
-    public async Task R2DeleteFailureRestoresThePostAndKeepsTheLedgerUploaded()
+    public async Task R2DeleteFailureKeepsTheLedgerUploaded()
     {
-        _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key2);
-        var before = File.ReadAllText(_fixture.PostPath("old-post"));
         var ledger = Ledger();
         var store = await StoreWithPhoto1();
         store.OnDelete = key => key.EndsWith("_1280.webp", StringComparison.Ordinal) ? new IOException("通信エラー（試験）") : null;
         var plan = RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/");
 
-        await Assert.ThrowsAsync<RemoveService.RemoveIncompleteException>(() => RemoveService.ApplyAsync(plan, "fara-vrc-photos", ledger, _fixture.LedgerPath, store, _fixture.Editor, Now));
+        await Assert.ThrowsAsync<RemoveService.RemoveIncompleteException>(() => RemoveService.ApplyAsync(plan, "fara-vrc-photos", ledger, _fixture.LedgerPath, store, Now));
 
-        Assert.Equal(before, File.ReadAllText(_fixture.PostPath("old-post")));
         Assert.Equal(LedgerStates.Uploaded, ledger.BySha["1111"].State);
         Assert.False(File.Exists(_fixture.LedgerPath));
     }
 
     [Fact]
-    public async Task SuccessRemovesFromPostsThenR2ThenMarksTheLedgerRemoved()
+    public async Task SuccessRemovesFromR2ThenMarksTheLedgerRemoved()
     {
-        _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key2);
         var ledger = Ledger();
         var store = await StoreWithPhoto1();
         var plan = RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/");
 
-        await RemoveService.ApplyAsync(plan, "fara-vrc-photos", ledger, _fixture.LedgerPath, store, _fixture.Editor, Now);
+        await RemoveService.ApplyAsync(plan, "fara-vrc-photos", ledger, _fixture.LedgerPath, store, Now);
 
         Assert.Empty(store.Objects);
         Assert.Equal(LedgerStates.Removed, ledger.BySha["1111"].State);

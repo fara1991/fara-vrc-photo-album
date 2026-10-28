@@ -195,9 +195,8 @@ public sealed class RemoveTests : IDisposable
     }
 
     [Fact]
-    public async Task ApplyDeletesR2MarksRemovedAndStripsThePhotoFromPosts()
+    public async Task ApplyDeletesR2AndMarksRemovedWhenNoPostUsesThePhoto()
     {
-        _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key2);
         var ledger = _fixture.Ledger((RepoFixture.Key1, "1111", LedgerStates.Uploaded, "2026-10-23T21:33:12+09:00"));
         var store = new MemoryObjectStore();
         foreach (var suffix in new[] { "_640.webp", "_1280.webp", "_2048.webp", "_og.jpg" })
@@ -208,13 +207,11 @@ public sealed class RemoveTests : IDisposable
         var plan = RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/");
         Assert.Equal(4, plan.R2Keys.Count);
         Assert.Equal("https://img.example.test/" + RepoFixture.Key1 + "_og.jpg", plan.PurgeUrls[^1]);
-        await RemoveService.ApplyAsync(plan, "fara-vrc-photos", ledger, _fixture.LedgerPath, store, _fixture.Editor, new DateTimeOffset(2026, 10, 25, 0, 0, 0, TimeSpan.Zero));
+        await RemoveService.ApplyAsync(plan, "fara-vrc-photos", ledger, _fixture.LedgerPath, store, new DateTimeOffset(2026, 10, 25, 0, 0, 0, TimeSpan.Zero));
 
         Assert.Empty(store.Objects);
         Assert.Equal(LedgerStates.Removed, ledger.BySha["1111"].State);
         Assert.True(File.Exists(_fixture.LedgerPath));
-        var photos = ContentEditor.ReadObject(_fixture.PostPath("old-post"))["photos"]!.AsArray();
-        Assert.Equal([RepoFixture.Key2], photos.Select(p => p!["key"]!.GetValue<string>()));
         Assert.Throws<InvalidOperationException>(() => RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/"));
     }
 }

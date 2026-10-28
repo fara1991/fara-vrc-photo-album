@@ -64,9 +64,10 @@ public sealed class SafetyTests : IDisposable
     public async Task RemoveDoesNothingUnlessConfirmed()
     {
         await _ws.SeedProductionAsync();
+        File.Delete(Path.Combine(_ws.Layout.RepoRoot, "content", "posts", "demo-draft.json"));                  // 非公開の記事を消して、その写真を「どの記事にも入っていない」にする
         var manage = new ManageViewModel(_ws.App, _ws.Dialogs);
         await manage.LoadRemovableAsync();
-        manage.SelectedRemovable = manage.Removable.Single(r => r.TakenText.StartsWith("2026-10-21", StringComparison.Ordinal));
+        manage.SelectedRemovable = manage.Removable.First(r => r.CanRemove);                      // 記事で使われていない写真だけが選べる
         var ledgerBefore = File.ReadAllText(_ws.ProductionLedgerPath);
         var postBefore = File.ReadAllText(Path.Combine(_ws.Layout.RepoRoot, "content", "posts", "demo-first.json"));
         var key = manage.SelectedRemovable!.Key;
@@ -81,12 +82,13 @@ public sealed class SafetyTests : IDisposable
     }
 
     [Fact]
-    public async Task RemoveAfterConfirmationRemovesFromR2LedgerAndPost()
+    public async Task RemoveAfterConfirmationRemovesFromR2AndLedger()
     {
         await _ws.SeedProductionAsync();
+        File.Delete(Path.Combine(_ws.Layout.RepoRoot, "content", "posts", "demo-draft.json"));                  // 非公開の記事を消して、その写真を「どの記事にも入っていない」にする
         var manage = new ManageViewModel(_ws.App, _ws.Dialogs);
         await manage.LoadRemovableAsync();
-        manage.SelectedRemovable = manage.Removable.Single(r => r.TakenText.StartsWith("2026-10-21", StringComparison.Ordinal));
+        manage.SelectedRemovable = manage.Removable.First(r => r.CanRemove);                      // 記事で使われていない写真だけが選べる
         var key = manage.SelectedRemovable!.Key;
 
         _ws.Dialogs.Answer = true;
@@ -95,8 +97,6 @@ public sealed class SafetyTests : IDisposable
         var store = _ws.Session.DemoStore(_ws.Session.ProductionBucket);
         Assert.False(store.Objects.ContainsKey(key + "_640.webp"));
         Assert.Equal(LedgerStates.Removed, PhotoLedger.Load(_ws.ProductionLedgerPath).FindByKey(key)!.State);
-        var post = ContentEditor.ReadObject(Path.Combine(_ws.Layout.RepoRoot, "content", "posts", "demo-first.json"));
-        Assert.DoesNotContain(post["photos"]!.AsArray(), p => p?["key"]?.GetValue<string>() == key);
     }
 
     [Fact]

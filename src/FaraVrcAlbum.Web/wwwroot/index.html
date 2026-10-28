@@ -20,10 +20,10 @@
     <!-- display=block: フォントが届くまで文字を出さない。swap だと、フォールバックの字で描いてから Zen Kaku に差し替わり、折り返しが変わって本文が動く。block にすると、差し替えによるずれが出ない。代わりに、届くまでの一瞬は文字が見えない（初回の読み込みの間だけ）。optional にすると初回の訪問で Zen Kaku が出ないので採らない（fara-labs の PR #79 と同じ判断） -->
     <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=block" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
-    <link href="_content/FaraSiteKit.Razor/css/fara-site-kit.css" rel="stylesheet" />
+    <link href="_content/FaraBlazorComponent.Razor/css/fara-blazor-component.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <!-- テーマは描画の前に反映する（data-storage-key・data-sidebar-key は SiteInfo.StorageKey・SidebarKey と同じ値） -->
-    <script src="_content/FaraSiteKit.Razor/js/theme-init.js" data-storage-key="fara-vrc-album.settings" data-sidebar-key="fara-vrc-album.sidebar-hidden"></script>
+    <script src="_content/FaraBlazorComponent.Razor/js/theme-init.js" data-storage-key="fara-vrc-album.settings" data-sidebar-key="fara-vrc-album.sidebar-hidden"></script>
     <!-- 保存されたテーマが無い・読めないときの既定をダーク（写真向き）にする。theme-init.js は light にするので、直後に直す -->
     <script src="js/theme-default.js"></script>
     <!-- 起動までの読み込み表示の CSS（起動の前から当てる。60 秒の保険は、kit の boot-indicator.js の RELEASE_MS と同じ秒数） -->
@@ -77,10 +77,10 @@
     </div>
     <script src="js/startup.js"></script>
     <script src="js/lightbox.js"></script>
-    <script src="_content/FaraSiteKit.Razor/js/boot-indicator.js"></script>
-    <script src="_content/FaraSiteKit.Razor/js/fara-site-kit.js"></script>
-    <script src="_content/FaraSiteKit.Razor/js/scroll-progress.js"></script>
-    <script src="_content/FaraSiteKit.Razor/js/report.js"></script>
+    <script src="_content/FaraBlazorComponent.Razor/js/boot-indicator.js"></script>
+    <script src="_content/FaraBlazorComponent.Razor/js/fara-blazor-component.js"></script>
+    <script src="_content/FaraBlazorComponent.Razor/js/scroll-progress.js"></script>
+    <script src="_content/FaraBlazorComponent.Razor/js/report.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>

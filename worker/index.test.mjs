@@ -56,13 +56,13 @@ test("報告以外の /api/ は、404（静的アセットには流さない）"
 test("通常のとき、ページはそのままアセットから返す", async () => {
   const res = await run("/", {}, {}, HTML_PAGE);
   assert.equal(res.status, 200);
-  assert.ok(!(await res.text()).includes("fsk-notice"));
+  assert.ok(!(await res.text()).includes("fbc-notice"));
 });
 
 test("お知らせ（MAINTENANCE_MODE=notice）のときも、ページの HTML には帯を入れない（アプリが /api/maintenance を読んで出す）", async () => {
   const res = await run("/", {}, { MAINTENANCE_MODE: "notice", MAINTENANCE_MESSAGE: "10月25日（土）20:00〜21:00 ごろ、サイトを更新します" }, HTML_PAGE);
   assert.equal(res.status, 200);
-  assert.ok(!(await res.text()).includes("fsk-notice"));
+  assert.ok(!(await res.text()).includes("fbc-notice"));
 });
 
 test("/api/maintenance は、いまの状態（kit の MaintenanceInfo が読む形）を返す", async () => {

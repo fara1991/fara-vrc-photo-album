@@ -1,6 +1,6 @@
 @* 服のページ（/outfits/{id}、/outfits/{id}/page/{n}）。先頭に BOOTH の商品の画像、その下に服の名前（商品ページへのリンク）と BOOTH の情報、その下にその服を着て撮った写真。
    画像・情報は、アプリが BOOTH Library Manager から取り込んだもの（閲覧時に BOOTH へ問い合わせない。画像だけ BOOTH のサーバーから読む）。無い項目は出さない。 *@
-<div class="album-list fsk-page-column fsk-page-column--wide">
+<div class="album-list fbc-page-column fbc-page-column--wide">
     @if (!string.IsNullOrWhiteSpace(Thumbnail))
     {
         @if (!string.IsNullOrWhiteSpace(Url))

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Build を実際に実行する（node と external/fara-site-kit が要る）。 -->
+  <!-- Build を実際に実行する（node と external/fara-blazor-component が要る）。 -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>

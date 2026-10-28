@@ -1,6 +1,6 @@
 # 静的解析とレイアウト計測（CI で止める決まり）
 
-レビューで繰り返し見つかる指摘を、CI で機械的に止める。仕組みは kit（external/fara-site-kit）の共通部品。ここには、このサイトの設定・件数・除外の書き方だけを書く。
+レビューで繰り返し見つかる指摘を、CI で機械的に止める。仕組みは kit（external/fara-blazor-component）の共通部品。ここには、このサイトの設定・件数・除外の書き方だけを書く。
 
 | 検査 | 手元のコマンド | CI の job | 設定 |
 | --- | --- | --- | --- |
@@ -8,14 +8,14 @@
 | ESLint（JavaScript） | `npm run lint` | lint | `eslint.config.mjs` |
 | C# のアナライザー（ラチェット） | `dotnet build FaraVrcAlbum.sln -c Release` | build | `Directory.Build.props`・kit の `tools/lint/dotnet.editorconfig` |
 
-kit の詳しい中身は `external/fara-site-kit/docs/layout-check.md`・`docs/lint.md`。
+kit の詳しい中身は `external/fara-blazor-component/docs/layout-check.md`・`docs/lint.md`。
 
 ## 1. レイアウトの自動計測
 
 `npm run layout-check` は、サンプルの記事（`samples/content`）で静的サイト（`site-production`）を作り、配って計測する。`--no-build` を付けると、作成済みの `site-production` をそのまま計測する。終了コードは 0（違反なし）・1（違反あり）・2（計測できなかった）。
 
 - 対象（`layout-check.config.mjs`）: トップ・記事（サンプル）・一覧（2026 年 1 月）・ワールド・タグ・服・問い合わせ・プライバシーポリシー・404（`/404.html`）。幅は 360・390・768・1024・1440px。
-- メニュー（`menuEsc`）: `buttonSelector` は `.fsk-menu-toggle`、`closeSelector` は `.fsk-drawer-close`（kit 0.7.0 の SiteLayout が、スマホのドロワーの左上に出す閉じるボタン）。ドロワーはメニューボタンを覆うため、閉じる手段は閉じるボタンで測る（`menu-close-visible`）。`closeSelector` を省くと、覆われたメニューボタンで違反になる（kit 0.7.0 に上げた時点で、18 件出た）。
+- メニュー（`menuEsc`）: `buttonSelector` は `.fbc-menu-toggle`、`closeSelector` は `.fbc-drawer-close`（kit 0.7.0 の SiteLayout が、スマホのドロワーの左上に出す閉じるボタン）。ドロワーはメニューボタンを覆うため、閉じる手段は閉じるボタンで測る（`menu-close-visible`）。`closeSelector` を省くと、覆われたメニューボタンで違反になる（kit 0.7.0 に上げた時点で、18 件出た）。
 - 配信: kit の `serve-static.mjs`（`createStaticServer`）で配る。kit の配信は、同じ名前のフォルダ（`/worlds` の `worlds/`）があると、`index.html` を探して 404 になるため、`tools/layout-check.mjs` は、拡張子の無いパスに `<パス>.html` があればそちらを渡す（Cloudflare と同じく `.html` を先に見る）。kit 側の直し（kit の docs の「`/works` → `works.html`」どおりにする）は、kit の別の変更として扱う。
 - `readySelector` は `.mud-layout`（Blazor が描く。静的 HTML には無い）。起動の後にだけ計測する。
 
@@ -26,7 +26,7 @@ kit の詳しい中身は `external/fara-site-kit/docs/layout-check.md`・`docs/
 ```js
 {
   rule: "tap-target",
-  selector: ".fsk-report-submit",
+  selector: ".fbc-report-submit",
   page: "/report",
   reason: "送信ボタンは、確認（Turnstile）が済むまで無効（disabled は pointer-events: none）。無効のボタンは押せないので、計測では当たらない。有効になったときの大きさは kit の CSS（600px 未満で 44px）で決まる",
 },
@@ -36,7 +36,7 @@ kit の詳しい中身は `external/fara-site-kit/docs/layout-check.md`・`docs/
 
 | 規則 | セレクター | ページ | 理由（要約） |
 | --- | --- | --- | --- |
-| tap-target | `.fsk-report-submit` | `/report` | 送信ボタンは確認が済むまで無効（pointer-events: none）。計測の時点では押せない |
+| tap-target | `.fbc-report-submit` | `/report` | 送信ボタンは確認が済むまで無効（pointer-events: none）。計測の時点では押せない |
 | tap-target | `a.album-card-link` | `/worlds` | カードの題のリンクの当たり判定の下側が、同じカードのタグ（別のリンク）と重なる。配置を変えると見た目が変わるため、別に検討する |
 
 ### 直したもの（この PR で）

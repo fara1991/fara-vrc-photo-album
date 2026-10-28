@@ -610,8 +610,8 @@ public class SiteBuilderTests
         var f = new BuildFixture();
         using var _ = f;
         var dir = Path.GetDirectoryName(f.TemplatePath)!;
-        Assert.Throws<ArgumentException>(() => SiteBuilder.Run(new BuildOptions(f.Repo, f.TemplatePath, dir, "production", Path.Combine(RepoRoot.Find(), "external", "fara-site-kit"))));
-        Assert.Throws<ArgumentException>(() => SiteBuilder.Run(new BuildOptions(f.Repo, f.TemplatePath, Path.Combine(Path.GetTempPath(), "x"), "staging", Path.Combine(RepoRoot.Find(), "external", "fara-site-kit"))));
+        Assert.Throws<ArgumentException>(() => SiteBuilder.Run(new BuildOptions(f.Repo, f.TemplatePath, dir, "production", Path.Combine(RepoRoot.Find(), "external", "fara-blazor-component"))));
+        Assert.Throws<ArgumentException>(() => SiteBuilder.Run(new BuildOptions(f.Repo, f.TemplatePath, Path.Combine(Path.GetTempPath(), "x"), "staging", Path.Combine(RepoRoot.Find(), "external", "fara-blazor-component"))));
     }
 
     [Fact]
@@ -623,7 +623,7 @@ public class SiteBuilderTests
         Directory.Delete(Path.Combine(f.Repo, "content"), recursive: true);
         var outDir = Path.Combine(Path.GetTempPath(), "album-build-out-" + Guid.NewGuid().ToString("N")[..8]);
         var ex = Assert.Throws<DirectoryNotFoundException>(() =>
-            SiteBuilder.Run(new BuildOptions(f.Repo, f.TemplatePath, outDir, "production", Path.Combine(RepoRoot.Find(), "external", "fara-site-kit"))));
+            SiteBuilder.Run(new BuildOptions(f.Repo, f.TemplatePath, outDir, "production", Path.Combine(RepoRoot.Find(), "external", "fara-blazor-component"))));
         Assert.Contains("記事の中身がありません", ex.Message);
         Assert.False(Directory.Exists(outDir));                                                             // 何も作らない
     }

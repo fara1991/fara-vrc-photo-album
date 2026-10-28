@@ -30,7 +30,7 @@ public static class SiteBuilder
         if (!Environments.Contains(options.Env)) throw new ArgumentException($"--env は production か develop です（{options.Env}）");
         if (!File.Exists(options.Template)) throw new FileNotFoundException($"テンプレートがありません: {options.Template}（dotnet publish の wwwroot/index.html）");
         var kitScript = Path.Combine(options.KitPath, "build", "build-pages.mjs");
-        if (!File.Exists(kitScript)) throw new FileNotFoundException($"fara-site-kit がありません: {kitScript}（git submodule update --init）");
+        if (!File.Exists(kitScript)) throw new FileNotFoundException($"fara-blazor-component がありません: {kitScript}（git submodule update --init）");
         if (string.Equals(Path.GetFullPath(Path.GetDirectoryName(options.Template)!), Path.GetFullPath(options.Out), StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("--out はテンプレート（dotnet publish の wwwroot）とは別のフォルダにしてください（コピーを作ってから実行）");
 
@@ -110,7 +110,7 @@ public static class SiteBuilder
         var stderr = process.StandardError.ReadToEndAsync();
         process.WaitForExit();
         if (process.ExitCode != 0)
-            throw new InvalidOperationException($"fara-site-kit の build-pages.mjs が失敗しました（終了コード {process.ExitCode}）:\n{stderr.Result}{stdout.Result}");
+            throw new InvalidOperationException($"fara-blazor-component の build-pages.mjs が失敗しました（終了コード {process.ExitCode}）:\n{stderr.Result}{stdout.Result}");
         Console.WriteLine(stdout.Result.Trim());
     }
 }

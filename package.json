@@ -20,7 +20,7 @@
     "layout-check": "node tools/layout-check.mjs",
     "test": "npm run test:worker && npm run test:kit && npm run test:gate && npm run test:js",
     "test:worker": "node --test worker/index.test.mjs",
-    "test:kit": "node --test external/fara-site-kit/worker/report.test.mjs external/fara-site-kit/worker/maintenance.test.mjs",
+    "test:kit": "node --test external/fara-blazor-component/worker/report.test.mjs external/fara-blazor-component/worker/maintenance.test.mjs",
     "test:gate": "node --test .github/scripts/require-maintenance.test.mjs .github/scripts/verify-site.test.mjs .github/scripts/workflows.test.mjs",
     "test:js": "node --test tests/js/theme-default.test.mjs tests/js/wrangler-config.test.mjs tests/js/lightbox.test.mjs tests/js/header-css.test.mjs tests/js/publish-retry.test.mjs tests/js/publish-guard.test.mjs tests/js/no-personal-email.test.mjs"
   },

@@ -13,8 +13,8 @@ import { existsSync } from "node:fs";
 import { createServer } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { createStaticServer } from "../external/fara-site-kit/tools/layout-check/serve-static.mjs";
-import { formatViolation, runLayoutCheck } from "../external/fara-site-kit/tools/layout-check/index.mjs";
+import { createStaticServer } from "../external/fara-blazor-component/tools/layout-check/serve-static.mjs";
+import { formatViolation, runLayoutCheck } from "../external/fara-blazor-component/tools/layout-check/index.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SITE_DIR = join(root, "site-production");

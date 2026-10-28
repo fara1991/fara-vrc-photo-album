@@ -15,13 +15,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaraVrcAlbum.Web", "src\Far
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "external", "external", "{A288BEE0-695A-BEEA-455C-649571D89326}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fara-site-kit", "fara-site-kit", "{DD0C60B0-4D6F-961E-18DF-F1421B6519E0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "fara-blazor-component", "fara-blazor-component", "{DD0C60B0-4D6F-961E-18DF-F1421B6519E0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0E5D373E-19C9-A76C-EBD7-F38F998969FE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaraSiteKit.Core", "external\fara-site-kit\src\FaraSiteKit.Core\FaraSiteKit.Core.csproj", "{E91BBAC0-8ACA-4266-9BC0-A8DBC1EBAA66}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaraBlazorComponent.Core", "external\fara-blazor-component\src\FaraBlazorComponent.Core\FaraBlazorComponent.Core.csproj", "{E91BBAC0-8ACA-4266-9BC0-A8DBC1EBAA66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaraSiteKit.Razor", "external\fara-site-kit\src\FaraSiteKit.Razor\FaraSiteKit.Razor.csproj", "{526C83B2-681A-47F3-9962-14DE8B7691B1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaraBlazorComponent.Razor", "external\fara-blazor-component\src\FaraBlazorComponent.Razor\FaraBlazorComponent.Razor.csproj", "{526C83B2-681A-47F3-9962-14DE8B7691B1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaraVrcAlbum.Build", "src\FaraVrcAlbum.Build\FaraVrcAlbum.Build.csproj", "{DBD1FBC1-3815-42A2-95C3-74637857332F}"
 EndProject

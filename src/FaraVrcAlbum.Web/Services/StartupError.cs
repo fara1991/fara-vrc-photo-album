@@ -1,4 +1,4 @@
-using FaraSiteKit.Razor;
+using FaraBlazorComponent.Razor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 

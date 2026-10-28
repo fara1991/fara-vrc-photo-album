@@ -29,13 +29,13 @@ test("--album-header-h: kit の既定と同じ 3.5rem の 1 つだけ（スマ�
 });
 
 test("kit の 3.5rem 固定のヘッダー・ツールバーと、MudBlazor の --mud-appbar-height・本文の上余白を、同じ変数に上書きしている", () => {
-  assert.match(rule(".fsk-header.mud-appbar"), /height:\s*var\(--album-header-h\)/);
-  const toolbar = rule(".fsk-header .mud-toolbar");
+  assert.match(rule(".fbc-header.mud-appbar"), /height:\s*var\(--album-header-h\)/);
+  const toolbar = rule(".fbc-header .mud-toolbar");
   assert.match(toolbar, /height:\s*var\(--album-header-h\)/);
   assert.match(toolbar, /min-height:\s*var\(--album-header-h\)/);
-  assert.match(rule("html:root,\n.fsk-page.mud-layout"), /--mud-appbar-height:\s*var\(--album-header-h\)/);
-  assert.match(rule(".fsk-page .mud-main-content"), /padding-top:\s*var\(--album-header-h\)/);
-  assert.match(rule(".fsk-search-sheet"), /top:\s*var\(--album-header-h\)/);
+  assert.match(rule("html:root,\n.fbc-page.mud-layout"), /--mud-appbar-height:\s*var\(--album-header-h\)/);
+  assert.match(rule(".fbc-page .mud-main-content"), /padding-top:\s*var\(--album-header-h\)/);
+  assert.match(rule(".fbc-search-sheet"), /top:\s*var\(--album-header-h\)/);
   assert.match(rule("html"), /scroll-padding-top:\s*calc\(var\(--album-header-h\)/);
 });
 

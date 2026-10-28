@@ -49,7 +49,7 @@ for (const [vpName, vp] of Object.entries(VIEWPORTS)) {
     const p = await open(vp, theme);
     r.check(`[${tag}] 見出し『Twitter のユーザー名（@○○）（必須）』`, (await p.locator("label[for=report-contact]").innerText()).trim() === "Twitter のユーザー名（@○○）（必須）");
     r.check(`[${tag}] 入力欄に aria-required と例『@example』`, (await p.getAttribute("#report-contact", "aria-required")) === "true" && (await p.getAttribute("#report-contact", "placeholder")) === "@example");
-    r.check(`[${tag}] 説明に Discord は使わない旨`, (await p.locator(".fsk-form-group", { has: p.locator("#report-contact") }).innerText()).includes("Discord では受け付けていません"));
+    r.check(`[${tag}] 説明に Discord は使わない旨`, (await p.locator(".fbc-form-group", { has: p.locator("#report-contact") }).innerText()).includes("Discord では受け付けていません"));
     await p.waitForFunction(() => !document.querySelector(".mud-alert-text-warning, .mud-alert-outlined-warning"), null, { timeout: 10000 }).catch(() => {});
     if (tag === "pc-dark" || tag === "sp-light") await p.screenshot({ path: join(OUT, `report-${tag}.png`), fullPage: true });
 

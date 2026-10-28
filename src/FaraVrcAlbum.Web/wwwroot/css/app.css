@@ -1,4 +1,4 @@
-/* Fara Photo Album のスタイル（1 ファイル）。色は :root の CSS 変数。kit の fara-site-kit.css の上に重ねる。
+/* Fara Photo Album のスタイル（1 ファイル）。色は :root の CSS 変数。kit の fara-blazor-component.css の上に重ねる。
    写真が主役になるよう、背景は中立（暗め）。ヘッダーは kit の紫のバー。 */
 
 :root {
@@ -27,7 +27,7 @@ html[data-bs-theme="dark"] {
   border: 0;
 }
 
-/* ヘッダーの高さ: kit の既定 3.5rem（56px）。名前は文字（サイト名）で、画像は各ページの本文の最初（.album-banner）。kit は .fsk-header と .mud-toolbar の高さを 3.5rem で決め、
+/* ヘッダーの高さ: kit の既定 3.5rem（56px）。名前は文字（サイト名）で、画像は各ページの本文の最初（.album-banner）。kit は .fbc-header と .mud-toolbar の高さを 3.5rem で決め、
    MudBlazor は --mud-appbar-height（本文の上の余白・ドロワーの上端・お知らせの帯の位置）で使う。同じ値に上書きして、変数 1 つで全部をそろえる（--mud-appbar-height は MudBlazor のテーマが :root に出すので、html:root で勝たせる）。
    tests/js/header-css.test.mjs が値を固定している。 */
 :root {
@@ -35,20 +35,20 @@ html[data-bs-theme="dark"] {
 }
 
 html:root,
-.fsk-page.mud-layout {
+.fbc-page.mud-layout {
   --mud-appbar-height: var(--album-header-h);
 }
 
-.fsk-header.mud-appbar {
+.fbc-header.mud-appbar {
   height: var(--album-header-h);
 }
 
-.fsk-header .mud-toolbar {
+.fbc-header .mud-toolbar {
   height: var(--album-header-h);
   min-height: var(--album-header-h);
 }
 
-.fsk-search-sheet {
+.fbc-search-sheet {
   top: var(--album-header-h);
 }
 
@@ -73,15 +73,15 @@ html {
   border-radius: var(--album-radius, 8px);
 }
 
-/* kit の .fsk-header :focus-visible は outline-color だけを決める。MudBlazor の reset で outline-style が none になり、ヘッダーの名前のリンクにキーボードのフォーカス枠が出ないので、ここで枠を付ける */
-.fsk-header .fsk-brand:focus-visible {
+/* kit の .fbc-header :focus-visible は outline-color だけを決める。MudBlazor の reset で outline-style が none になり、ヘッダーの名前のリンクにキーボードのフォーカス枠が出ないので、ここで枠を付ける */
+.fbc-header .fbc-brand:focus-visible {
   outline: 2px solid #e9d5ff;
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 /* MudBlazor の reset はサイト全体の a の outline を消す。本文領域・フッターのリンクすべてに枠を戻す（記事の本文リンク・ギャラリーの写真リンクを含む）。kit 側で戻すのが本筋（kit の docs/new-site-checklist.md） */
-#fsk-main a:focus-visible,
+#fbc-main a:focus-visible,
 .album-card-link:focus-visible,
 .album-card-tags a:focus-visible,
 .album-prevnext-link:focus-visible,
@@ -89,9 +89,9 @@ html {
 .album-pager-link:focus-visible,
 .album-gallery a:focus-visible,
 .album-post-body a:focus-visible,
-.fsk-footer a:focus-visible,
-.fsk-nav a:focus-visible {
-  outline: 2px solid var(--fsk-brand);
+.fbc-footer a:focus-visible,
+.fbc-nav a:focus-visible {
+  outline: 2px solid var(--fbc-brand);
   outline-offset: 2px;
 }
 
@@ -144,13 +144,13 @@ html {
   color: inherit;
 }
 
-/* サイドバーのアーカイブ（公開月別）。PC でサイドバーを細くしている間は、アイコンだけの列に月の文字が入らないので出さない（kit の .fsk-nav-section と同じ条件） */
+/* サイドバーのアーカイブ（公開月別）。PC でサイドバーを細くしている間は、アイコンだけの列に月の文字が入らないので出さない（kit の .fbc-nav-section と同じ条件） */
 .album-archive {
   margin-top: 0.5rem;
 }
 
-.fsk-sidebar.mud-drawer--closed:not(:hover) .album-archive,
-.fsk-sidebar.mud-drawer-mini:not(.mud-drawer--open):not(:hover) .album-archive {
+.fbc-sidebar.mud-drawer--closed:not(:hover) .album-archive,
+.fbc-sidebar.mud-drawer-mini:not(.mud-drawer--open):not(:hover) .album-archive {
   display: none;
 }
 
@@ -929,7 +929,7 @@ html.album-lb-open body {
 }
 
 /* ヘッダーの右端（テーマの切り替え）。検索欄を置かないので、ブランドの画像の右に空きができる分は、切り替えを右へ寄せる */
-.fsk-header .fsk-theme-switch {
+.fbc-header .fbc-theme-switch {
   margin-left: auto;
 }
 
@@ -982,7 +982,7 @@ main.entry-static {
 
 /* MudBlazor は、幅 600px 未満の縦向きで、本文の上の余白とドロワーの上端を --mud-appbar-height の 7/8 にする（標準の 56px のヘッダーが 49px 分しか避けない）。
    このサイトはヘッダーの高さ（スマホ 72px）をそのまま使う（本文がヘッダーの下に潜らない） */
-.fsk-page .mud-main-content {
+.fbc-page .mud-main-content {
   padding-top: var(--album-header-h);
 }
 
@@ -1003,7 +1003,7 @@ html[data-bs-theme="dark"] main.entry-static {
    カードの題・前後の記事・ページ送りは、囲み・見出しの形で分かるので付けない */
 .album-post-body a,
 main.entry-static .album-post-body a {
-  color: var(--fsk-brand);
+  color: var(--fbc-brand);
   text-decoration: underline;
   text-underline-offset: 0.18em;
 }
@@ -1025,20 +1025,20 @@ main.entry-static a {
 }
 
 /* ボタン（ハンバーガー・アーカイブの年・テーマの切り替え）のキーボードのフォーカス枠。MudBlazor の reset が枠を消すので、ここで戻す（リンクと同じ） */
-.fsk-header button:focus-visible,
-.fsk-header .fsk-theme-switch:focus-within {
+.fbc-header button:focus-visible,
+.fbc-header .fbc-theme-switch:focus-within {
   outline: 2px solid #e9d5ff;
   outline-offset: 2px;
 }
 
-.fsk-sidebar button:focus-visible,
-.fsk-sidebar .mud-nav-link:focus-visible {
+.fbc-sidebar button:focus-visible,
+.fbc-sidebar .mud-nav-link:focus-visible {
   outline: 2px solid #e9d5ff;
   outline-offset: -2px;
 }
 
-.fsk-footer button:focus-visible {
-  outline: 2px solid var(--fsk-brand);
+.fbc-footer button:focus-visible {
+  outline: 2px solid var(--fbc-brand);
   outline-offset: 2px;
 }
 
@@ -1090,7 +1090,7 @@ main.entry-static a {
 }
 
 /* 報告ページ（kit の ReportFormView）: 文中のリンクは色だけで見分けさせない（axe link-in-text-block） */
-.fsk-report-card p a {
+.fbc-report-card p a {
   text-decoration: underline;
 }
 
@@ -1143,14 +1143,14 @@ html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
   }
 
   /* SNS のアイコン（22px）は、当たり判定だけ 44px にする（padding と負の margin。間隔は kit の 22px のまま、隣と重ならない） */
-  a.fsk-footer-social {
+  a.fbc-footer-social {
     box-sizing: content-box;
     padding: 11px;
     margin: -11px;
   }
 
   /* 当たり判定が隣と接すると、端の 0.5px で隣が取ってしまう（計測の 21.5px の点）ので、間隔を 2px 広げる */
-  .fsk-footer-socials {
+  .fbc-footer-socials {
     gap: 24px;
   }
 }
@@ -1158,14 +1158,14 @@ html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
 /* 入力欄のフォーカス（MudBlazor は下線の色だけで示すため、キーボードのフォーカスを枠でも示す）。
    MudBlazor の `.mud-input>input.mud-input-root:focus { outline: 0 }` に勝つため、:root を付けて詳細度を上げる */
 :root .mud-input-slot.mud-input-root:focus-visible {
-  outline: 2px solid var(--fsk-focus, #e9d5ff);
+  outline: 2px solid var(--fbc-focus, #e9d5ff);
   outline-offset: 2px;
 }
 
 /* スマホのタップ領域（44px 以上）: メニューの項目（kit の既定は 41px）・ヘッダーのメニューボタン（40px）・テーマ切替（ライトモードの文字の行） */
 .mud-drawer .mud-nav-link { min-height: 44px; }
 .mud-appbar .mud-icon-button { width: 44px; height: 44px; }
-.fsk-theme-switch { min-height: 44px; }
+.fbc-theme-switch { min-height: 44px; }
 
-/* 注記の文字（kit の small.fsk-muted は 11.3px）は 12px 以上 */
-small.fsk-muted { font-size: 12px; }
+/* 注記の文字（kit の small.fbc-muted は 11.3px）は 12px 以上 */
+small.fbc-muted { font-size: 12px; }

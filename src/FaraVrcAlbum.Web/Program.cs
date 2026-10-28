@@ -1,5 +1,5 @@
-using FaraSiteKit.Core;
-using FaraSiteKit.Razor;
+using FaraBlazorComponent.Core;
+using FaraBlazorComponent.Razor;
 using FaraVrcAlbum.Web;
 using FaraVrcAlbum.Web.Services;
 using Microsoft.AspNetCore.Components.Web;
@@ -30,7 +30,7 @@ if (!storeTask.Result)
 
 builder.Services.AddSingleton(store);
 // 共通部品（レイアウト・フッター・報告フォームなど）が読む SiteOptions に、サイトの設定を入れる
-builder.Services.AddFaraSiteKit(options => SiteInfo.Configure(options, store.Settings));
+builder.Services.AddFaraBlazorComponent(options => SiteInfo.Configure(options, store.Settings));
 builder.Services.AddSingleton(maintenanceTask.Result);
 
 if (maintenanceTask.Result.State == MaintenanceState.On)

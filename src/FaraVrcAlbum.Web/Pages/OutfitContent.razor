@@ -27,11 +27,16 @@ else
     private OutfitPage? outfit;
     private int pageCount = 1;
     private bool loaded;
+    private int _request;
 
     protected override async Task OnParametersSetAsync()
     {
+        // 読み込みの途中でパラメータが変わったら、古い応答は捨てる（後から届いた古い応答で、新しい表示を上書きしない）
+        var request = ++_request;
         loaded = false;
-        outfit = await Store.GetOutfitAsync(Id);
+        var found = await Store.GetOutfitAsync(Id);
+        if (request != _request) return;
+        outfit = found;
         pageCount = SiteRules.PageCount(outfit?.Photos.Count ?? 0, Store.Settings.PostsPerPage);
         loaded = true;
     }

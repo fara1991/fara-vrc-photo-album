@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Fara Photo Album（VRChat の写真ブログ。本番 https://vrc-album.fara-labs.com/ ・確認用 https://vrc-album-dev.fara-labs.com/）。.NET 10 / Blazor WebAssembly + MudBlazor（共通部品は fara-site-kit。`external/fara-site-kit` の submodule、v0.5.0 に固定）の静的サイトを Cloudflare Workers（静的アセット + 小さな Worker）に公開する。写真は R2 の独自ドメイン（https://vrc-photos.fara-labs.com/）から配信する。設計は計画書（作業者の手元: `Temp/plan-vrc-album/plan.md`）。Cloudflare の手作業は docs/cloudflare-setup.md。
+Fara Photo Album（VRChat の写真ブログ。本番 https://vrc-album.fara-labs.com/ ・確認用 https://vrc-album-dev.fara-labs.com/）。.NET 10 / Blazor WebAssembly + MudBlazor（共通部品は fara-site-kit。`external/fara-site-kit` の submodule、v0.6.0 に固定）の静的サイトを Cloudflare Workers（静的アセット + 小さな Worker）に公開する。写真は R2 の独自ドメイン（https://vrc-photos.fara-labs.com/）から配信する。設計は計画書（作業者の手元: `Temp/plan-vrc-album/plan.md`）。Cloudflare の手作業は docs/cloudflare-setup.md。
 
 ## ブランチ運用（必ず守る）
 
@@ -9,7 +9,7 @@ Fara Photo Album（VRChat の写真ブログ。本番 https://vrc-album.fara-lab
 - `master` へは `develop` からのみマージする
 - **サイトの公開は GitHub Actions では行わない**（このリポジトリはパブリックにするため、本物の記事 `content/` を Git に入れていない。Actions で公開すると空のサイトで本番を上書きしてしまう）。公開は、手元のデスクトップアプリの「公開」タブ（または `node tools/site.mjs deploy <develop|production>`）から行う。master／develop への push で公開されることは無い。本番の初回は `MAINTENANCE_MODE=true` のメンテナンス画面のまま作られる（公開してよくなったら `MAINTENANCE_MODE` を切り替える）
 - master へのマージはユーザーが行う。Claude は develop → master の PR の作成までで、master へはマージしない
-- ワークフローは `build.yml` だけ（PR と、develop・master への push。ビルドとテストと公開物の検査・`wrangler deploy --dry-run` まで。公開しない・Cloudflare のシークレットも使わない）。`.github/scripts/workflows.test.mjs` が「ワークフローは build.yml だけ・公開しない」を確かめる。CI は本物の `content/` が無いので、架空のサンプル `samples/content` で通す（`--content samples/content`）
+- ワークフローは `build.yml` だけ（PR と、develop・master への push。ビルドとテストと公開物の検査・`wrangler deploy --dry-run` まで。公開しない・Cloudflare のシークレットも使わない）。job は build（ビルド・テスト・検査）・lint（ESLint）・layout-check（レイアウトの自動計測。ubuntu・chromium）`.github/scripts/workflows.test.mjs` が「ワークフローは build.yml だけ・公開しない」を確かめる。CI は本物の `content/` が無いので、架空のサンプル `samples/content` で通す（`--content samples/content`）
 - **リポジトリはパブリックにする予定**（今は private。2026-10-28 に、以前のリポジトリを `fara-vrc-photo-album_backup`（private）に改名し、履歴をまとめた新しいリポジトリを作った）。**人名・本物の `content/`・アバター情報は、Git にも履歴にも入れない**。private + 無料プランのためブランチ保護は使えない（パブリックにすれば使える）
 
 ## 構成メモ
@@ -59,8 +59,11 @@ dotnet test           # Content / Build（node と submodule が要る）/ Web�
 npm test              # Worker・kit の worker・公開の関門・wrangler.jsonc・ブラウザ用 JS
 npm run check         # publish → 本番・確認用の出力 → verify-site → wrangler deploy --dry-run（両環境）
 npm run preview       # Cloudflare と同じ動きで http://localhost:8787（確認用は preview:develop）
+npm run lint          # ESLint（tools・worker・.github/scripts・tests/js・画面の JS。kit の共通設定）
+npm run layout-check  # レイアウトの自動計測（サンプルで静的サイトを作って計測。違反があれば終了コード 1）
 ```
 
-- ブラウザでの確認（Playwright）は tools/verify/README.md（`playwright-core` は作業用フォルダに入れる。リポジトリには入れない）
+- 静的解析（ESLint・C# のアナライザー）とレイアウト計測の決まり・除外の書き方・C# のルールの件数は docs/static-checks.md
+- ブラウザでの確認（Playwright）は tools/verify/README.md（`playwright-core` は devDependency。1.64.1 に固定）
 - 公開前の手動確認（CORS・ホットリンク・axe・ヘッダー・ライトボックス）は docs/verification.md
 - ローカルの `dotnet publish` の ILLink がたまに落ちることがある（他サイトと同じ）。コードの問題ではない。`tools/site.mjs`（アプリの「公開」・`npm run site` 系）は、ILLink が原因の失敗だけ、自動で最大 3 回までやり直す（`tools/publish-retry.mjs`）。それでも落ちたら、再実行する（`npm run clean` で bin/obj を消してからでもよい）

@@ -12,7 +12,20 @@ public static class WorldImageEncoder
 {
     private static readonly (int Width, int Quality)[] Sizes = [(512, 78), (1024, 80)];
 
+    /// <summary>画像を WebP にする。読めない画像・変換できない画像は <see cref="InvalidDataException"/>（NetVips の型は外に出さない）。</summary>
     public static EncodedWorldImage Encode(byte[] image)
+    {
+        try
+        {
+            return EncodeCore(image);
+        }
+        catch (VipsException e)
+        {
+            throw new InvalidDataException($"画像として読めませんでした（{e.Message}）", e);
+        }
+    }
+
+    private static EncodedWorldImage EncodeCore(byte[] image)
     {
         using var source = Image.NewFromBuffer(image);
         using var srgb = source.Colourspace(Enums.Interpretation.Srgb);

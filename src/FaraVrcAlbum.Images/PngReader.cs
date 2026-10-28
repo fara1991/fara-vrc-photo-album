@@ -57,7 +57,7 @@ public static class PngReader
         while (pos + 12 <= data.Length)
         {
             var length = BinaryPrimitives.ReadInt32BigEndian(data.Slice(pos, 4));
-            if (length < 0 || pos + 12 + length > data.Length) break;
+            if (length < 0 || (long)pos + 12 + length > data.Length) break;                // int のまま足すと、長さが大きいとき溢れて通り抜けるため
             var type = Encoding.ASCII.GetString(data.Slice(pos + 4, 4));
             result.Add(new PngChunk(type, pos + 8, length));
             if (type is "IDAT" or "IEND") break;

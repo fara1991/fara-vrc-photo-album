@@ -285,7 +285,8 @@ public static class WorldImageService
         }
         // worlds.json から消えたワールドの情報は消す
         foreach (var gone in file.Worlds.Keys.Where(k => !content.Worlds.ContainsKey(k)).ToList()) file.Worlds.Remove(gone);
-        if (apply && updated > 0) WriteStats(editor, file, now, keepDate: false);
+        // 途中で止まった・取れなかったワールドがあるときは、全体の取得日時を新しくしない（残りは前の値のままのため）
+        if (apply && updated > 0) WriteStats(editor, file, now, keepDate: problems.Count > 0);
         return new StatsResult(updated, problems, remaining);
     }
 
@@ -393,13 +394,29 @@ public static class WorldImageService
                 problems.Add($"{item.Name}: {Describe(e)}");
                 continue;
             }
-            var encoded = WorldImageEncoder.Encode(bytes);
-            foreach (var variant in encoded.Variants)
-                await store.PutAsync(item.Key + variant.Suffix, variant.Data, variant.ContentType, ObjectHeaders.ImmutableImage, ct);
-            WriteImage(editor, item.Id, new WorldImage { Key = item.Key, W = encoded.W, H = encoded.H });
-            done++;
+            try
+            {
+                await StoreImageAsync(editor, store, item.Id, item.Key, bytes, ct);
+                done++;
+            }
+            catch (Exception e) when (!ct.IsCancellationRequested)
+            {
+                problems.Add($"{item.Name}: 画像を保存できませんでした（{Describe(e)}）");        // 1 件の失敗で止めず、次へ進む（この件は次の実行でやり直せる）
+            }
         }
         return (done, problems);
+    }
+
+    /// <summary>
+    /// 画像（VRChat から読んだ元のバイト列）を WebP（512・1024）にして R2 に置き、worlds.json の image を書く。
+    /// 取得（VRChat への問い合わせ）は呼び出し側。ApplyImagesAsync と WorldFetchService の共通。
+    /// </summary>
+    internal static async Task StoreImageAsync(ContentEditor editor, IObjectStore store, string worldId, string key, byte[] bytes, CancellationToken ct)
+    {
+        var encoded = WorldImageEncoder.Encode(bytes);
+        foreach (var variant in encoded.Variants)
+            await store.PutAsync(key + variant.Suffix, variant.Data, variant.ContentType, ObjectHeaders.ImmutableImage, ct);
+        WriteImage(editor, worldId, new WorldImage { Key = key, W = encoded.W, H = encoded.H });
     }
 
     /// <summary>worlds.json の 1 つのワールドの image を書く（ほかの項目・順序は保つ）。書いたあと、ビルドと同じ検査を通す（通らなければ元に戻す）。</summary>

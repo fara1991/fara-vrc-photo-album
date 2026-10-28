@@ -4,7 +4,7 @@
 //   node external/fara-site-kit/tools/layout-check/serve-static.mjs site-production 8850
 // で配ってから、kit の cli.mjs を --config layout-check.config.mjs で動かす。
 //
-// 幅は既定（360・390・768・1024・1440）。規則は既定（no-horizontal-scroll・single-h1・focus-visible・no-offscreen-focus・tap-target・min-font-size・menu-esc）。
+// 幅は既定（360・390・768・1024・1440）。規則は既定（no-horizontal-scroll・single-h1・focus-visible・no-offscreen-focus・tap-target・min-font-size・menu-esc・menu-close-visible）。
 // 除外（exclusions）は、規則・セレクター・理由を必ず書く。理由の無い除外は設定エラー。
 export default {
   baseURL: "http://127.0.0.1:8850",
@@ -22,7 +22,8 @@ export default {
   ],
   // Blazor が描く MudLayout。静的 HTML には無いので、起動後に待つ
   readySelector: ".mud-layout",
-  menuEsc: { buttonSelector: ".fsk-menu-toggle" },
+  // closeSelector: 開いたドロワーの閉じるボタン（kit 0.7.0 の SiteLayout が出す）。ドロワーがメニューボタンを覆うので、閉じる手段はこちらで測る（menu-close-visible）
+  menuEsc: { buttonSelector: ".fsk-menu-toggle", closeSelector: ".fsk-drawer-close" },
   exclusions: [
     {
       rule: "tap-target",

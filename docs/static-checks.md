@@ -15,6 +15,7 @@ kit の詳しい中身は `external/fara-site-kit/docs/layout-check.md`・`docs/
 `npm run layout-check` は、サンプルの記事（`samples/content`）で静的サイト（`site-production`）を作り、配って計測する。`--no-build` を付けると、作成済みの `site-production` をそのまま計測する。終了コードは 0（違反なし）・1（違反あり）・2（計測できなかった）。
 
 - 対象（`layout-check.config.mjs`）: トップ・記事（サンプル）・一覧（2026 年 1 月）・ワールド・タグ・服・問い合わせ・プライバシーポリシー・404（`/404.html`）。幅は 360・390・768・1024・1440px。
+- メニュー（`menuEsc`）: `buttonSelector` は `.fsk-menu-toggle`、`closeSelector` は `.fsk-drawer-close`（kit 0.7.0 の SiteLayout が、スマホのドロワーの左上に出す閉じるボタン）。ドロワーはメニューボタンを覆うため、閉じる手段は閉じるボタンで測る（`menu-close-visible`）。`closeSelector` を省くと、覆われたメニューボタンで違反になる（kit 0.7.0 に上げた時点で、18 件出た）。
 - 配信: kit の `serve-static.mjs`（`createStaticServer`）で配る。kit の配信は、同じ名前のフォルダ（`/worlds` の `worlds/`）があると、`index.html` を探して 404 になるため、`tools/layout-check.mjs` は、拡張子の無いパスに `<パス>.html` があればそちらを渡す（Cloudflare と同じく `.html` を先に見る）。kit 側の直し（kit の docs の「`/works` → `works.html`」どおりにする）は、kit の別の変更として扱う。
 - `readySelector` は `.mud-layout`（Blazor が描く。静的 HTML には無い）。起動の後にだけ計測する。
 

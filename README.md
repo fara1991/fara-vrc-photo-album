@@ -15,7 +15,7 @@ fara-vrc-photo-album/
 ├── appsettings.json                  サイト名・画像の基準 URL・1 ページの件数
 ├── content/posts/                    ★ 記事（Git 管理外。手元と R2 の控えで持つ）
 ├── samples/content/                  CI 用の架空のサンプル記事（Git 管理）
-├── external/fara-site-kit/           共通部品（submodule。v0.4.0）
+├── external/fara-site-kit/           共通部品（submodule。v0.7.0）
 ├── src/
 │   ├── FaraVrcAlbum.Shared/          モデル・規則・日付（ブラウザとビルドで共用）
 │   ├── FaraVrcAlbum.Content/         ビルド時のみ: content の検証・Markdown

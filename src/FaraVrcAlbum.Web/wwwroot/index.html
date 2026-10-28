@@ -17,7 +17,8 @@
     -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet" />
+    <!-- display=block: フォントが届くまで文字を出さない。swap だと、フォールバックの字で描いてから Zen Kaku に差し替わり、折り返しが変わって本文が動く。block にすると、差し替えによるずれが出ない。代わりに、届くまでの一瞬は文字が見えない（初回の読み込みの間だけ）。optional にすると初回の訪問で Zen Kaku が出ないので採らない（fara-labs の PR #79 と同じ判断） -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=block" rel="stylesheet" />
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <link href="_content/FaraSiteKit.Razor/css/fara-site-kit.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />

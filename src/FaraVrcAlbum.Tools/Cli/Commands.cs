@@ -296,7 +296,7 @@ public static class Commands
     }
 }
 
-/// <summary>同時実行の防止（local/album.lock）。残っていれば、前回が異常終了したかを確かめてから消す。</summary>
+/// <summary>同時実行の防止（local/album.lock）。残っていれば「別の album が動いている」として止める。前回の異常終了かどうかは確かめず、消すのは利用者（自動では消さない）。</summary>
 public sealed class LockFile : IDisposable
 {
     private readonly string _path;

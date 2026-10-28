@@ -365,7 +365,7 @@ public class SiteBuilderTests
             .Select(x => world.IndexOf(x, StringComparison.Ordinal)).ToArray();
         Assert.True(order.All(i => i >= 0) && order.SequenceEqual(order.Order()), string.Join(",", order));
         Assert.Contains("src=\"" + ImageHost + "/" + BuildFixture.World1ImageKey + "_1024.webp\"", world);
-        Assert.Contains("575,361", world);
+        Assert.Contains("123,456", world);
         Assert.Contains("作者の名前", world);
         Assert.Contains("2026年10月26日時点の", world);
         Assert.Contains(vrchat, world);
@@ -376,7 +376,7 @@ public class SiteBuilderTests
         Assert.DoesNotContain("album-world-info", world2);
         // データ（JSON）にも同じ情報（起動後の Blazor の画面用）
         var data = JsonSerializer.Deserialize(Read(prod, $"data/worlds/{Uuid1}.json"), SiteJsonContext.Default.WorldPage)!;
-        Assert.Equal((575361L, BuildFixture.World1ImageKey), (data.Stats!.Visits, data.Image!.Key));
+        Assert.Equal((123456L, BuildFixture.World1ImageKey), (data.Stats!.Visits, data.Image!.Key));
     }
 
     [Fact]

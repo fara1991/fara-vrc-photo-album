@@ -76,10 +76,25 @@ test("run: false・未設定・シークレットのときは止める", async (
   }
 });
 
-test("run: Worker がまだ無い（初回の公開）ときは通す", async () => {
+test("run: Worker が 404 のときは、既定では止める（名前の打ち間違いと区別できないため）", async () => {
   const r = await runWith(async () => new Response("", { status: 404 }));
+  assert.equal(r.code, 1);
+  assert.match(r.text, /404/);
+  assert.match(r.text, /ALLOW_MISSING_WORKER=1/);
+});
+
+test("run: ALLOW_MISSING_WORKER=1 のときだけ、初回の公開として通す", async () => {
+  const r = await runWith(async () => new Response("", { status: 404 }), { ...ENV, ALLOW_MISSING_WORKER: "1" });
   assert.equal(r.code, 0);
   assert.match(r.text, /初回/);
+  assert.match(r.text, /ALLOW_MISSING_WORKER=1 のため/);
+});
+
+test("run: ALLOW_MISSING_WORKER は 1 のときだけ効く（0・空・true では通さない）", async () => {
+  for (const value of ["0", "", "true"]) {
+    const r = await runWith(async () => new Response("", { status: 404 }), { ...ENV, ALLOW_MISSING_WORKER: value });
+    assert.equal(r.code, 1, `ALLOW_MISSING_WORKER=${JSON.stringify(value)} で通してしまった`);
+  }
 });
 
 test("run: 確かめられなかったとき（通信・権限）は止める", async () => {

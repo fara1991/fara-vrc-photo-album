@@ -51,7 +51,7 @@ public sealed class BuildFixture : IDisposable
         File.WriteAllText(Path.Combine(Repo, "content", "worlds.json"),
             "{ \"" + World1 + "\": { \"name\": \"" + World1Name + "\", \"aliases\": [\"旧名\"], \"image\": { \"key\": \"" + World1ImageKey + "\", \"w\": 1024, \"h\": 768 } }, \"" + World2 + "\": { \"name\": \"マスタのワールド名 2\" } }");
         File.WriteAllText(Path.Combine(Repo, "content", "world-stats.json"),
-            "{ \"fetchedAt\": \"2026-10-26T12:00:00+09:00\", \"worlds\": { \"" + World1 + "\": { \"authorName\": \"作者の名前\", \"visits\": 575361, \"favorites\": 50162, \"capacity\": 80, \"recommendedCapacity\": 40 } } }");
+            "{ \"fetchedAt\": \"2026-10-26T12:00:00+09:00\", \"worlds\": { \"" + World1 + "\": { \"authorName\": \"作者の名前\", \"visits\": 123456, \"favorites\": 4321, \"capacity\": 80, \"recommendedCapacity\": 40 } } }");
         File.WriteAllText(Path.Combine(Repo, "content", "tags.json"),
             "{ \"sample\": { \"name\": \"サンプル\" }, \"night\": { \"name\": \"夜景\" }, \"unused\": { \"name\": \"使われないタグ\" } }");
         File.WriteAllText(Path.Combine(Repo, "content", "outfits.json"),

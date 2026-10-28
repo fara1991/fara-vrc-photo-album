@@ -25,7 +25,7 @@ public sealed class PhotoServerHistoryTests : IDisposable
     {
         var path = Write(
             """{"t":"2026-10-28T11:00:00+09:00","type":"avatar","avatarName":"Earlier"}""",
-            """{"t":"2026-10-28T11:30:00+09:00","type":"world","worldId":"wrld_528e5412-7bb4-42c1-aab2-2b38a629f5de","worldName":"W"}""",
+            """{"t":"2026-10-28T11:30:00+09:00","type":"world","worldId":"wrld_66667777-8888-4999-8aaa-bbbbbbbbbbbb","worldName":"W"}""",
             "これは壊れた行",
             """{"t":"2026-10-28T11:50:00+09:00","type":"avatar","avatarName":"Fara AlmarianDress"}""",
             """{"t":"2026-10-28T11:50:00+09:00","type":"avatar","avatarName":"Fara AlmarianDress","avatarId":"avtr_00000000-0000-4000-8000-000000000003"}""",

@@ -4,7 +4,7 @@ namespace FaraVrcAlbum.Content.Tests;
 
 public class IdRulesTests
 {
-    private const string Uuid = "951b8ef4-bc5a-47c5-a156-2b62057d313f";
+    private const string Uuid = "11111111-2222-4333-8444-555555555555";
 
     [Fact]
     public void WorldIdConvertsToAndFromThePathSegment()
@@ -20,8 +20,8 @@ public class IdRulesTests
     [InlineData("")]
     [InlineData("wrld_")]
     [InlineData("wrld_951B8EF4-BC5A-47C5-A156-2B62057D313F")]      // 大文字
-    [InlineData("wrld_951b8ef4bc5a47c5a1562b62057d313f")]          // ハイフンなし
-    [InlineData("wrld_951b8ef4-bc5a-47c5-a156-2b62057d313f:123")]  // インスタンス ID つき
+    [InlineData("wrld_11112222433384445555555555555555")]          // ハイフンなし
+    [InlineData("wrld_11111111-2222-4333-8444-555555555555:123")]  // インスタンス ID つき
     [InlineData("usr_00000000-0000-0000-0000-000000000000")]
     public void AnythingButWrldAndAUuidIsRejected(string id)
     {
@@ -33,8 +33,8 @@ public class IdRulesTests
     [Theory]
     [InlineData("")]
     [InlineData("wrld_" + Uuid)]
-    [InlineData("951b8ef4-bc5a-47c5-a156-2b62057d313")]
-    [InlineData("../951b8ef4-bc5a-47c5-a156-2b62057d313f")]
+    [InlineData("11111111-2222-4333-8444-55555555555")]
+    [InlineData("../11111111-2222-4333-8444-555555555555")]
     [InlineData("951B8EF4-BC5A-47C5-A156-2B62057D313F")]
     public void APathSegmentThatIsNotAUuidIsNull(string segment) => Assert.Null(WorldId.FromPathSegment(segment));
 

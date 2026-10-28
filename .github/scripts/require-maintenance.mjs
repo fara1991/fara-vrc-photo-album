@@ -74,8 +74,14 @@ export async function run({ workerName, env, fetchImpl, log = console.log, error
     return 1;
   }
   if (settings.missing) {
-    log(`Worker ${workerName} がまだありません（初回の公開）。確認を飛ばして公開します`);
-    return 0;
+    // 404 は「まだ無い（初回）」とも「名前の打ち間違い」とも区別できない。確認を飛ばせば、メンテナンスの表示を確かめずに本番を出してしまうので、
+    // 既定では止める。初回の本番の公開だけ、明示的に ALLOW_MISSING_WORKER=1 を付けて通す
+    if (String(env.ALLOW_MISSING_WORKER ?? "").trim() === "1") {
+      log(`Worker ${workerName} がまだありません（初回の公開）。ALLOW_MISSING_WORKER=1 のため、確認を飛ばして公開します`);
+      return 0;
+    }
+    error(`::error::Worker ${workerName} が見つかりません（404）。名前が正しいか確かめてください。初回の本番の公開（Worker をまだ作っていないとき）だけ、ALLOW_MISSING_WORKER=1 を付けて実行します`);
+    return 1;
   }
   const result = evaluate(readMaintenanceValue(settings.bindings));
   if (result.ok) { log(result.message); return 0; }

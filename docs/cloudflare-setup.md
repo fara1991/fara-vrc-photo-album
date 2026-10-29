@@ -4,11 +4,11 @@ Fara Photo Album は Cloudflare Workers（静的アセットのみ + 小さな W
 
 | 公開先 | 置き場所 | 公開のタイミング |
 | --- | --- | --- |
-| https://vrc-album.fara-labs.com/（本番） | Worker `fara-vrc-album` | 手元のアプリ／`tools/site.mjs deploy production`（初回は `MAINTENANCE_MODE=true` のメンテナンス画面のまま作られる） |
+| https://vrc-album.fara-labs.com/（本番） | Worker `fara-vrc-album` | 手元のアプリ／`tools/site.mjs deploy production`（**初回は、メンテナンス画面を経由せず、すぐ一般公開される**。下の「本番の最初の公開」） |
 | https://vrc-album-dev.fara-labs.com/（確認用） | Worker `fara-vrc-album-dev` | 手元のアプリ／`tools/site.mjs deploy develop`（Cloudflare Access で守る） |
 | https://vrc-photos.fara-labs.com/（写真） | R2 バケット `fara-vrc-photos` のカスタムドメイン | 画像のアップロード（M3 の `album` ツール）時 |
 
-**公開は GitHub Actions では行わない**（2026-10-28 から。本物の記事 `content/` を Git に入れていないため）。ワークフローは `build.yml`（PR と、develop・master への push。サンプル記事でのビルドと検査と `wrangler deploy --dry-run` だけ）の 1 本。以下の表の A2・A3・A5・B3 など、Actions の Environments・シークレットを使う手順は、**以前の構成の記録**（新しいリポジトリには Environments もシークレットも作っていない）。公開用のトークンは、デスクトップアプリの設定（`.env.local`）に入れる。
+**公開は GitHub Actions では行わない**（2026-10-28 から。本物の記事 `content/` を Git に入れていないため）。ワークフローは `build.yml`（PR と、develop・master への push。サンプル記事でのビルドと検査と `wrangler deploy --dry-run` だけ）の 1 本。以下の表の A2・A3・A5・B3・D など、Actions の Environments・シークレットを使う手順は、**以前の構成の記録**（新しいリポジトリには Environments もシークレットも作っていない）。公開用のトークンは、デスクトップアプリの設定（`.env.local`）に入れる。
 
 ## 優先順
 
@@ -20,7 +20,7 @@ Fara Photo Album は Cloudflare Workers（静的アセットのみ + 小さな W
 | A2 | **Environments を作る**（`production` = Deployment branches を master のみ、`develop` = develop のみ）。その **Environment の secrets** に `CLOUDFLARE_API_TOKEN`（production・develop のそれぞれ）、**リポジトリの Variables** に `CLOUDFLARE_ACCOUNT_ID` を登録 | Settings → Environments / Secrets and variables → Actions | deploy.yml は `environment: production`、deploy-develop.yml は `environment: develop` を使うので、Environment の secrets を読める。build.yml（PR でも動く）は environment を使わず、シークレットを読まない。**既存サイトと同じトークンの値を使える**。権限: Workers Scripts Edit・Workers Routes Edit・Zone DNS Edit（カスタムドメインの自動作成）・Account Settings Read（`require-maintenance` が Worker の設定を読むため。**表記が実態と合うかは未確認**。Workers Scripts の Edit は Read を含む）。範囲は Zone = `fara-labs.com` なので新ホストの追加は不要 |
 | A3 | （A2 で作った）Environments の保護の確認: `production`（Deployment branches = master のみ）・`develop`（= develop のみ） | Settings → Environments | avatar・portfolio（private）には同じ Environments があり、ブランチ制限（branch_policy）が使えることを API で確認済み。一方 **ブランチ保護（branch protection）は private + 無料プランでは設定できない**（403）。取り違えは deploy.yml・deploy-develop.yml の中の照合（ブランチ）・verify-site・require-maintenance が防ぐ |
 | A4 | Cloudflare Access に `vrc-album-dev.fara-labs.com` を追加（既存の dev 用 Application の public hostname に追加し、同じ Allow ポリシー） | Zero Trust → Access → Applications | **`vrc-photos.fara-labs.com` は Access の対象にしない**（確認用サイトから画像が読めなくなる） |
-| A5 | develop にマージ → Deploy (develop) が動くのを確認 → https://vrc-album-dev.fara-labs.com/ を Access 越しに開く | GitHub Actions | 初回はカスタムドメインの作成に数分。権限エラーなら Workers → 該当 Worker → Settings → Domains & Routes から手動で 1 回追加して再実行 |
+| A5 | 手元のアプリ（または `node tools/site.mjs deploy develop`。develop のブランチで、作業ツリーが clean）で確認用へ公開 → https://vrc-album-dev.fara-labs.com/ を Access 越しに開く。**develop にマージしただけでは反映されない**（再公開が要る） | 手元のアプリ | 初回はカスタムドメインの作成に数分。権限エラーなら Workers → 該当 Worker → Settings → Domains & Routes から手動で 1 回追加して再実行（A2・A3 の Environments は、以前の構成の記録） |
 
 ### B. 本番を出す前に（M4）
 
@@ -28,7 +28,7 @@ Fara Photo Album は Cloudflare Workers（静的アセットのみ + 小さな W
 | --- | --- | --- | --- |
 | B1 | Turnstile のウィジェット（既存の `fara sites report`）にホスト名 `vrc-album.fara-labs.com`・`vrc-album-dev.fara-labs.com` を追加 | Cloudflare → Turnstile | `/report` 用 |
 | B2 | 初回公開後、Worker `fara-vrc-album`・`fara-vrc-album-dev` に変数・シークレットを登録: `TURNSTILE_SITE_KEY`・`TURNSTILE_SECRET`・`DISCORD_WEBHOOK_URL`（**シークレット**）、`MAINTENANCE_MODE`・`MAINTENANCE_MESSAGE`（**テキスト**） | Workers & Pages → 各 Worker → 設定 → 変数とシークレット | 手順は portfolio の `docs/report-and-maintenance.md` の 1-3・2-2 と同じ。`keep_vars` により公開では消えない |
-| B3 | 本番の最初の公開（master へのマージ）は **`MAINTENANCE_MODE=true` のまま**作られる。公開してよくなったら Actions → Deploy (production) → Run workflow（`maintenance_mode=false`、Use workflow from = master） | GitHub Actions | 本番の公開前ゲート（`MAINTENANCE_MODE=notice` が必要）は、Worker がまだ無い初回だけ通る |
+| B3 | 本番の最初の公開。**master にマージしただけでは公開されない**。手元のアプリ／`tools/site.mjs deploy production` から行う。**そのまま初回の公開をすると、メンテナンス画面を経由せず、すぐ一般公開される**。メンテナンス画面のまま出すなら、下の「本番の最初の公開」の手順 | 手元 | 本番の公開前ゲート（`MAINTENANCE_MODE` が `notice` か `true`）は、Worker がまだ無い初回だけ `ALLOW_MISSING_WORKER=1` で通る（このとき変数は入らない） |
 | B4 | レート制限ルール（`/api/report` の POST）は既存のゾーン規則で足りる（確認のみ） | WAF | |
 | B5 | Web Analytics: 新ホストを許可（ビーコンはゾーンの設定で自動挿入）。CSP は `tools/site.json` で許可済み | Cloudflare → Analytics | 他サイトと同じ。privacy に記載する |
 
@@ -56,13 +56,37 @@ Fara Photo Album は Cloudflare Workers（静的アセットのみ + 小さな W
 
 ### F. アプリからの公開に使うトークン（任意。デスクトップ版の「公開」タブを使うとき）
 
-1. Cloudflare のダッシュボード → 右上のプロフィール → 「API トークン」→「トークンを作成」→「Cloudflare Workers を編集する」のテンプレート（GitHub Actions の公開に使っているものと同じ権限）
+1. Cloudflare のダッシュボード → 右上のプロフィール → 「API トークン」→「トークンを作成」→「Cloudflare Workers を編集する」のテンプレート（以前の GitHub Actions の公開に使っていたものと同じ権限）
 2. 作ったトークンの値を、デスクトップ版の設定の「Cloudflare の API トークン（サイトの公開用）」に入れて保存する（アカウント ID は、R2 の設定の「Cloudflare R2 のアカウント ID」を共通で使う）（`.env.local` に入る。Git には入らない）
 3. 本番の公開では、Worker の変数 `MAINTENANCE_MODE` を読む権限（Workers Scripts の読み取り）も使う。テンプレートに含まれる
 
 ### 注意（kit の一括メンテ切替）
 
-**公開してよくなるまで、kit の一括メンテ切替（`set-maintenance-all.yml` / `tools/maintenance.mjs set`）を master（本番）向けに実行しない。** 本番の album は初回公開でメンテナンス画面（`MAINTENANCE_MODE=true`）のまま作られ、本番を含む一括切替（`notice` / `false`）は、それを意図せず公開してしまう。このため kit の `maintenance-sites.json` には album の **develop（確認用）だけ**を載せてあり、production は公開準備ができてから足す（手順は kit の `docs/maintenance-cli.md`）。本番の album は、このリポジトリの Actions → Deploy (production) → Run workflow で操作する。
+**公開してよくなるまで、kit の一括メンテ切替（`set-maintenance-all.yml` / `tools/maintenance.mjs set`）を master（本番）向けに実行しない。** 本番の album の `MAINTENANCE_MODE` は、「本番の最初の公開」の手順で `true` にしておく運用のあいだ、本番を含む一括切替（`notice` / `false`）が、それを意図せず公開してしまう（手順を踏まずに初回を公開した場合は、最初から公開状態になる）。このため kit の `maintenance-sites.json` には album の **develop（確認用）だけ**を載せてあり、production は公開準備ができてから足す（手順は kit の `docs/maintenance-cli.md`）。本番の album の `MAINTENANCE_MODE` は、Cloudflare のダッシュボード（Workers & Pages → `fara-vrc-album` → 設定 → 変数とシークレット）で切り替える（`keep_vars` により、手元の公開では消えない）。
+
+### 本番の最初の公開（要点）
+
+現状のコード（`tools/site.mjs`・`SitePublishService`）の動きは次のとおり（コードの読み取りで確かめたもの。本番では実行していない）。
+
+- 公開の前提: **master に develop をマージ済み**で、手元の master が最新（HEAD が `origin/master` と一致・作業ツリーが clean。`tools/publish-guard.mjs`）。確認用（dev）に今の記事の中身を公開済みで、content は「同期」タブで R2 と揃えてある（content は Git の外なので、ガードは見ない）。
+- Worker がまだ無いと、公開の前の確認（`require-maintenance.mjs`）が 404 で止まる。`ALLOW_MISSING_WORKER=1` で通すと、`wrangler deploy` は変数なしで実行される。**`MAINTENANCE_MODE` が入らないので、メンテナンス画面を経由せず、すぐ一般公開される。**
+- Worker が既にあれば、確認は `MAINTENANCE_MODE` が `notice` か `true` のときだけ通る。
+
+**メンテナンス画面のまま出したいとき**は、先に Worker を `MAINTENANCE_MODE=true` つきで作る。そうすれば、そのあとのアプリの公開は `ALLOW_MISSING_WORKER` なしで通る。
+
+```bash
+# master を最新にして、作業ツリーが clean の状態で。CLOUDFLARE_API_TOKEN・CLOUDFLARE_ACCOUNT_ID を環境変数に入れておく
+node tools/site.mjs build production                 # site-production を作る（verify-site も走る）
+cp -r site-production dist                           # PowerShell なら Copy-Item -Recurse
+node node_modules/wrangler/bin/wrangler.js deploy --env= --var MAINTENANCE_MODE:true
+rm -rf dist
+```
+
+- これは `publish-guard` と `require-maintenance` を通らない手元の直接の実行。**master の最新・content が R2 と同じであること・Worker 名（`fara-vrc-album`）を、自分で確かめてから行う**。
+- **要確認**: `--var` で入れた変数が、その後のアプリの公開（`keep_vars: true`）で消えずに残るか。公開のあと、ダッシュボードで `MAINTENANCE_MODE` が **テキスト**の `true` になっていること、本番の URL が 503（メンテナンス画面）になることを確かめる（確かめるまでは、アプリで本番を公開しない）。残らなければ、ダッシュボードで `MAINTENANCE_MODE`（テキスト）を足す。
+- **要確認**: 初回の公開でカスタムドメイン（`vrc-album.fara-labs.com`）が自動で作られるか（確認用では A5 のとおり、数分かかる・権限エラーのときは手動）。
+- 公開してよくなったら、ダッシュボードで `MAINTENANCE_MODE` を切り替える（`notice` で予告 → `false`）。`false` にしたあとは、次のアプリの公開が止まる（`notice` か `true` に戻してから公開する決まり）。
+- `B2` の変数（`TURNSTILE_*`・`DISCORD_WEBHOOK_URL`）も、公開を解く前に入れる。
 
 ### D. kit 側（Claude が PR を出す。マージ・タグ・設定はユーザー）
 
@@ -87,7 +111,7 @@ Fara Photo Album は Cloudflare Workers（静的アセットのみ + 小さな W
 ```
 
 - 計画書の例（`["/api/*", "/*.html", "/", "!…"]`）は **使えない**: `/posts/foo` のような拡張子なしの URL に `/*.html` は一致せず、メンテナンス中でも HTML が 503 にならない。`/*` に除外を足す形にした。
-- `/data/*` は除外しない（本番の初回はメンテナンス画面のまま作るので、記事の JSON もメンテナンス中は止める）。
+- `/data/*` は除外しない（メンテナンス中は、記事の JSON も止める）。
 - 検証（wrangler 4.152.0、`wrangler dev --var MAINTENANCE_MODE:true`、2026-10-24）: `/`・`/posts/…`・``/privacy`・`/data/*.json`・`/nonexist`・`/robots.txt` = **503**（Worker を通る）、`/api/maintenance` = 200、`/_framework/*`・`/_content/*`・`/css/*`・`/js/*`・`/images/*`・`/favicon.svg` = **200**（Worker を通さない）。通常時は、HTML・静的部品の両方に `Content-Security-Policy` が付く（`_headers` は Worker 経由でも直接でも効く）。`wrangler deploy --dry-run` も本番・develop で通る。
 - **未確認**: 実際の Cloudflare 上での課金カウント（静的部品が Workers の呼び出しに数えられないこと）。公開後に Workers の使用量（ダッシュボード）で確認する。ローカルの wrangler dev で除外が効くことまでは確認済み。効いていなければ `true` に戻せばよい（設定 1 か所）。
 - 設定の形は `tests/js/wrangler-config.test.mjs` が固定している。

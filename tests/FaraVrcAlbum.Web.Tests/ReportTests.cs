@@ -10,7 +10,7 @@ using Xunit;
 
 namespace FaraVrcAlbum.Web.Tests;
 
-/// <summary>/report: 連絡先は Twitter のユーザー名（@○○）が必須（kit v0.4.0 のオプション）。</summary>
+/// <summary>/report: 連絡先は任意（kit の既定。他のサイトと同じ）。</summary>
 public sealed class ReportTests : BunitContext, IAsyncLifetime
 {
     public ReportTests()
@@ -38,13 +38,13 @@ public sealed class ReportTests : BunitContext, IAsyncLifetime
     }
 
     [Fact]
-    public void TheContactIsRequiredAndAskedAsAnXUserName()
+    public void TheContactIsOptional()
     {
         var cut = Render<Report>();
 
-        Assert.Equal("Twitter のユーザー名（@○○）（必須）", cut.Find("label[for=report-contact]").TextContent.Trim());
-        Assert.Equal("true", cut.Find("#report-contact").GetAttribute("aria-required"));
-        Assert.Equal("@example", cut.Find("#report-contact").GetAttribute("placeholder"));
-        Assert.Contains("Discord では受け付けていません", cut.Markup);
+        Assert.Equal("連絡先（任意）", cut.Find("label[for=report-contact]").TextContent.Trim());
+        Assert.NotEqual("true", cut.Find("#report-contact").GetAttribute("aria-required"));
+        Assert.Contains("書かなくても送れます", cut.Markup);
+        Assert.DoesNotContain("Twitter", cut.Markup);
     }
 }

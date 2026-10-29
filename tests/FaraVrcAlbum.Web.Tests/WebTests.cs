@@ -75,6 +75,21 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
     }
 
     [Fact]
+    public async Task TheSupportMenuUsesTheSameNamesAsTheFooterAndThePages()
+    {
+        var cut = await RenderLayoutAsync();
+
+        // 同じ機能は、メニュー・フッター・ページで同じ名前（他のサイトと同じ「問い合わせ」。「作者へ報告」は使わない）
+        var support = cut.Find("nav[aria-label=サポート]");
+        var labels = support.QuerySelectorAll("a").Select(a => a.TextContent.Trim()).ToArray();
+        Assert.Equal(new[] { "問い合わせ", "プライバシーポリシー" }, labels);
+        var footerLinks = cut.FindAll("footer a").Select(a => a.TextContent.Trim()).ToArray();
+        Assert.Contains("問い合わせ", footerLinks);
+        Assert.Contains("プライバシーポリシー", footerLinks);
+        Assert.DoesNotContain("作者へ報告", cut.Markup);
+    }
+
+    [Fact]
     public void TheHeaderImageFileIsHashNamedByItsContentAndIs960By240()
     {
         var repo = new DirectoryInfo(AppContext.BaseDirectory);

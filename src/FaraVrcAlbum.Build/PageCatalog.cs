@@ -221,8 +221,8 @@ internal static class PageCatalog
         pages.Add(Page("/privacy", $"プライバシーポリシー | {settings.SiteName}", "このサイトが取得する情報と、写真の掲載・削除依頼についての方針です。",
             Render<PrivacyView>(new Dictionary<string, object?> { ["ImageHost"] = new Uri(settings.PublicImageBaseUrl).Authority })));
 
-        var report = Page("/report", $"作者へ報告 | {settings.SiteName}", "作者への報告・削除依頼のフォームです。",
-            Render<LoadingView>(new Dictionary<string, object?> { ["Title"] = "作者へ報告" }));
+        var report = Page("/report", $"問い合わせ | {settings.SiteName}", "作者への問い合わせ（不具合・要望・ご意見・写真の削除依頼）のフォームです。",
+            Render<LoadingView>(new Dictionary<string, object?> { ["Title"] = "問い合わせ" }));
         report["noindex"] = true;
         pages.Add(report);
 

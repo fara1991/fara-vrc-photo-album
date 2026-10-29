@@ -36,12 +36,13 @@ public static class WorldImageService
     /// </summary>
     public static HttpClient CreateClient(HttpMessageHandler? inner = null, Func<CancellationToken, Task>? wait = null, TimeSpan? requestTimeout = null)
     {
-        var throttle = new Throttle(wait ?? (c => Task.Delay(Interval + TimeSpan.FromMilliseconds(Random.Shared.Next(0, 5000)), c)), requestTimeout ?? RequestTimeout)
+        // HttpClient の Timeout は待ち時間まで含むので使わない（通信だけの時間切れは Throttle がかける）
+#pragma warning disable CA2000 // Throttle は HttpClient（disposeHandler 既定 true）が持ち、HttpClient を破棄するときに一緒に破棄される（所有権を渡している）
+        var http = new HttpClient(new Throttle(wait ?? (c => Task.Delay(Interval + TimeSpan.FromMilliseconds(Random.Shared.Next(0, 5000)), c)), requestTimeout ?? RequestTimeout)
         {
             InnerHandler = inner ?? new SocketsHttpHandler { AllowAutoRedirect = false, ConnectCallback = ConnectIpv4FirstAsync },   // 転送（302）は Throttle が自分で追う（どのホストで失敗したかを出すため。転送先は待たない）
-        };
-        // HttpClient の Timeout は待ち時間まで含むので使わない（通信だけの時間切れは Throttle がかける）
-        var http = new HttpClient(throttle) { Timeout = Timeout.InfiniteTimeSpan };
+        }) { Timeout = Timeout.InfiniteTimeSpan };
+#pragma warning restore CA2000
         http.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
         return http;
     }
@@ -79,7 +80,9 @@ public static class WorldImageService
         Exception? last = null;
         foreach (var address in Ipv4First(addresses))
         {
+#pragma warning disable CA2000 // 成功したら NetworkStream（ownsSocket: true）が持ち、失敗したら下の catch で破棄する（どの経路でも破棄される）
             var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+#pragma warning restore CA2000
             try
             {
                 // アドレスごとに短い時間切れをかける（IPv4 が無応答でも、IPv6 へ進めるように）
@@ -139,10 +142,11 @@ public static class WorldImageService
                 _first = false;
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
                 timeout.CancelAfter(requestTimeout);
+                using var retry = attempt == 1 ? null : Clone(request);   // 2 回目以降は複製を送る（送り終えたら破棄する）
                 HttpResponseMessage response;
                 try
                 {
-                    response = await SendFollowingAsync(attempt == 1 ? request : Clone(request), timeout.Token);
+                    response = await SendFollowingAsync(retry ?? request, timeout.Token);
                 }
                 catch (OperationCanceledException) when (!ct.IsCancellationRequested)
                 {
@@ -170,22 +174,33 @@ public static class WorldImageService
         /// <summary>転送（301・302・303・307・308）を、最大 5 回まで追う（画像は api.vrchat.cloud から files.vrchat.cloud へ転送される）。通信の失敗には、どのホストかを付ける。</summary>
         private async Task<HttpResponseMessage> SendFollowingAsync(HttpRequestMessage request, CancellationToken ct)
         {
-            for (var hop = 0; ; hop++)
+            HttpRequestMessage? followed = null;   // 転送先へ作り直したリクエスト。ここで作ったものだけ破棄する（最初の request は呼び出し元のもの）
+            try
             {
-                HttpResponseMessage response;
-                try
+                for (var hop = 0; ; hop++)
                 {
-                    response = await base.SendAsync(request, ct);
+                    HttpResponseMessage response;
+                    try
+                    {
+                        response = await base.SendAsync(request, ct);
+                    }
+                    catch (HttpRequestException e) when (request.RequestUri is { } uri)
+                    {
+                        throw new HttpRequestException($"{uri.Host} への通信に失敗: {e.Message}", e.InnerException ?? e);
+                    }
+                    var location = response.Headers.Location;
+                    if (hop >= 5 || location is null || (int)response.StatusCode is not (301 or 302 or 303 or 307 or 308)) return response;
+                    response.Dispose();
+                    var next = new HttpRequestMessage(HttpMethod.Get, location.IsAbsoluteUri ? location : new Uri(request.RequestUri!, location));
+                    next.Headers.UserAgent.ParseAdd(UserAgent);
+                    followed?.Dispose();
+                    followed = next;
+                    request = next;
                 }
-                catch (HttpRequestException e) when (request.RequestUri is { } uri)
-                {
-                    throw new HttpRequestException($"{uri.Host} への通信に失敗: {e.Message}", e.InnerException ?? e);
-                }
-                var location = response.Headers.Location;
-                if (hop >= 5 || location is null || (int)response.StatusCode is not (301 or 302 or 303 or 307 or 308)) return response;
-                response.Dispose();
-                request = new HttpRequestMessage(HttpMethod.Get, location.IsAbsoluteUri ? location : new Uri(request.RequestUri!, location));
-                request.Headers.UserAgent.ParseAdd(UserAgent);
+            }
+            finally
+            {
+                followed?.Dispose();
             }
         }
 

@@ -36,7 +36,9 @@ public partial class App : Application
             MainWindow = window;
             window.Show();
         }
+#pragma warning disable CA1031 // 起動の最上位の例外ハンドラー。どんな例外でも表示して終了する
         catch (Exception ex)
+#pragma warning restore CA1031
         {
             ShowError(ex);
             Shutdown(1);

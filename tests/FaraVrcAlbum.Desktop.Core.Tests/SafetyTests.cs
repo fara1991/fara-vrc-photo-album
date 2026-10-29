@@ -130,12 +130,12 @@ public sealed class SafetyTests : IDisposable
     }
 
     [Fact]
-    public void AsyncCommandReportsErrorsAndResetsIsRunning()
+    public async Task AsyncCommandReportsErrorsAndResetsIsRunning()
     {
         var errors = new List<Exception>();
         var command = new AsyncCommand(_ => throw new InvalidOperationException("失敗のテスト"), errors.Add);
 
-        command.RunAsync().GetAwaiter().GetResult();
+        await command.RunAsync();
 
         Assert.Single(errors);
         Assert.False(command.IsRunning);

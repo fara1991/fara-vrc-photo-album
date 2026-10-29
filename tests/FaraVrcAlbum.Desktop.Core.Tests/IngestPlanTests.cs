@@ -205,7 +205,7 @@ public sealed class IngestPlanTests : IDisposable
         await ingest.RefreshAsync();
         var files = ingest.Items.Where(i => i.StateText == "未登録" && i.ProblemText.Length == 0).Select(i => i.Path).ToList();
         var gate = new TaskCompletionSource<bool>();
-        var plan = new PlanViewModel(new AppState(_ws.Session), new GatedDialogs(gate.Task));
+        var plan = new PlanViewModel(new AppState(_ws.Session), new GatedDialogs(gate));
         plan.SetFiles(ToInbox(files));
         await plan.DryRunCommand.RunAsync();
 
@@ -220,9 +220,11 @@ public sealed class IngestPlanTests : IDisposable
         Assert.True(plan.DryRunCommand.CanExecute(null));
     }
 
-    private sealed class GatedDialogs(Task<bool> answer) : IDialogService
+    private sealed class GatedDialogs(TaskCompletionSource<bool> gate) : IDialogService
     {
-        public Task<bool> ConfirmAsync(string title, string message, string confirmLabel) => answer;
+#pragma warning disable VSTHRD003 // テストの門（TaskCompletionSource）の Task を返すのが目的。門は同じテストの中で開ける（別の文脈の Task を待つのではない）
+        public Task<bool> ConfirmAsync(string title, string message, string confirmLabel) => gate.Task;
+#pragma warning restore VSTHRD003
     }
 
     [Fact]

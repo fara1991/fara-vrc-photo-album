@@ -20,18 +20,36 @@ public sealed class AlbumStoreSafetyTests
         }
     }
 
-    private static (AlbumStore Store, Routes Routes) Create()
+    /// <summary>テストごとの AlbumStore・応答の表・HttpClient（Routes ごと破棄する）。</summary>
+    private sealed class Env : IDisposable
     {
-        var routes = new Routes();
-        routes.Map["/data/site.json"] = SiteJson;
-        routes.Map["/data/posts-index.json"] = "[]";
-        return (new AlbumStore(new HttpClient(routes) { BaseAddress = new Uri("https://album.test/") }), routes);
+        private readonly HttpClient _http;
+
+        public Env()
+        {
+            Routes = new Routes();
+            Routes.Map["/data/site.json"] = SiteJson;
+            Routes.Map["/data/posts-index.json"] = "[]";
+            _http = new HttpClient(Routes) { BaseAddress = new Uri("https://album.test/") };
+            Store = new AlbumStore(_http);
+        }
+
+        public AlbumStore Store { get; }
+
+        public Routes Routes { get; }
+
+        public void Deconstruct(out AlbumStore store, out Routes routes) => (store, routes) = (Store, Routes);
+
+        public void Dispose() => _http.Dispose();   // HttpClient が Routes（ハンドラー）も破棄する
     }
+
+    private static Env Create() => new();
 
     [Fact]
     public async Task DuplicateTagSlugsDoNotStopStartupAndTheFirstNameWins()
     {
-        var (store, routes) = Create();
+        using var env = Create();
+        var (store, routes) = env;
         routes.Map["/data/tags.json"] = "[{\"slug\":\"night\",\"name\":\"夜景\",\"postCount\":1},{\"slug\":\"night\",\"name\":\"別名\",\"postCount\":2}]";
 
         Assert.True(await store.LoadAsync());                                            // 例外で起動が止まらない
@@ -41,7 +59,8 @@ public sealed class AlbumStoreSafetyTests
     [Fact]
     public async Task AnUnreadTagListIsFetchedAgainTheNextTime()
     {
-        var (store, routes) = Create();
+        using var env = Create();
+        var (store, routes) = env;
         Assert.True(await store.LoadAsync());                                            // タグの一覧は無い（読めない）
         Assert.Null(await store.GetTagsAsync());
 
@@ -57,7 +76,8 @@ public sealed class AlbumStoreSafetyTests
     [InlineData(500)]
     public async Task AnOutOfRangePostsPerPageIsReplacedWithTheBuildDefaultSoPagingWorks(int perPage)
     {
-        var (store, routes) = Create();
+        using var env = Create();
+        var (store, routes) = env;
         routes.Map["/data/site.json"] = SiteJson.Replace("\"postsPerPage\":2", $"\"postsPerPage\":{perPage}");
         Assert.True(await store.LoadAsync());                                            // 起動は止めない
         Assert.Equal(12, store.Settings.PostsPerPage);
@@ -67,7 +87,8 @@ public sealed class AlbumStoreSafetyTests
     [Fact]
     public async Task AnUnreadWorldAndOutfitListAreFetchedAgainTheNextTime()
     {
-        var (store, routes) = Create();
+        using var env = Create();
+        var (store, routes) = env;
         Assert.True(await store.LoadAsync());
         Assert.Null(await store.GetWorldsAsync());                                       // 読めなかった null を覚えない
         Assert.Null(await store.GetOutfitsAsync());
@@ -95,8 +116,9 @@ public sealed class AlbumStoreSafetyTests
     [Fact]
     public async Task ConcurrentLoadsOfTheWorldListShareOneRequest()
     {
-        var counting = new CountingRoutes();
-        var store = new AlbumStore(new HttpClient(counting) { BaseAddress = new Uri("https://album.test/") });
+        using var counting = new CountingRoutes();
+        using var http = new HttpClient(counting) { BaseAddress = new Uri("https://album.test/") };
+        var store = new AlbumStore(http);
         var results = await Task.WhenAll(store.GetWorldsAsync(), store.GetWorldsAsync(), store.GetWorldsAsync());
         Assert.Equal(1, counting.Requests);                                              // 同時に呼んでも、1 回だけ取る（待機中の Task を置き換えない）
         Assert.All(results, r => Assert.NotNull(r));

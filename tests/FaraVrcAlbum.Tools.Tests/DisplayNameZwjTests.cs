@@ -101,25 +101,25 @@ public sealed class DisplayNameZwjTests : IDisposable
     }
 
     [Fact]
-    public void AnUnusableXmpWorldNameAndAMissingOneGetDifferentWarnings()
+    public async Task AnUnusableXmpWorldNameAndAMissingOneGetDifferentWarnings()
     {
-        var unusable = DryRunWorld(TestImages.XmpAttributes(worldName: "​‮"), "unusable.png");
+        var unusable = await DryRunWorldAsync(TestImages.XmpAttributes(worldName: "​‮"), "unusable.png");
         Assert.Contains(unusable.Warnings, w => w.Contains("使えない") && w.Contains("制御文字"));
         Assert.DoesNotContain(unusable.Warnings, w => w.Contains("XMP に無い"));
 
-        var missing = DryRunWorld(TestImages.XmpAttributes(worldName: ""), "missing.png");
+        var missing = await DryRunWorldAsync(TestImages.XmpAttributes(worldName: ""), "missing.png");
         Assert.Contains(missing.Warnings, w => w.Contains("XMP に無い"));
         Assert.DoesNotContain(missing.Warnings, w => w.Contains("使えない"));
 
-        var tooLong = DryRunWorld(TestImages.XmpAttributes(worldName: new string('x', 65)), "long.png");
+        var tooLong = await DryRunWorldAsync(TestImages.XmpAttributes(worldName: new string('x', 65)), "long.png");
         Assert.Contains(tooLong.Warnings, w => w.Contains("使えない"));
     }
 
-    private IngestResult DryRunWorld(string xmp, string fileName)
+    private async Task<IngestResult> DryRunWorldAsync(string xmp, string fileName)
     {
         var path = Path.Combine(_fixture.Root, fileName);
         File.WriteAllBytes(path, TestImages.Png(640, 360, xmp));
         var ledger = PhotoLedger.Empty();
-        return new PhotoIngestor(ledger, null).IngestAsync(path, new IngestOptions { Apply = false }).GetAwaiter().GetResult();
+        return await new PhotoIngestor(ledger, null).IngestAsync(path, new IngestOptions { Apply = false });
     }
 }

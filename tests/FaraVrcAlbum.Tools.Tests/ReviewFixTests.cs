@@ -91,8 +91,9 @@ public sealed class ReviewFixTests : IDisposable
     {
         _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key1);
         var scope = VerifyService.Plan(ContentLoader.Load(_fixture.ContentDir), null);
-        using var http = new HttpClient(new FakeHandler(request =>
-            Ok(request, "image/png", "public, max-age=31536000, immutable", 640, 360)));
+        using var handler = new FakeHandler(request =>
+            Ok(request, "image/png", "public, max-age=31536000, immutable", 640, 360));
+        using var http = new HttpClient(handler);
 
         var problems = await VerifyService.RunAsync(scope.Photos, "https://img.example.test/", http);
 
@@ -105,8 +106,9 @@ public sealed class ReviewFixTests : IDisposable
     {
         _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key1);
         var scope = VerifyService.Plan(ContentLoader.Load(_fixture.ContentDir), null);
-        using var http = new HttpClient(new FakeHandler(request =>
-            FakeImages.Response(request, TypeFor(request), "no-cache", FakeImages.WebpHeader(640, 360))));
+        using var handler = new FakeHandler(request =>
+            FakeImages.Response(request, TypeFor(request), "no-cache", FakeImages.WebpHeader(640, 360)));
+        using var http = new HttpClient(handler);
 
         var problems = await VerifyService.RunAsync(scope.Photos, "https://img.example.test/", http);
 
@@ -119,9 +121,10 @@ public sealed class ReviewFixTests : IDisposable
     {
         _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key1);
         var scope = VerifyService.Plan(ContentLoader.Load(_fixture.ContentDir), null);
-        using var http = new HttpClient(new FakeHandler(request =>
+        using var handler = new FakeHandler(request =>
             FakeImages.Response(request, TypeFor(request), "public, max-age=31536000, immutable",
-                FakeImages.WebpHeader(100, 100))));
+                FakeImages.WebpHeader(100, 100)));
+        using var http = new HttpClient(handler);
 
         var problems = await VerifyService.RunAsync(scope.Photos, "https://img.example.test/", http);
 

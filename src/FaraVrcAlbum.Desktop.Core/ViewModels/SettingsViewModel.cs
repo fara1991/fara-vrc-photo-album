@@ -294,14 +294,14 @@ public sealed class SettingsViewModel : PageViewModel
             "控えを作る");
         if (!confirmed) return;
         using var handle = Session.OpenStore(bucket);
-        var info = await Guard(bucket, () => ContentBackupService.BackupAsync(dir, handle.Store, DateTimeOffset.UtcNow, ct));
+        var info = await GuardAsync(bucket, () => ContentBackupService.BackupAsync(dir, handle.Store, DateTimeOffset.UtcNow, ct));
         Session.Preferences.LastBackup = $"{info.CreatedAt.ToOffset(TimeSpan.FromHours(9)):yyyy-MM-dd HH:mm}（{info.FileCount} ファイル）";
         OnPropertyChanged(nameof(BackupStatusText));
         Status = $"記事の中身の控えを作りました（{info.Id}・{info.FileCount} ファイル）。";
     }
 
     /// <summary>控え用のバケットへのアクセスが拒否されたとき（トークンがそのバケットを許していない）、原因と直し方を示す文にする。</summary>
-    internal static async Task<T> Guard<T>(string bucket, Func<Task<T>> run)
+    internal static async Task<T> GuardAsync<T>(string bucket, Func<Task<T>> run)
     {
         try { return await run(); }
         catch (Amazon.S3.AmazonS3Exception e) when (e.StatusCode == System.Net.HttpStatusCode.Forbidden)
@@ -319,7 +319,7 @@ public sealed class SettingsViewModel : PageViewModel
     {
         var bucket = ContentBackupService.RequireBackupBucket(Session.BackupBucket, Session.ProductionBucket);
         using var handle = Session.OpenStore(bucket);
-        var snapshots = await Guard(bucket, () => ContentBackupService.ListAsync(handle.Store, ct));
+        var snapshots = await GuardAsync(bucket, () => ContentBackupService.ListAsync(handle.Store, ct));
         if (snapshots.Count == 0)
         {
             Status = "控えが見つかりません（控え用のバケットに、まだ控えがありません）。";

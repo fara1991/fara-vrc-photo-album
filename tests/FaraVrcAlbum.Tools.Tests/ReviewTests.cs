@@ -16,7 +16,7 @@ public sealed class RemoveOrderTests : IDisposable
 
     private PhotoLedger Ledger() => _fixture.Ledger((RepoFixture.Key1, "1111", LedgerStates.Uploaded, "2026-10-23T21:33:12+09:00"));
 
-    private static async Task<MemoryObjectStore> StoreWithPhoto1()
+    private static async Task<MemoryObjectStore> StoreWithPhoto1Async()
     {
         var store = new MemoryObjectStore();
         foreach (var suffix in new[] { "_640.webp", "_1280.webp", "_2048.webp", "_og.jpg" })
@@ -60,7 +60,7 @@ public sealed class RemoveOrderTests : IDisposable
     public async Task R2DeleteFailureKeepsTheLedgerUploaded()
     {
         var ledger = Ledger();
-        var store = await StoreWithPhoto1();
+        var store = await StoreWithPhoto1Async();
         store.OnDelete = key => key.EndsWith("_1280.webp", StringComparison.Ordinal) ? new IOException("通信エラー（試験）") : null;
         var plan = RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/");
 
@@ -74,7 +74,7 @@ public sealed class RemoveOrderTests : IDisposable
     public async Task SuccessRemovesFromR2ThenMarksTheLedgerRemoved()
     {
         var ledger = Ledger();
-        var store = await StoreWithPhoto1();
+        var store = await StoreWithPhoto1Async();
         var plan = RemoveService.Plan(RepoFixture.Key1, ledger, _fixture.Editor, "https://img.example.test/");
 
         await RemoveService.ApplyAsync(plan, "fara-vrc-photos", ledger, _fixture.LedgerPath, store, Now);

@@ -20,32 +20,41 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
         Services.AddSingleton(MaintenanceInfo.Off);
     }
 
-    async Task IAsyncLifetime.DisposeAsync() => await base.DisposeAsync();
+    private Handler? _handler;
+    private HttpClient? _http;
+
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        _http?.Dispose();
+        _handler?.Dispose();
+        await base.DisposeAsync();
+    }
 
     Task IAsyncLifetime.InitializeAsync() => Task.CompletedTask;
 
     private const string ArchiveJson = "{\"2025\":{\"12\":1},\"2026\":{\"09\":2,\"10\":12}}";
 
-    private IRenderedComponent<MainLayout> RenderLayout(string? archiveJson = ArchiveJson)
+    private async Task<IRenderedComponent<MainLayout>> RenderLayoutAsync(string? archiveJson = ArchiveJson)
     {
-        var handler = new Handler(path => path switch
+        _handler = new Handler(path => path switch
         {
             "/data/site.json" => (HttpStatusCode.OK, "{\"siteName\":\"Fara Photo Album\",\"author\":\"Fara\",\"imageBaseUrl\":\"https://i.test/\",\"postsPerPage\":12}"),
             "/data/posts-index.json" => (HttpStatusCode.OK, "[]"),
             "/data/archive.json" when archiveJson is not null => (HttpStatusCode.OK, archiveJson),
             _ => (HttpStatusCode.NotFound, ""),
         });
-        var store = Store(handler);
-        Assert.True(store.LoadAsync().GetAwaiter().GetResult());
+        _http = new HttpClient(_handler) { BaseAddress = new Uri("https://vrc-album.test/") };
+        var store = new AlbumStore(_http);
+        Assert.True(await store.LoadAsync());
         Services.AddSingleton(store);
         JSInterop.Setup<bool>("faraBlazorComponent.watchMobile", _ => true).SetResult(false);
         return Render<MainLayout>(p => p.Add(c => c.Body, (RenderFragment)(b => b.AddMarkupContent(0, "<p class=\"body-text\">本文</p>"))));
     }
 
     [Fact]
-    public void TheHeaderBrandIsTheSiteNameTextAndTheImageIsAtTheStartOfTheBody()
+    public async Task TheHeaderBrandIsTheSiteNameTextAndTheImageIsAtTheStartOfTheBody()
     {
-        var cut = RenderLayout();
+        var cut = await RenderLayoutAsync();
 
         var brand = cut.Find(".fbc-header a.fbc-brand");
         Assert.Equal("./", brand.GetAttribute("href"));
@@ -91,9 +100,9 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
     }
 
     [Fact]
-    public void TheSidebarListsTheMonthlyArchiveNewestFirstWithCounts()
+    public async Task TheSidebarListsTheMonthlyArchiveNewestFirstWithCounts()
     {
-        var cut = RenderLayout();
+        var cut = await RenderLayoutAsync();
 
         var archive = cut.Find(".album-archive");
         Assert.Equal("NAV", archive.TagName);
@@ -106,17 +115,17 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
     }
 
     [Fact]
-    public void TheArchiveMenuIsOmittedWhenTheArchiveCannotBeRead()
+    public async Task TheArchiveMenuIsOmittedWhenTheArchiveCannotBeRead()
     {
-        var cut = RenderLayout(archiveJson: null);
+        var cut = await RenderLayoutAsync(archiveJson: null);
 
         Assert.Empty(cut.FindAll(".album-archive"));
     }
 
     [Fact]
-    public void TheLayoutHasTheFooterReportAndPrivacyLinksAndThemeSwitch()
+    public async Task TheLayoutHasTheFooterReportAndPrivacyLinksAndThemeSwitch()
     {
-        var cut = RenderLayout();
+        var cut = await RenderLayoutAsync();
 
         Assert.Contains(cut.FindAll("footer a"), a => (a.GetAttribute("href") ?? "").StartsWith("report"));
         Assert.Contains(cut.FindAll("footer a"), a => a.GetAttribute("href") == "privacy");
@@ -125,26 +134,26 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
     }
 
     [Fact]
-    public void TheNoticeBannerShowsOnlyWhenMaintenanceIsNotice()
+    public async Task TheNoticeBannerShowsOnlyWhenMaintenanceIsNotice()
     {
         Services.AddSingleton(new MaintenanceInfo(MaintenanceState.Notice, "更新します"));   // 後から足した登録が優先される
-        var cut = RenderLayout();
+        var cut = await RenderLayoutAsync();
 
         Assert.Contains("更新します", cut.Find(".fbc-notice-text").TextContent);
     }
 
     [Fact]
-    public void TheFooterShowsTheFourSocialLinksInTheSameOrderAsTheOtherSites()
+    public async Task TheFooterShowsTheFourSocialLinksInTheSameOrderAsTheOtherSites()
     {
         // フッターの SNS は、GitHub・X・Twitch・Discord の 4 つ（fara-labs・pokemon と同じ並び・同じ URL）。欠けると、ここで落ちる
-        var cut = RenderLayout();
+        var cut = await RenderLayoutAsync();
 
         var links = cut.FindAll("footer a.fbc-footer-social");
         Assert.Equal(4, links.Count);
-        Assert.Equal(["GitHub", "Twitter", "Twitch", "Discord"], links.Select(a => a.GetAttribute("aria-label")).ToArray());
+        Assert.Equal(["GitHub", "Twitter", "Twitch", "Discord"], links.Select(a => a.GetAttribute("aria-label") ?? "").ToArray());
         Assert.Equal(
             ["https://github.com/fara1991", "https://twitter.com/game_fara", "https://twitch.tv/game_fara", "https://discord.com/invite/B38eCSYyk5"],
-            links.Select(a => a.GetAttribute("href")).ToArray());
+            links.Select(a => a.GetAttribute("href") ?? "").ToArray());
     }
 
     [Fact]
@@ -170,19 +179,18 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
         }
     }
 
-    private static AlbumStore Store(Handler handler) => new(new HttpClient(handler) { BaseAddress = new Uri("https://vrc-album.test/") });
-
     [Fact]
     public async Task TheStoreLoadsSettingsAndTheIndexAndPostsOnDemand()
     {
-        var handler = new Handler(path => path switch
+        using var handler = new Handler(path => path switch
         {
             "/data/site.json" => (HttpStatusCode.OK, "{\"siteName\":\"Fara Photo Album\",\"author\":\"Fara\",\"imageBaseUrl\":\"https://i.test/\",\"postsPerPage\":2}"),
             "/data/posts-index.json" => (HttpStatusCode.OK, "[{\"slug\":\"a\",\"title\":\"A\",\"publishedAt\":\"2026-10-24T20:00:00+09:00\",\"summary\":\"\",\"tags\":[],\"photoCount\":0},{\"slug\":\"b\",\"title\":\"B\",\"publishedAt\":\"2026-10-23T20:00:00+09:00\",\"summary\":\"\",\"tags\":[],\"photoCount\":0},{\"slug\":\"c\",\"title\":\"C\",\"publishedAt\":\"2026-10-22T20:00:00+09:00\",\"summary\":\"\",\"tags\":[],\"photoCount\":0}]"),
             "/data/posts/a.json" => (HttpStatusCode.OK, "{\"slug\":\"a\",\"title\":\"A\",\"publishedAt\":\"2026-10-24T20:00:00+09:00\",\"summary\":\"\",\"bodyHtml\":\"<p>x</p>\",\"tags\":[],\"photos\":[]}"),
             _ => (HttpStatusCode.NotFound, ""),
         });
-        var store = Store(handler);
+        using var http = new HttpClient(handler) { BaseAddress = new Uri("https://vrc-album.test/") };
+        var store = new AlbumStore(http);
 
         Assert.True(await store.LoadAsync());
         Assert.Equal(3, store.Posts.Count);
@@ -197,7 +205,11 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
     [Fact]
     public async Task TheStoreReportsFailureWhenTheDataCannotBeRead()
     {
-        Assert.False(await Store(new Handler(_ => (HttpStatusCode.NotFound, ""))).LoadAsync());
-        Assert.False(await Store(new Handler(_ => (HttpStatusCode.OK, "<html>"))).LoadAsync());   // 開発中などで index.html が返る
+        using var notFound = new Handler(_ => (HttpStatusCode.NotFound, ""));
+        using var notFoundHttp = new HttpClient(notFound) { BaseAddress = new Uri("https://vrc-album.test/") };
+        Assert.False(await new AlbumStore(notFoundHttp).LoadAsync());
+        using var html = new Handler(_ => (HttpStatusCode.OK, "<html>"));
+        using var htmlHttp = new HttpClient(html) { BaseAddress = new Uri("https://vrc-album.test/") };
+        Assert.False(await new AlbumStore(htmlHttp).LoadAsync());   // 開発中などで index.html が返る
     }
 }

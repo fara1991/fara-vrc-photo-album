@@ -224,9 +224,6 @@ public sealed class VerifyTests : IDisposable
 
     private const string ImmutableCache = "public, max-age=31536000, immutable";
 
-    private static HttpClient Client(Func<HttpRequestMessage, HttpResponseMessage> respond) =>
-        new(new FakeHandler(respond));
-
     private List<VerifyPhoto> Photos()
     {
         _fixture.WriteExistingPost();
@@ -237,13 +234,14 @@ public sealed class VerifyTests : IDisposable
     public async Task PassesWhenEveryObjectHasTheRightHeadersAndSize()
     {
         var photos = Photos();
-        using var http = Client(request =>
+        using var handler = new FakeHandler(request =>
         {
             var url = request.RequestUri!.ToString();
             if (url.EndsWith("_og.jpg")) return FakeImages.Response(request, "image/jpeg", ImmutableCache, [0xFF, 0xD8]);
             var (width, height) = url.Contains(RepoFixture.Key2) ? (1280, 720) : (640, 360);
             return FakeImages.Response(request, "image/webp", ImmutableCache, FakeImages.WebpHeader(width, height));
         });
+        using var http = new HttpClient(handler);
 
         var problems = await VerifyService.RunAsync(photos, "https://img.example.test/", http);
 
@@ -254,7 +252,7 @@ public sealed class VerifyTests : IDisposable
     public async Task ReportsMissingObjectsWrongHeadersAndWrongSize()
     {
         var photos = Photos();
-        using var http = Client(request =>
+        using var handler = new FakeHandler(request =>
         {
             var url = request.RequestUri!.ToString();
             if (url.Contains(RepoFixture.Key1 + "_1280.webp")) return new HttpResponseMessage(HttpStatusCode.NotFound) { RequestMessage = request };
@@ -263,6 +261,7 @@ public sealed class VerifyTests : IDisposable
             if (url.EndsWith("_og.jpg")) return FakeImages.Response(request, "image/jpeg", ImmutableCache, [0xFF, 0xD8]);
             return FakeImages.Response(request, "image/webp", ImmutableCache, FakeImages.WebpHeader(1280, 720));
         });
+        using var http = new HttpClient(handler);
 
         var problems = await VerifyService.RunAsync(photos, "https://img.example.test/", http);
 
@@ -354,7 +353,7 @@ public sealed class UploadTests : IDisposable
         var report = await UploadService.RunAsync(Path.Combine(_uploadRoot, "inbox"), Path.Combine(_uploadRoot, "uploaded"),
             new UploadOptions { Apply = true }, PhotoLedger.Empty(), Ledger, new MemoryObjectStore(), DateTimeOffset.UtcNow);
 
-        Assert.Single(report.Items.Where(i => i.Skipped));
+        Assert.Single(report.Items, i => i.Skipped);
         Assert.Equal(0, report.Count(IngestState.Uploaded));
     }
 

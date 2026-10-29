@@ -16,8 +16,9 @@ public sealed class ReportTests : BunitContext, IAsyncLifetime
     public ReportTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
-        Services.AddSingleton(new HttpClient { BaseAddress = new Uri("https://album.test/") });
-        Services.AddSingleton(new AlbumStore(new HttpClient { BaseAddress = new Uri("https://album.test/") }));
+        // ファクトリーで登録する（コンテナーが作って、コンテキストの破棄のときに破棄する）
+        Services.AddSingleton(_ => new HttpClient { BaseAddress = new Uri("https://album.test/") });
+        Services.AddSingleton(_ => new AlbumStore(new HttpClient { BaseAddress = new Uri("https://album.test/") }));
         Services.AddFaraBlazorComponent(options => SiteInfo.Configure(options, new SiteSettings { SiteName = "Fara Photo Album", Author = "Fara", ImageBaseUrl = "https://i.test/" }));
         Services.AddSingleton(MaintenanceInfo.Off);
         Services.AddSupplyValueFromQueryProvider();

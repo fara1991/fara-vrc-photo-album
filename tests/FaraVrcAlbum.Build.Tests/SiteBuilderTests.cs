@@ -443,14 +443,14 @@ public class SiteBuilderTests
         Assert.Contains("2026年10月26日時点の BOOTH の情報です。", outfit);
         Assert.DoesNotContain("商品ページを見る</a>", outfit);
         Assert.Contains("class=\"album-lead album-lead--after-info\">この服を着て撮った写真です（1 枚）。", outfit);
-        Assert.Equal(1, Regex.Matches(outfit, "<li class=\"album-card album-card--photo\"").Count);
+        Assert.Single(Regex.Matches(outfit, "<li class=\"album-card album-card--photo\""));
         Assert.Contains("href=\"posts/outfit-post\"", outfit);
         Assert.DoesNotContain("<a", Body(Read(prod, "outfits/boots.html")).Split("<h1", 2)[1].Split("</h1>", 2)[0]);   // 商品ページの URL が無い服は、名前をリンクにしない
         var list = Body(Read(prod, "outfits.html"));
         Assert.Contains("href=\"outfits/coat-red\"", list);
         Assert.Contains("テスト店・1 枚", list);
         Assert.Contains("<img src=\"https://booth.pximg.net/x/i/1/thumb.jpg\"", list);                                   // 一覧の画像は、BOOTH の商品の画像
-        Assert.Equal(1, Regex.Matches(list, "album-card-media--outfit").Count);                                              // 画像の無い服（靴）は、画像を出さない（自分の撮った写真は出さない）
+        Assert.Single(Regex.Matches(list, "album-card-media--outfit"));                                              // 画像の無い服（靴）は、画像を出さない（自分の撮った写真は出さない）
         Assert.DoesNotContain("_640.webp", list);
         using var data = JsonDocument.Parse(Read(prod, "data/outfits/coat-red.json"));
         Assert.Equal("赤いコート", data.RootElement.GetProperty("name").GetString());

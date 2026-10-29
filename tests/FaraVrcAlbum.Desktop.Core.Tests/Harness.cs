@@ -64,7 +64,7 @@ internal sealed class Workspace : IDisposable
     /// <summary>デモの本番 R2（メモリ）に写真を入れる。</summary>
     public async Task SeedProductionAsync()
     {
-        await DemoWorkspace.SeedStore(Session.DemoStore(Session.ProductionBucket), PhotoLedger.Load(ProductionLedgerPath));
+        await DemoWorkspace.SeedStoreAsync(Session.DemoStore(Session.ProductionBucket), PhotoLedger.Load(ProductionLedgerPath));
     }
 
 

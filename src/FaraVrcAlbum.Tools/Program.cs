@@ -51,7 +51,7 @@ public static class Program
             var args = Cli.Args.Parse(argv);
             if (args.Command is "help" or "--help" or "-h" || args.Has("help"))
             {
-                Console.WriteLine(UsageText);
+                await Console.Out.WriteLineAsync(UsageText);
                 return 0;
             }
             repo = RepoContext.Discover(args.Value("repo"));
@@ -59,14 +59,16 @@ public static class Program
         }
         catch (UsageException e)
         {
-            Console.Error.WriteLine(Secrets.Redact(e.Message, repo));
-            Console.Error.WriteLine("（album help で使い方）");
+            await Console.Error.WriteLineAsync(Secrets.Redact(e.Message, repo));
+            await Console.Error.WriteLineAsync("（album help で使い方）");
             return 2;
         }
+#pragma warning disable CA1031 // 最上位の例外ハンドラー。どんな例外でも終了コード 1 とメッセージにして返す（CLI の入口）
         catch (Exception e)
+#pragma warning restore CA1031
         {
             // 例外の表示は、R2 の値と認証情報の形を消してから（AWS の例外に混ざることがある）。種類は表示する
-            Console.Error.WriteLine($"エラー（{e.GetType().Name}）: {Secrets.Redact(e.Message, repo)}");
+            await Console.Error.WriteLineAsync($"エラー（{e.GetType().Name}）: {Secrets.Redact(e.Message, repo)}");
             return 1;
         }
     }

@@ -28,7 +28,7 @@ public static class StartupError
         if (js is not IJSInProcessRuntime sync) return;
         try
         {
-            if (!string.IsNullOrEmpty(sync.Invoke<string?>("localStorage.getItem", SiteInfo.StorageKey))) return;
+            if (!string.IsNullOrEmpty(await sync.InvokeAsync<string?>("localStorage.getItem", SiteInfo.StorageKey))) return;
         }
         catch (JSException)
         {

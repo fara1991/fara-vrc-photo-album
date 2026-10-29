@@ -5,7 +5,7 @@
 
 @* 共通のレイアウト（fara-blazor-component の SiteLayout）: ヘッダー・サイドバー（PC は Mini、スマホは一時的なメニュー）・本文・フッター・お知らせの帯。
    ヘッダーの名前（ブランド）は、kit 既定の文字（サイト名『Fara Photo Album』。appsettings.json の SiteName。<title>・og:site_name・RSS・フッター・プライバシーポリシーと同じ）。h1 にはしない（h1 は各ページの題）。
-   画像（文字『Fara』入り）は、各ページの本文の最初に、本文の幅いっぱいに出す（SiteBanner。静的 HTML にも同じものを入れる。app.css の .album-banner・docs/header-image.md）。
+   画像（文字『Fara』入り）は、各ページの本文の最初に、本文の幅の半分で出す（SiteBanner。静的 HTML にも同じものを入れる。app.css の .album-banner・docs/header-image.md）。
    サイドバーには、ナビの下に公開月別のアーカイブ（年ごとの折りたたみ。archive.json）。 *@
 <SiteLayout Body="@BodyWithBanner" Maintenance="Maintenance" MobilePageScroll="true">
     <DrawerContent>

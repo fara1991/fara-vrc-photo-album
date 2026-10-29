@@ -32,6 +32,6 @@
 ## M3: 画像は各ページの本文の最初へ（現在の形）
 
 - ヘッダーの名前は kit 既定の文字 **『Fara Photo Album』**（サイト名。`appsettings.json` の `SiteName`。`<title>`・`og:site_name`・RSS のタイトル・フッター・プライバシーポリシーと同じ。`SiteLayout` の `Brand` は使わない）。ヘッダーの高さは kit 既定の 3.5rem（`--album-header-h`。PC・スマホとも同じ）。**上の M0〜M2 のヘッダー画像・高さ（112px・72px）・`SiteInfo.BrandName` の記述は、この変更で置き換わった。**
-- 画像（`SiteRules.HeaderImage`。960×240 の WebP）は、**すべてのページの本文の最初**に、本文の幅いっぱいに出す（コンポーネント `SiteBanner`、CSS は `.album-banner`）。縦横比は 4:1（`aspect-ratio`）で、画像が来る前から高さが決まる。alt は空（名前は文字で出ているので飾り）。
+- 画像（`SiteRules.HeaderImage`。960×240 の WebP）は、**すべてのページの本文の最初**に、本文の幅の半分（狭い画面でも 200px 以上。左寄せ）で出す（コンポーネント `SiteBanner`、CSS は `.album-banner`。以前は本文の幅いっぱいだった）。縦横比は 4:1（`aspect-ratio`）で、画像が来る前から高さが決まる。alt は空（名前は文字で出ているので飾り）。
 - **静的 HTML にも同じものを入れる**（`PageCatalog` が全ページの `<main class="entry-static">` の先頭に `SiteBanner` を足す）。起動の前後で画像が動かない（CLS）。
 - 表示の幅が 960px を超える画面では拡大して出る（元の画像は 960 幅）。粗く見える場合は 1920 幅の画像に差し替える（`tools/make-header-image.py`）。

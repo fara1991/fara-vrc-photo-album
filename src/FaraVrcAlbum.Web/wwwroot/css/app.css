@@ -59,9 +59,11 @@ html {
   scroll-padding-top: calc(var(--album-header-h) + 0.5rem);
 }
 
-/* 各ページの本文の最初の画像（SiteBanner。960×240 の WebP）。本文の幅いっぱいに出し、縦横比 4:1 で場所を空ける（画像が来る前から高さが決まる = CLS が出ない）。
+/* 各ページの本文の最初の画像（SiteBanner。960×240 の WebP）。本文の幅の半分（狭い画面でも 200px 以上。左寄せ）で出し、縦横比 4:1 で場所を空ける（画像が来る前から高さが決まる = CLS が出ない）。
    静的 HTML（main.entry-static）にも同じものが入る。 */
 .album-banner {
+  width: 50%;
+  min-width: min(100%, 200px);
   margin: 0 0 1rem;
   line-height: 0;
 }

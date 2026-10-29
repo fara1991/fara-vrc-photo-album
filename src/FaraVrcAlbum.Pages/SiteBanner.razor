@@ -1,3 +1,3 @@
-@* 各ページの本文の最初に出す画像（文字『Fara』入りのヘッダー画像。本文の幅いっぱい）。静的 HTML（ビルド）とブラウザのアプリで同じ見た目にする。
+@* 各ページの本文の最初に出す画像（文字『Fara』入りのヘッダー画像。本文の幅の半分。ただし 200px 以上）。静的 HTML（ビルド）とブラウザのアプリで同じ見た目にする。
    寸法（width・height）を指定し、CSS の aspect-ratio と合わせて、画像が来る前から場所を空ける（CLS）。ヘッダーの名前は文字（Fara Photo Album）なので、画像は飾り（alt なし）。 *@
 <div class="album-banner"><img src="@SiteRules.HeaderImage" alt="" width="@SiteRules.HeaderImageWidth" height="@SiteRules.HeaderImageHeight" fetchpriority="high" decoding="async" /></div>

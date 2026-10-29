@@ -1,16 +1,10 @@
 # album 独自の C# の静的解析の上書き（global analyzer config）。Directory.Build.props が kit の dotnet.editorconfig の後に読む。
-# kit の dotnet.editorconfig では warning のルールのうち、album の違反が 0 件になったものを error にする（新しい違反をビルドで止める）。
-# global_level を kit の既定（0）より大きくして、同じルールの重大度を album 側で上書きする。
+# kit v1.0.1 の dotnet.editorconfig は、CS4014・VSTHRD100・CA1816・IDE0059・CA1031・CA2000・VSTHRD002・VSTHRD003・VSTHRD103 を error にしている。
+# album の上書きは kit に無いルールだけ（kit と同じ重大度の上書きは置かない）。
+# global_level を kit の既定（0）より大きくして、同じルールを album 側で上書きできる形にしている。
 # 件数と理由は docs/static-checks.md の「3. C# のアナライザー」。
 is_global = true
 global_level = 1
-
-# 違反 0 件（kit は warning。kit の CA1031・CA2000 が残る間は、kit 側は warning のまま）
-dotnet_diagnostic.CA1031.severity = error
-dotnet_diagnostic.CA2000.severity = error
-dotnet_diagnostic.VSTHRD002.severity = error
-dotnet_diagnostic.VSTHRD003.severity = error
-dotnet_diagnostic.VSTHRD103.severity = error
 
 # kit のラチェットに無いもの（album 0 件）
 dotnet_diagnostic.VSTHRD200.severity = error

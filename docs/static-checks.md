@@ -60,9 +60,9 @@ kit の詳しい中身は `external/fara-blazor-component/docs/layout-check.md`�
 
 方針: 違反が 0 件のルールだけ error（新しい違反を止める）。
 
-`Directory.Build.props` が、kit の `dotnet.editorconfig`（CS4014・VSTHRD100・CA1816・IDE0059 は error、CA1031・CA2000 などは warning）を読み、そのあとに album 独自の `tools/lint/dotnet.album.editorconfig` を読む。album 側は `global_level = 1`（kit は 0）で、album の違反が 0 件になった warning を error にする。kit との差は下の表の「kit」と「album」の列。`Microsoft.VisualStudio.Threading.Analyzers` 17.14.15（`PrivateAssets="all"`）。
+`Directory.Build.props` が、kit v1.0.1 の `dotnet.editorconfig`（下の表の 9 ルールはすべて error）を読み、そのあとに album 独自の `tools/lint/dotnet.album.editorconfig` を読む。kit v1.0.1 で kit 側も error になったので、album の上書きは kit に無い VSTHRD200 だけ（`global_level = 1`、kit は 0）。`Microsoft.VisualStudio.Threading.Analyzers` 17.14.15（`PrivateAssets="all"`）。
 
-error にしたルールは、違反を入れたファイルで、`dotnet build` が error を出すことを確かめた（CS4014・VSTHRD100・CA1816・IDE0059 は 2026-10-29、album 側で上げた VSTHRD002 は 2026-10-29 に確認。確かめたファイルは消した）。
+error にしたルールは、違反を入れたファイルで、`dotnet build` が error を出すことを確かめた（CS4014・VSTHRD100・CA1816・IDE0059 は 2026-10-29、CA1031・CA2000・VSTHRD002・VSTHRD003・VSTHRD103 は album 側で上げたときに確認。kit v1.0.1 で kit 側も error になった。確かめたファイルは消した）。
 
 | ルール | kit | album | album の違反 | 中身 |
 | --- | --- | --- | --- | --- |
@@ -70,11 +70,11 @@ error にしたルールは、違反を入れたファイルで、`dotnet build`
 | VSTHRD100 | error | error | 0 | `async void`（WPF のイベントの形でも報告される。起動の読み込みは `Task` を返すメソッドにした） |
 | CA1816 | error | error | 0 | Dispose で `GC.SuppressFinalize` を呼んでいない |
 | IDE0059 | error | error | 0 | 使われない代入 |
-| CA1031 | warning | error | 0 | 一般の例外（`Exception`）の catch。最上位のハンドラー 4 か所だけ、理由つきで抑止（下） |
-| CA2000 | warning | error | 0 | Dispose 漏れ。所有権を渡している 3 か所だけ、理由つきで抑止（下） |
-| VSTHRD002 | warning | error | 0 | 非同期の処理を同期で待つ。同期の入口 3 か所だけ、理由つきで抑止（下） |
-| VSTHRD003 | warning | error | 0 | 他のスレッドで開始した Task を await している。誤検知 2 か所だけ、理由つきで抑止（下） |
-| VSTHRD103 | warning | error | 0 | async のメソッドの中で、同期の呼び出しを使っている（非同期版を使う） |
+| CA1031 | error | error | 0 | 一般の例外（`Exception`）の catch。最上位のハンドラー 4 か所だけ、理由つきで抑止（下） |
+| CA2000 | error | error | 0 | Dispose 漏れ。所有権を渡している 3 か所だけ、理由つきで抑止（下） |
+| VSTHRD002 | error | error | 0 | 非同期の処理を同期で待つ。同期の入口 3 か所だけ、理由つきで抑止（下） |
+| VSTHRD003 | error | error | 0 | 他のスレッドで開始した Task を await している。誤検知 2 か所だけ、理由つきで抑止（下） |
+| VSTHRD103 | error | error | 0 | async のメソッドの中で、同期の呼び出しを使っている（非同期版を使う） |
 | VSTHRD200 | （既定） | error | 0 | `Async` の接尾辞（命名の規則。0 件にしたので error にした） |
 
 抑止（`#pragma warning disable`。すべて理由のコメントつき・その 1 文だけ）:

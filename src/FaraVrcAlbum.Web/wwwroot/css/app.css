@@ -7,6 +7,8 @@
   --album-card-bg: #ffffff;
   --album-card-border: rgba(0, 0, 0, 0.12);
   --album-muted: #5b5370;
+  /* サイドバーの選択中の項目の文字色（ダーク・ライトとも。サイドバーは両テーマで暗い）。#a855f7（ダーク）・#7c3aed（ライト）は、暗い背景の上で AA に届かない */
+  --album-nav-active: #c084fc;
 }
 
 html[data-bs-theme="dark"] {
@@ -212,6 +214,12 @@ html {
 .album-archive-link.active {
   background-color: rgba(255, 255, 255, 0.25);
   color: #fff;
+}
+
+/* サイドバーの選択中の項目（ナビの「ホーム」など）の文字色。MudBlazor の .mud-navmenu-default .mud-nav-link.active（詳細度 0,4,0）が、テーマの Primary（ダーク #a855f7・ライト #7c3aed）を文字に付け、
+   kit の白（0,3,0）に勝つ。ここで同じ詳細度以上に上書きする。アイコンは kit が決める（!important） */
+.fbc-sidebar .mud-navmenu.mud-navmenu-default .mud-nav-link.active {
+  color: var(--album-nav-active);
 }
 
 .album-archive-summary:focus-visible,

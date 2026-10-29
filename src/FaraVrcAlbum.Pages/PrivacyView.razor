@@ -1,6 +1,7 @@
 @* プライバシーポリシー。サイトの実装（問い合わせの Worker・回数制限・外部サービスの読み込み・写真と情報の掲載）に合わせて書く。運営者の運用の約束（保存期間など）は書かない。削除依頼の対応の目安（受付から 7 日以内）は変えない。 *@
 <div class="fbc-page-column fbc-page-column--wide album-privacy">
     <h1 class="album-heading">プライバシーポリシー</h1>
+    <p class="album-note">最終改定: 2026 年 10 月 29 日</p>
 
     <h2>問い合わせ</h2>
     <p>「問い合わせ」ページから送信できます。送信すると、次の情報を Discord（Discord Inc.）に通知として送り、作者に届けます。</p>
@@ -11,7 +12,7 @@
     <p>サイトのサーバーには本文を保存しません（Discord 側には残ります）。パスワードやアクセスキーなどは書かないでください。</p>
     <p>迷惑な送信を防ぐため、Cloudflare Turnstile を使います。Turnstile は「問い合わせ」ページを開いたときに読み込まれ、ブラウザの情報と IP アドレスが Cloudflare に送られます。送信のときは、サイトのサーバーも、確認のためにトークンと IP アドレスを Cloudflare に送ります。</p>
     <h3>送信回数の制限</h3>
-    <p>「問い合わせ」の送信は、1 日 3 回までに制限しています。そのため、送信元の IP アドレスと日付から、秘密の鍵つきで作った値を Cloudflare の Durable Object に保存します。IP アドレスそのものは保存しません。日付が変わったあとの最初の掃除（日本時間の 0 時ごろ）で削除します。</p>
+    <p>「問い合わせ」の送信は、1 日 3 回までに制限しています。そのため、送信元の IP アドレスと日付から、秘密の鍵つきで作った値を Cloudflare のサーバーに保存します。IP アドレスそのものは保存しません。日付が変わったあとの最初の掃除（日本時間の 0 時ごろ）で削除します。</p>
 
     <h2>Cookie と端末への保存</h2>
     <p>このサイトからは Cookie を設定しません。</p>
@@ -39,7 +40,7 @@
                 <tr>
                     <td>Cloudflare Web Analytics（Cloudflare, Inc.）</td>
                     <td>閲覧したページ・参照元・ブラウザ・国などの統計</td>
-                    <td>利用状況の把握（Cookie を使わない集計）</td>
+                    <td>利用状況の把握</td>
                     <td>すべてのページ</td>
                 </tr>
                 <tr>
@@ -69,7 +70,6 @@
             </tbody>
         </table>
     </div>
-    <p>サイトの運営者は、Cloudflare Web Analytics の統計から個人を特定する情報を受け取りません。</p>
 
     <h2>写真の掲載について</h2>
     <ul>
@@ -92,7 +92,7 @@
     <h2>削除・修正の依頼</h2>
     <ul>
         <li>写っている方、ワールドやアバターの権利者の方は、写真・ワールドの画像・ワールドの作者の情報などの削除や修正を依頼できます。</li>
-        <li>窓口は、<a href="report">問い合わせ</a>ページ（連絡先の記入は任意ですが、返信を希望する場合は連絡先を書いてください）か、<a href="@SiteRules.AuthorXUrl" target="_blank" rel="noopener noreferrer">X（旧 Twitter）の @SiteRules.AuthorXHandle</a> です。</li>
+        <li>窓口は、<a href="report">問い合わせ</a>ページ（連絡先の記入は任意ですが、返信を希望する場合は連絡先を書いてください）か、<a href="@SiteRules.AuthorXUrl" target="_blank" rel="noopener noreferrer">Twitterの @SiteRules.AuthorXHandle</a> です。</li>
         <li>対応の目安は、受付から <strong>7 日以内</strong>です。</li>
         <li>写真は、画像を配信元（Cloudflare R2）から削除してサイトから取り下げ、画像の配信元（Cloudflare）のキャッシュも削除します。</li>
         <li>ワールドの画像・ワールドの作者の情報の削除も、同じ窓口で受け付けます。</li>
@@ -108,10 +108,7 @@
     <h2>第三者への提供</h2>
     <p>サービスの提供に必要な範囲で、上記の外部サービスに情報を渡します。それ以外の目的で第三者に提供しません。ただし、法令に基づく場合を除きます。</p>
 
-    <h2>改定</h2>
-    <p>内容を改定するときは、このページで告知し、最終改定日を更新します。</p>
-
-    <p class="album-note">運営者: Fara（連絡先は上記の窓口）<br />最終改定日: 2026-10-29</p>
+    <p class="album-note">運営者: Fara（連絡先は上記の窓口）</p>
 </div>
 
 @code {

@@ -194,8 +194,8 @@ public class SiteBuilderTests
         Assert.DoesNotContain("&#x", body);
         Assert.Contains("<table", body);
         Assert.Contains("booth.pximg.net", body);
-        Assert.Contains("X（旧 Twitter）", body);
-        Assert.Contains("最終改定日: 2026-10-29", body);
+        Assert.Contains("Twitter", body);
+        Assert.Contains("最終改定: 2026 年 10 月 29 日", body);
         Assert.Contains("7 日以内", body);
     }
 

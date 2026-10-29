@@ -180,7 +180,7 @@ public class SiteBuilderTests
         foreach (var name in new[] { "report.html", "privacy.html", "index.html", "404.html" })
             Assert.DoesNotContain("作者へ報告", Read(prod, name));
         Assert.Contains("<title>プライバシーポリシー | Fara Photo Album</title>", Head(Read(prod, "privacy.html")));
-        Assert.Contains("<a href=\"report\">問い合わせ</a>", Body(Read(prod, "privacy.html")));
+        Assert.Contains("<a href=\"/report\">問い合わせ</a>", Body(Read(prod, "privacy.html")));
     }
 
     [Fact]
@@ -193,10 +193,29 @@ public class SiteBuilderTests
         Assert.DoesNotContain("Twitter（", body);
         Assert.DoesNotContain("&#x", body);
         Assert.Contains("<table", body);
-        Assert.Contains("booth.pximg.net", body);
+        Assert.Contains("BOOTH（pixiv Inc.）の画像サーバー", body);
         Assert.Contains("Twitter", body);
-        Assert.Contains("最終改定: 2026 年 10 月 29 日", body);
+        Assert.Contains($"制定: {PrivacyDate} / 最終改定: {PrivacyDate}", body);
         Assert.Contains("7 日以内", body);
+    }
+
+    // プライバシーポリシーの制定日・最終改定日（PrivacyView.razor の Enacted / Revised）。改定したら両方そろえて直す
+    private const string PrivacyDate = "2026 年 10 月 29 日";
+
+    [Fact]
+    public void ThePrivacyPageHasTheSameSectionsAsTheOtherSitesAndDescribesTheImplementation()
+    {
+        var (f, prod, _) = Build();
+        using var _ = f;
+        var body = Body(Read(prod, "privacy.html"));
+        foreach (var heading in new[] { "運営者", "ブラウザに保存する情報", "服の掲載について", "広告", "変更について" })
+            Assert.Contains($"<h2>{heading}</h2>", body);
+        Assert.DoesNotContain("Cookie と端末への保存", body);
+        Assert.DoesNotContain("迷惑な送信", body);
+        Assert.DoesNotContain("匿名", body);
+        Assert.Contains("EU 圏内からのアクセスは計測の対象外", body);
+        Assert.Contains("商品説明のうち対応アバターと利用規約の抜粋", body);
+        Assert.Contains("広告を表示していません", body);
     }
 
     private static string Footer(string dir, string name) =>

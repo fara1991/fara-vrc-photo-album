@@ -237,8 +237,8 @@ public class SiteBuilderTests
         Assert.Contains(" 枚", body);           // 日本語が文字参照（&#x…;）になっていない
         Assert.DoesNotContain("&#x", body);
         Assert.Contains("<h1 class=\"visually-hidden\">Fara Photo Album</h1>", body);       // 視覚的に隠した h1（ヘッダーは画像の『Fara』）
-        Assert.Contains("Fara です。インバイトでよく引きこもっています。<br", body);
-        Assert.Contains("たまに VRChat に潜って撮った写真や、フレンドに撮ってもらった写真を、このサイトに載せていきます。", body);
+        Assert.Contains("Faraです。2021/7からVRChat始めてますがインバイトで良く引きこもってます。<br", body);
+        Assert.Contains("たまにVRC潜って撮った写真や、フレンドに撮ってもらった写真をこのサイトに載せてます。", body);
         Assert.Contains("href=\"posts/first-post\"", body);  // 相対リンク（base href=/ の下で解決）
         Assert.Matches("<img[^>]+width=\"2048\"[^>]+height=\"1152\"", body);
         Assert.DoesNotContain("下書き", body);

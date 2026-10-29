@@ -108,7 +108,7 @@ public static partial class SiteRules
     public const string AuthorDiscordUrl = "https://discord.com/invite/B38eCSYyk5";
 
     /// <summary>トップページのリード文（自己紹介）。</summary>
-    public const string HomeLead = "Fara です。インバイトでよく引きこもっています。\nたまに VRChat に潜って撮った写真や、フレンドに撮ってもらった写真を、このサイトに載せていきます。";
+    public const string HomeLead = "Faraです。2021/7からVRChat始めてますがインバイトで良く引きこもってます。\nたまにVRC潜って撮った写真や、フレンドに撮ってもらった写真をこのサイトに載せてます。";
 
     public const string WorldsHref = "worlds";
 

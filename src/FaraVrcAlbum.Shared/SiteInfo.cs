@@ -1,10 +1,11 @@
 using FaraBlazorComponent.Core;
-using FaraVrcAlbum.Models;
+using FaraVrcAlbum;
 
-namespace FaraVrcAlbum.Web.Services;
+namespace FaraVrcAlbum.Models;
 
 /// <summary>
-/// このサイトの名前・作者・保存のキー・確認用ホスト。共通部品（fara-blazor-component。フッター・報告フォームなど）が読む SiteOptions に、起動時に入れる（Program.cs）。
+/// このサイトの名前・作者・保存のキー・確認用ホスト。共通部品（fara-blazor-component。フッター・報告フォームなど）が読む SiteOptions に入れる。
+/// Web（起動時。Program.cs）と Build（静的 HTML のフッター。PageRenderer）が、同じ Configure を使う（値を二重に持たない）。
 /// 他のサイト（pokemon・avatar・bot・portfolio）と、フッターの形を同じにする。
 /// </summary>
 public static class SiteInfo

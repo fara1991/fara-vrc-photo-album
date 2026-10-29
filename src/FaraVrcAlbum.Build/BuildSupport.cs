@@ -25,9 +25,13 @@ internal sealed class SiteConfigFile
 /// <summary>kit の build-pages に渡す site.json。tools/site.json に、画像の配信元（ImageBaseUrl のホスト）を CSP の img-src と connect-src に足す。</summary>
 internal static class KitSiteConfig
 {
-    public static string Build(SiteConfigFile config, SiteSettings settings)
+    /// <summary>notFoundHtml は 404.html の本文（フッター入り。PageCatalog.NotFoundBodyHtml）。kit は、これが無いと 404 の本文を空にする。</summary>
+    public static string Build(SiteConfigFile config, SiteSettings settings, string notFoundHtml)
     {
         var node = (JsonObject)config.Node.DeepClone();
+        var notFound = node["notFoundPage"] as JsonObject ?? new JsonObject();
+        notFound["bodyHtml"] = notFoundHtml;
+        node["notFoundPage"] = notFound;
         var csp = node["csp"] as JsonObject ?? throw new InvalidDataException("tools/site.json に csp がありません");
         var origin = ImageOrigin(settings.PublicImageBaseUrl);
         // img-src: 写真（R2）。connect-src は tools/site.json の値だけ（記事・ワールドの JSON は同じオリジンから読む）

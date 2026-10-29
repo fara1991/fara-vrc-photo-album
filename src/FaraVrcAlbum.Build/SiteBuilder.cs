@@ -51,13 +51,17 @@ public static class SiteBuilder
         Directory.CreateDirectory(work);
         try
         {
+            // フッターの URL（問い合わせ・作者リンク）は、この環境のオリジンで決める（Web で開いたときと同じ値になる）
+            var origin = options.Env == "production" ? siteConfig.Origin : siteConfig.DevOrigin;
             var pagesFile = Path.Combine(work, "pages.json");
+            string notFoundHtml;
             using (var renderer = new PageRenderer())
             {
-                File.WriteAllText(pagesFile, PageCatalog.BuildPagesJson(model, renderer), new UTF8Encoding(false));
+                File.WriteAllText(pagesFile, PageCatalog.BuildPagesJson(model, renderer, origin), new UTF8Encoding(false));
+                notFoundHtml = PageCatalog.NotFoundBodyHtml(model, renderer, origin);
             }
             var siteFile = Path.Combine(work, "site.json");
-            File.WriteAllText(siteFile, KitSiteConfig.Build(siteConfig, settings), new UTF8Encoding(false));
+            File.WriteAllText(siteFile, KitSiteConfig.Build(siteConfig, settings, notFoundHtml), new UTF8Encoding(false));
 
             RunKit(options, kitScript, siteFile, pagesFile);
             HeadersFile.AppendNoindexRules(Path.Combine(options.Out, "_headers"));

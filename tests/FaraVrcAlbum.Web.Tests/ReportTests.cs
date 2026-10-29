@@ -29,6 +29,15 @@ public sealed class ReportTests : BunitContext, IAsyncLifetime
     Task IAsyncLifetime.InitializeAsync() => Task.CompletedTask;
 
     [Fact]
+    public void TheHeadingIsContactNotReportToAuthor()
+    {
+        var cut = Render<Report>();
+
+        Assert.Equal("問い合わせ", cut.Find("h1").TextContent.Trim());
+        Assert.DoesNotContain("作者へ報告", cut.Markup);
+    }
+
+    [Fact]
     public void TheContactIsRequiredAndAskedAsAnXUserName()
     {
         var cut = Render<Report>();

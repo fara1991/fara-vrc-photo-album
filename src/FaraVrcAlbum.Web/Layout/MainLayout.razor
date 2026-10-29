@@ -32,7 +32,7 @@
                 }
             </nav>
         }
-        @* サポート（作者へ報告・プライバシーポリシー）。アーカイブの下。ナビの <nav> が 2 つになるので、名前（aria-label）で区別する *@
+        @* サポート（問い合わせ・プライバシーポリシー）。アーカイブの下。ナビの <nav> が 2 つになるので、名前（aria-label）で区別する *@
         <MudNavMenu Class="fbc-nav" aria-label="サポート">
             <div class="fbc-nav-section">サポート</div>
             @foreach (var item in SupportItems)
@@ -77,7 +77,7 @@
     /// <summary>サポートのメニュー。アーカイブの下に出す。</summary>
     private static readonly IReadOnlyList<SiteNavItem> SupportItems = new[]
     {
-        new SiteNavItem("report", "作者へ報告", Icons.Material.Filled.MailOutline),
+        new SiteNavItem("report", "問い合わせ", Icons.Material.Filled.MailOutline),
         new SiteNavItem("privacy", "プライバシーポリシー", Icons.Material.Filled.PrivacyTip),
     };
 }

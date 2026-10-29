@@ -1136,12 +1136,12 @@ main.entry-static a {
   min-height: 0;
 }
 
-/* 報告ページ（kit の ReportFormView）: 文中のリンクは色だけで見分けさせない（axe link-in-text-block） */
+/* 問い合わせページ（kit の ReportFormView）: 文中のリンクは色だけで見分けさせない（axe link-in-text-block） */
 .fbc-report-card p a {
   text-decoration: underline;
 }
 
-/* 報告ページの注意書き（kit の MudAlert。ライトテーマの警告色 #d68100 は白地でコントラスト 3:1 しかない。axe の color-contrast）。文字だけ濃い色にする */
+/* 問い合わせページの注意書き（kit の MudAlert。ライトテーマの警告色 #d68100 は白地でコントラスト 3:1 しかない。axe の color-contrast）。文字だけ濃い色にする */
 html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
   color: #8a5300;
 }

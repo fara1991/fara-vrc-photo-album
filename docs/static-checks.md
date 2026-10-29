@@ -44,7 +44,7 @@ kit の詳しい中身は `external/fara-blazor-component/docs/layout-check.md`�
 - 記事・タグ・パンくずのリンク: 行の中のリンクの当たり判定（`padding` と負の `margin`）を広げ、隣の行の文字と重なる分は `position: relative; z-index: 1` で先に受ける。「ホーム」は 600px 未満で左右にも広げる。
 - 見出しのリンク（記事の題）: 当たり判定の高さを 44px に。
 - フッターの SNS アイコン（600px 未満）: 当たり判定を 44px（`padding` 11px・負の `margin`）にし、アイコンの間隔を 24px（隣と接すると端の 0.5px で隣が取るため）。見た目の大きさは変えない。
-- 報告フォームの入力欄: キーボードのフォーカスを枠（`outline`）で示す（MudBlazor は下線の色だけだった）。
+- 問い合わせフォームの入力欄: キーボードのフォーカスを枠（`outline`）で示す（MudBlazor は下線の色だけだった）。
 
 ## 2. ESLint
 

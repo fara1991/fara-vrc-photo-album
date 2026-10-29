@@ -169,6 +169,20 @@ public class SiteBuilderTests
         Assert.Contains("<h1>ページが見つかりません</h1>", Read(prod, "404.html"));
     }
 
+    [Fact]
+    public void TheContactPageAndThePrivacyPageUseTheSameNamesEverywhere()
+    {
+        var (f, prod, _) = Build();
+        using var _ = f;
+        var report = Read(prod, "report.html");
+        Assert.Contains("<title>問い合わせ | Fara Photo Album</title>", Head(report));
+        Assert.Contains("問い合わせ", Body(report));
+        foreach (var name in new[] { "report.html", "privacy.html", "index.html", "404.html" })
+            Assert.DoesNotContain("作者へ報告", Read(prod, name));
+        Assert.Contains("<title>プライバシーポリシー | Fara Photo Album</title>", Head(Read(prod, "privacy.html")));
+        Assert.Contains("<a href=\"report\">問い合わせ</a>", Body(Read(prod, "privacy.html")));
+    }
+
     private static string Footer(string dir, string name) =>
         Regex.Match(Read(dir, name), "<footer class=\"fbc-footer entry-static\">.*?</footer>", RegexOptions.Singleline).Value;
 

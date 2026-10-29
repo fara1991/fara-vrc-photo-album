@@ -2,7 +2,7 @@
 
 **Fara Photo Album**: VRChat で撮った写真のブログ（本番 https://vrc-album.fara-labs.com/ ・確認用 https://vrc-album-dev.fara-labs.com/）。C# / .NET 10 の Blazor WebAssembly + MudBlazor（共通部品は [fara-blazor-component](https://github.com/fara1991/fara-blazor-component)）で作った静的サイトを Cloudflare Workers に公開します。写真は R2（https://vrc-photos.fara-labs.com/）から配信します。
 
-現在は **M0（リポジトリ・骨組み・デプロイの関門）** です。記事の一覧・記事ページ・メンテナンス表示・プライバシー・報告まで。ライトボックス・ワールド・タグ・アーカイブ・検索なし・画像のアップロードツールは後続のマイルストーンで足します。
+現在は **M0（リポジトリ・骨組み・デプロイの関門）** です。記事の一覧・記事ページ・メンテナンス表示・プライバシーポリシー・問い合わせまで。ライトボックス・ワールド・タグ・アーカイブ・検索なし・画像のアップロードツールは後続のマイルストーンで足します。
 
 - 記事は `content/posts/*.json`（Markdown 本文）。ビルド（`FaraVrcAlbum.Build`）が、本文入りの静的 HTML（検索エンジン・JavaScript の無い環境向け）とアプリが読む `data/*.json` を作ります。ブラウザは起動すると静的 HTML を引き継ぎます。
 - サーバー・データベースは使いません（Worker は、メンテナンスの状態・報告の受け口だけ）。

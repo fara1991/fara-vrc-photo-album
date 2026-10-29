@@ -34,18 +34,21 @@ fara-vrc-photo-album/
 
 | 公開先 | タイミング |
 | --- | --- |
-| https://vrc-album-dev.fara-labs.com/（確認用） | デスクトップアプリの「公開」タブ（`node tools/site.mjs deploy develop`）から。Actions では公開しない |
-| https://vrc-album.fara-labs.com/（本番） | 同じく手元から（`node tools/site.mjs deploy production`。確認用に公開済みのときだけ）。**初回はメンテナンス画面のまま**作られる |
+| https://vrc-album-dev.fara-labs.com/（確認用） | デスクトップアプリの「公開」タブ（`node tools/site.mjs deploy develop`）から。Actions では公開しない。**develop にマージしただけでは反映されない（手元で再公開する）** |
+| https://vrc-album.fara-labs.com/（本番） | 同じく手元から（`node tools/site.mjs deploy production`。確認用に公開済みのときだけ。HEAD が origin/master と一致し、作業ツリーが clean であること）。**初回は、メンテナンス画面を経由せず、すぐ一般公開される**（メンテナンス画面のまま出す手順は [docs/cloudflare-setup.md](docs/cloudflare-setup.md) の「本番の最初の公開」） |
 
 テスト・検証が通らなければ公開されません。初回の設定（API トークン・Access・R2・ドメイン）は [docs/cloudflare-setup.md](docs/cloudflare-setup.md)。
 
 ## ブランチ運用
 
 ```
-feature/xxx ──PR──▶ develop ──PR──▶ master ──(自動)──▶ vrc-album.fara-labs.com
-                       │
-                       └──(自動)──▶ vrc-album-dev.fara-labs.com
+feature/xxx ──PR──▶ develop ──PR──▶ master
+                       │                 │
+                       │                 └──(手元から公開)──▶ vrc-album.fara-labs.com
+                       └──(手元から公開)──▶ vrc-album-dev.fara-labs.com
 ```
+
+マージしても公開はされません（push で動くのは `build.yml` の検査だけ）。公開は、手元のアプリ／`tools/site.mjs` から行います。
 
 作業ブランチは **develop から** 作成して **develop へ** マージする。リリースは **develop → master**（ユーザーがマージ）。
 

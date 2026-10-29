@@ -1,8 +1,8 @@
 {
   // Cloudflare Workers（静的アセット + 小さな Worker）で公開する設定。
   // 公開するのは Blazor WebAssembly の静的サイト（dist。node tools/site.mjs が、環境ごとの出力を置く。公開は手元からだけ）。
-  //   本番:   wrangler deploy --env=""        → https://vrc-album.fara-labs.com/      （Deploy ワークフロー・master への push）
-  //   確認用: wrangler deploy --env develop   → https://vrc-album-dev.fara-labs.com/  （Deploy ワークフロー・develop への push。Cloudflare Access で守る）
+  //   本番:   wrangler deploy --env=""        → https://vrc-album.fara-labs.com/      （手元のアプリ／tools/site.mjs deploy production・master のブランチから）
+  //   確認用: wrangler deploy --env develop   → https://vrc-album-dev.fara-labs.com/  （手元のアプリ／tools/site.mjs deploy develop・develop のブランチから。Cloudflare Access で守る）
   // 写真は R2 の別ドメイン（https://vrc-photos.fara-labs.com）から配信する。Worker を通らない（docs/cloudflare-setup.md）。
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "fara-vrc-album",

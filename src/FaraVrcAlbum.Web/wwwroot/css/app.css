@@ -1,25 +1,116 @@
 /* Fara Photo Album のスタイル（1 ファイル）。色は :root の CSS 変数。kit の fara-blazor-component.css の上に重ねる。
-   写真が主役になるよう、背景は中立（暗め）。ヘッダーは kit の紫のバー。 */
+   色と見た目は、先頭の「テーマ」ブロックにまとめている（ローズ〜ピンク寄り）。 */
+
+/* =====================================================================================================
+   テーマ（このサイトの色と見た目。ローズ〜ピンク寄りの、温かみのあるアルバム）
+   色を変えるときは、このブロックの変数だけを触る（kit の --fbc-* の上書きと、このサイトの --album-*）。
+   MudBlazor のコンポーネント（ボタン・チップ・スイッチ）の色は、Layout/AlbumTheme.cs のパレットで決める（同じ値にそろえる）。
+   kit（fara-blazor-component）の既定は紫。fara-labs・pokemon は紫のまま。
+   ===================================================================================================== */
 
 :root {
+  /* ---- 形（レイアウトは変えない。角丸・影・見出しの飾りだけ） ---- */
   --album-gap: 1rem;
-  --album-radius: 0.5rem;
+  --album-radius: 0.75rem;              /* カード・画像の角丸（以前 0.5rem） */
+  --album-card-shadow: 0 1px 3px rgba(122, 40, 72, 0.1);
+  --album-card-shadow-hover: 0 4px 14px rgba(122, 40, 72, 0.16);
+
+  /* ---- kit の変数の上書き（ライト） ---- */
+  --fbc-body-bg: #fdf6f8;               /* ページの背景（以前 #f7f4fd） */
+  --fbc-border: #ecd3dc;                /* 区切り線・カードの枠（以前 #d8cdf2） */
+  --fbc-muted: #7a5160;                 /* 補足の文字（以前 #6b5f8a）。#fdf6f8 の上で 6.2:1 */
+  --fbc-field-bg: rgba(255, 255, 255, 0.7);
+  --fbc-brand: #b83a64;                 /* ブランド色（リンクのホバー・主ボタン・SNS の既定）。白文字で 5.5:1（以前 #7c3aed） */
+  --fbc-focus: #9d2a52;                 /* フォーカス枠（明るいページの上。#fdf6f8 の上で 6.8:1） */
+  --fbc-grad: linear-gradient(120deg, #f9a8c9 0%, #fb7185 50%, #fdba74 100%);   /* 404 の大きな数字（以前 紫→ピンク→青） */
+  --fbc-header-bg: linear-gradient(90deg, #1f0b15 0%, #3a1425 100%);            /* ヘッダー（以前 #140a26→#241243） */
+  --fbc-header-accent: linear-gradient(90deg, #f9a8c9 0%, #fb7185 100%);        /* スクロールの進み具合の線 */
+  --fbc-header-track: rgba(249, 168, 201, 0.22);
+  --fbc-sidebar-bg: linear-gradient(180deg, rgba(31, 11, 21, 0.92) 0%, rgba(53, 19, 36, 0.92) 60%, rgba(66, 26, 45, 0.92) 100%);   /* サイドバー */
+  --fbc-sidebar-text: #e0d3d8;
+  --fbc-maintenance-bg: #130a0e;
+  --fbc-maintenance-text: #fbeff3;
+  --fbc-maintenance-muted: #c9abb8;
+
+  /* ---- このサイトの変数（ライト） ---- */
+  --album-text: #2a1520;                /* 本文の文字（静的な入口ページ用。MudBlazor の TextPrimary と同じ） */
   --album-card-bg: #ffffff;
-  --album-card-border: rgba(0, 0, 0, 0.12);
-  --album-muted: #5b5370;
-  --album-link-text: #5b21b6;
-  --album-table-stripe: rgba(91, 33, 182, 0.04);
-  /* サイドバーの選択中の項目の文字色（ダーク・ライトとも。サイドバーは両テーマで暗い）。#a855f7（ダーク）・#7c3aed（ライト）は、暗い背景の上で AA に届かない */
-  --album-nav-active: #c084fc;
+  --album-card-border: rgba(122, 40, 72, 0.16);
+  --album-muted: #7a5160;
+  --album-link-text: #a3204f;           /* 本文のリンク。#fdf6f8 の上で 6.9:1 */
+  --album-table-stripe: rgba(184, 58, 100, 0.05);
+  --album-accent: #d6336c;              /* 見出しの飾り・カードのホバーの枠 */
+  --album-accent-soft: rgba(214, 51, 108, 0.35);
+  /* サイドバーは両テーマで暗い */
+  --album-sidebar-solid: #1e0d17;       /* サイドバーの下地（以前 #1a0d33） */
+  --album-sidebar-border: rgba(255, 190, 215, 0.14);
+  --album-sidebar-link: #f4e6ec;        /* サイドバーの文字（以前 #ece6f7） */
+  --album-sidebar-icon-active: #ffe0ec; /* 選択中のアイコン（以前 #f3e8ff） */
+  --album-nav-active: #ffb3cf;          /* サイドバーの選択中の項目の文字色。サイドバーの最も明るい背景の上で 8.5:1（tests/js/nav-contrast.test.mjs） */
+  --album-focus-on-dark: #ffd1e1;       /* 暗い背景（ヘッダー・サイドバー・ライトボックス）の上のフォーカス枠（以前 #e9d5ff） */
+  /* ライトボックス（背景は常に暗色。写真が主役なので、ほぼ無彩色のまま） */
+  --album-lb-bg: #080506;
+  --album-lb-text: #fbeff3;
+  --album-lb-muted: #e6d2da;
+  --album-lb-link: #ffd1e1;
+  --album-lb-spinner: #f472a8;
 }
 
-html[data-bs-theme="dark"] {
-  --album-card-bg: #17121f;
-  --album-card-border: rgba(255, 255, 255, 0.12);
-  --album-muted: #b4aac8;
-  --album-link-text: #d8b4fe;
-  --album-table-stripe: rgba(255, 255, 255, 0.03);
+html:root[data-bs-theme="dark"] {
+  --fbc-body-bg: #130a0e;               /* 以前 #0c0616 */
+  --fbc-border: rgba(255, 190, 215, 0.16);
+  --fbc-muted: #c9abb8;                 /* 以前 #b4a7d1 */
+  --fbc-field-bg: rgba(34, 18, 25, 0.7);
+  --fbc-brand: #d6336c;                 /* 白文字で 4.6:1（以前 #a855f7） */
+  --fbc-focus: #ffc2d8;                 /* 暗いページの上のフォーカス枠 */
+
+  --album-text: #fbeff3;
+  --album-card-bg: #1d1217;
+  --album-card-border: rgba(255, 190, 215, 0.14);
+  --album-muted: #c9abb8;
+  --album-link-text: #f7a8c4;           /* #1d1217 の上で 9.9:1（以前 #d8b4fe） */
+  --album-table-stripe: rgba(255, 200, 220, 0.04);
+  --album-accent: #f472a8;
+  --album-accent-soft: rgba(244, 114, 168, 0.4);
+  --album-card-shadow: none;
+  --album-card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.45);
 }
+
+/* kit の色の直書き（変数にできていない部分）を、ここで上書きする。kit は変更しない */
+.fbc-sidebar.mud-drawer {
+  background-color: var(--album-sidebar-solid);
+  border-right-color: var(--album-sidebar-border);
+}
+
+.fbc-sidebar .mud-nav-link {
+  color: var(--album-sidebar-link);
+}
+
+.fbc-sidebar .mud-nav-link.active .mud-icon-root,
+.fbc-sidebar .mud-nav-link.active .mud-nav-link-icon {
+  color: var(--album-sidebar-icon-active) !important;
+}
+
+.fbc-maintenance h1 {
+  color: #f4a9c4;
+}
+
+.fbc-btn-primary.mud-button-root {
+  background: linear-gradient(135deg, #d6336c, #b0194f);
+  box-shadow: 0 10px 30px -8px rgba(214, 51, 108, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.fbc-skip-link {
+  color: var(--album-text);
+}
+
+/* 暗い面（ヘッダー・サイドバー）の中は、フォーカス枠の色を明るいピンクに（kit の枠は --fbc-focus。ライトのページ用の濃い色だと、暗い面で見えない） */
+.fbc-header,
+.fbc-sidebar {
+  --fbc-focus: var(--album-focus-on-dark);
+}
+
+/* ===================================== （テーマのブロックはここまで） ===================================== */
 
 .visually-hidden {
   position: absolute;
@@ -101,7 +192,7 @@ figcaption,
 
 /* kit の .fbc-header :focus-visible は outline-color だけを決める。MudBlazor の reset で outline-style が none になり、ヘッダーの名前のリンクにキーボードのフォーカス枠が出ないので、ここで枠を付ける */
 .fbc-header .fbc-brand:focus-visible {
-  outline: 2px solid #e9d5ff;
+  outline: 2px solid var(--album-focus-on-dark);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -186,7 +277,7 @@ figcaption,
   align-items: center;
   min-height: 44px;
   padding: 0 1rem;
-  color: #ece6f7;
+  color: var(--album-sidebar-link);
   font-size: 0.9rem;
   font-weight: 700;
   border-radius: 4px;
@@ -229,7 +320,7 @@ figcaption,
   align-items: center;
   min-height: 44px;
   padding: 0 1rem 0 2.5rem;
-  color: #ece6f7;
+  color: var(--album-sidebar-link);
   font-size: 0.9rem;
   text-decoration: none;
   border-radius: 4px;
@@ -248,7 +339,7 @@ figcaption,
 
 .album-archive-summary:focus-visible,
 .album-archive-link:focus-visible {
-  outline: 2px solid #e9d5ff;
+  outline: 2px solid var(--album-focus-on-dark);
   outline-offset: -2px;
 }
 
@@ -281,6 +372,8 @@ figcaption,
 
 .album-card {
   position: relative;
+  box-shadow: var(--album-card-shadow);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -776,8 +869,8 @@ html.album-lb-open body {
   margin: 0;
   padding: 0;
   border: 0;
-  color: #f3edff;
-  background: #07040d;
+  color: var(--album-lb-text);
+  background: var(--album-lb-bg);
   overscroll-behavior: contain;
   touch-action: pan-y pinch-zoom;
 }
@@ -788,7 +881,7 @@ html.album-lb-open body {
 }
 
 .album-lb::backdrop {
-  background: #07040d;
+  background: var(--album-lb-bg);
 }
 
 .album-lb-bar {
@@ -803,7 +896,7 @@ html.album-lb-open body {
 .album-lb-count {
   font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
-  color: #d9ccf0;
+  color: var(--album-lb-muted);
 }
 
 .album-lb-button {
@@ -829,7 +922,7 @@ html.album-lb-open body {
 
 .album-lb-button:focus-visible,
 .album-lb a:focus-visible {
-  outline: 3px solid #e9d5ff;
+  outline: 3px solid var(--album-focus-on-dark);
   outline-offset: 2px;
 }
 
@@ -876,7 +969,7 @@ html.album-lb-open body {
   height: 2.5rem;
   margin: -1.25rem 0 0 -1.25rem;
   box-sizing: border-box;
-  border: 0.3rem solid #a855f7;
+  border: 0.3rem solid var(--album-lb-spinner);
   border-right-color: transparent;
   border-radius: 50%;
   visibility: hidden;
@@ -910,12 +1003,12 @@ html.album-lb-open body {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   font-size: 0.9rem;
   line-height: 1.6;
-  color: #d9ccf0;
+  color: var(--album-lb-muted);
   text-align: center;
 }
 
 .album-lb-caption a {
-  color: #e9d5ff;
+  color: var(--album-lb-link);
 }
 
 .album-lb-info {
@@ -948,7 +1041,7 @@ html.album-lb-open body {
     margin-top: -22px;
     width: 44px;
     height: 44px;
-    background: rgba(7, 4, 13, 0.55);
+    background: rgba(8, 5, 6, 0.55);
   }
 
   .album-lb-prev {
@@ -1063,11 +1156,11 @@ main.entry-static {
   font-family: "Zen Kaku Gothic New", system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
   font-size: 0.875rem;
   line-height: 1.43;
-  color: #1e1433;
+  color: var(--album-text);
 }
 
 html[data-bs-theme="dark"] main.entry-static {
-  color: #f3edff;
+  color: var(--album-text);
 }
 
 /* リンクは色だけで見分けさせない（MudBlazor の reset はリンクの色・下線を消す）。本文・キャプション・パンくず・メタ情報のリンクは下線を付ける。
@@ -1098,13 +1191,13 @@ main.entry-static a {
 /* ボタン（ハンバーガー・アーカイブの年・テーマの切り替え）のキーボードのフォーカス枠。MudBlazor の reset が枠を消すので、ここで戻す（リンクと同じ） */
 .fbc-header button:focus-visible,
 .fbc-header .fbc-theme-switch:focus-within {
-  outline: 2px solid #e9d5ff;
+  outline: 2px solid var(--album-focus-on-dark);
   outline-offset: 2px;
 }
 
 .fbc-sidebar button:focus-visible,
 .fbc-sidebar .mud-nav-link:focus-visible {
-  outline: 2px solid #e9d5ff;
+  outline: 2px solid var(--album-focus-on-dark);
   outline-offset: -2px;
 }
 
@@ -1229,7 +1322,7 @@ html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
 /* 入力欄のフォーカス（MudBlazor は下線の色だけで示すため、キーボードのフォーカスを枠でも示す）。
    MudBlazor の `.mud-input>input.mud-input-root:focus { outline: 0 }` に勝つため、:root を付けて詳細度を上げる */
 :root .mud-input-slot.mud-input-root:focus-visible {
-  outline: 2px solid var(--fbc-focus, #e9d5ff);
+  outline: 2px solid var(--fbc-focus);
   outline-offset: 2px;
 }
 
@@ -1540,4 +1633,29 @@ small.fbc-muted { font-size: 12px; }
 
 .album-privacy > :not(.album-table-wrap) {
   max-width: 46rem;
+}
+
+/* ---- テーマの見た目（色以外の小さな違い。レイアウトは変えない） ---- */
+
+/* カード: 角丸 0.75rem・やわらかい影。マウスを重ねると、枠がアクセント色に（動きは弱く。prefers-reduced-motion では transition なし） */
+.album-card:hover {
+  border-color: var(--album-accent-soft);
+  box-shadow: var(--album-card-shadow-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .album-card {
+    transition: none;
+  }
+}
+
+/* ページの題（h1）の下に、アクセント色の短い線 */
+h1.album-heading {
+  padding-bottom: 0.5rem;
+  background: linear-gradient(90deg, var(--album-accent), transparent) left bottom / 3rem 3px no-repeat;
+}
+
+/* 節の見出し（プライバシーポリシーの h2）の下線も、少しだけアクセントに */
+.album-privacy h2 {
+  border-bottom-color: var(--album-accent-soft);
 }

@@ -217,6 +217,9 @@ public class SiteBuilderTests
         Assert.Contains("商品説明のうち対応アバターと利用規約の抜粋", body);
         Assert.Contains("広告は、いま使っていません。", body);
         Assert.DoesNotContain("掃除", body);
+        // 閲覧者に要らない技術の詳細（ホスト名・内部の仕組みの名前・保存のキー名・置き換え記号）は出さない
+        foreach (var jargon in new[] { "fara-labs.com", "pximg.net", "googleapis", "R2", "Durable", "HMAC", "キャッシュ", "localStorage", "fara-vrc-album.", "@ImageHost", "秘密の鍵" })
+            Assert.DoesNotContain(jargon, body);
         Assert.True(body.IndexOf("<h2>運営者</h2>", StringComparison.Ordinal) < body.IndexOf("<h2>利用目的</h2>", StringComparison.Ordinal));
     }
 

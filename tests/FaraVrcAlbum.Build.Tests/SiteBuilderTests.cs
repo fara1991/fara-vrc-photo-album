@@ -215,7 +215,9 @@ public class SiteBuilderTests
         Assert.DoesNotContain("匿名", body);
         Assert.Contains("EU 圏内からのアクセスは計測の対象外", body);
         Assert.Contains("商品説明のうち対応アバターと利用規約の抜粋", body);
-        Assert.Contains("広告を表示していません", body);
+        Assert.Contains("広告は、いま使っていません。", body);
+        Assert.DoesNotContain("掃除", body);
+        Assert.True(body.IndexOf("<h2>運営者</h2>", StringComparison.Ordinal) < body.IndexOf("<h2>利用目的</h2>", StringComparison.Ordinal));
     }
 
     private static string Footer(string dir, string name) =>

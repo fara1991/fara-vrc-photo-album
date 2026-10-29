@@ -39,10 +39,11 @@ test("kit の 3.5rem 固定のヘッダー・ツールバーと、MudBlazor の 
   assert.match(rule("html"), /scroll-padding-top:\s*calc\(var\(--album-header-h\)/);
 });
 
-test("本文の最初の画像（.album-banner）は本文の幅の半分・縦横比 4:1 で場所を空ける", () => {
+test("本文の最初の画像（.album-banner）は本文の幅の半分・中央・縦横比 4:1 で場所を空ける", () => {
   const wrap = rule(".album-banner");
   assert.match(wrap, /width:\s*50%/);
   assert.match(wrap, /min-width:\s*min\(100%, 200px\)/);
+  assert.match(wrap, /margin:\s*0 auto 1rem/); // 本文の領域の中央（内容の列と同じ中央線）
   const img = rule(".album-banner img");
   assert.match(img, /width:\s*100%/);
   assert.match(img, /aspect-ratio:\s*4 \/ 1/);

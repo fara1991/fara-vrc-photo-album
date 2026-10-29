@@ -7,6 +7,8 @@
   --album-card-bg: #ffffff;
   --album-card-border: rgba(0, 0, 0, 0.12);
   --album-muted: #5b5370;
+  --album-link-text: #5b21b6;
+  --album-table-stripe: rgba(91, 33, 182, 0.04);
   /* サイドバーの選択中の項目の文字色（ダーク・ライトとも。サイドバーは両テーマで暗い）。#a855f7（ダーク）・#7c3aed（ライト）は、暗い背景の上で AA に届かない */
   --album-nav-active: #c084fc;
 }
@@ -15,6 +17,8 @@ html[data-bs-theme="dark"] {
   --album-card-bg: #17121f;
   --album-card-border: rgba(255, 255, 255, 0.12);
   --album-muted: #b4aac8;
+  --album-link-text: #d8b4fe;
+  --album-table-stripe: rgba(255, 255, 255, 0.03);
 }
 
 .visually-hidden {
@@ -1219,22 +1223,150 @@ html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
 /* 注記の文字（kit の small.fbc-muted は 11.3px）は 12px 以上 */
 small.fbc-muted { font-size: 12px; }
 
-/* プライバシーポリシーの表（外部サービスとの通信）。狭い画面では横にスクロールする */
+/* プライバシーポリシー。kit の reset で段落・見出し・リストの余白が無いので、このページの中だけで整える。
+   行が長くなりすぎないよう、PC でも 56rem までにする（kit の --wide は 72rem） */
+.fbc-page-column.fbc-page-column--wide.album-privacy {
+  max-width: 56rem;
+  margin-left: 0;
+  line-height: 1.8;
+}
+
+.album-privacy .album-heading {
+  margin-bottom: 0.5rem;
+}
+
+.album-privacy p,
+.album-privacy ul {
+  margin: 0 0 0.9rem;
+}
+
+.album-privacy ul {
+  padding-left: 1.4rem;
+  list-style: disc;
+}
+
+.album-privacy li + li {
+  margin-top: 0.35rem;
+}
+
+.album-privacy .album-note {
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+
+.album-privacy h2 {
+  margin: 2.25rem 0 0.75rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--album-card-border);
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+.album-privacy h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+/* 本文のリンクは、色（コントラスト 4.5 以上）と下線で見分ける */
+.album-privacy a {
+  color: var(--album-link-text);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.album-privacy a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* 外部サービスの表。広い画面は 4 列の表、狭い画面（56rem 未満。サイドバーがある幅を含む）は 1 行ずつのカードにして、横にスクロールさせない */
 .album-table-wrap {
-  overflow-x: auto;
   margin: 0 0 1rem;
 }
 
 .album-table {
   border-collapse: collapse;
   width: 100%;
-  min-width: 36rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 .album-table th,
 .album-table td {
   border: 1px solid var(--album-card-border);
-  padding: 0.4rem 0.6rem;
+  padding: 0.55rem 0.75rem;
   text-align: left;
   vertical-align: top;
+}
+
+.album-table thead th {
+  background: var(--album-card-bg);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.album-table tbody th {
+  font-weight: 700;
+}
+
+.album-table tbody tr:nth-child(even) {
+  background: var(--album-table-stripe);
+}
+
+.album-table th:first-child {
+  width: 22%;
+}
+
+@media (max-width: 55.99rem) {
+  .album-table,
+  .album-table tbody,
+  .album-table tr,
+  .album-table th,
+  .album-table td {
+    display: block;
+  }
+
+  .album-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .album-table tbody tr {
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--album-card-border);
+    border-radius: var(--album-radius);
+    overflow: hidden;
+  }
+
+  .album-table th,
+  .album-table td {
+    border: 0;
+    padding: 0.35rem 0.75rem;
+  }
+
+  .album-table th:first-child {
+    width: auto;
+  }
+
+  .album-table tbody th {
+    padding-top: 0.55rem;
+    background: var(--album-card-bg);
+    border-bottom: 1px solid var(--album-card-border);
+  }
+
+  .album-table td::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--album-muted);
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .album-table td:last-child {
+    padding-bottom: 0.55rem;
+  }
 }

@@ -402,6 +402,22 @@ public class PagesTests : BunitContext
     }
 
     [Fact]
+    public void TheOutfitDescriptionIsSplitIntoSectionsByItsBracketHeadingsWithoutLosingText()
+    {
+        const string description = "前文です。\n【対応アバター】\n■ A\n■ B\n\n【利用規約】\n個人利用のみ。";
+        var page = Render<OutfitPageView>(p => p.Add(c => c.Id, "coat").Add(c => c.Name, "コート").Add(c => c.Description, description)
+            .Add(c => c.Photos, Array.Empty<PhotoRef>()).Add(c => c.BaseUrl, Base));
+
+        var sections = page.FindAll("section.album-outfit-section");
+        Assert.Equal(3, sections.Count);                                              // 前文（見出しなし）・対応アバター・利用規約
+        Assert.Empty(sections[0].QuerySelectorAll("h2"));
+        Assert.Equal("【対応アバター】", sections[1].QuerySelector("h2")!.TextContent);
+        Assert.Equal("■ A\n■ B", sections[1].QuerySelector("p.album-more-text")!.TextContent);
+        Assert.Equal("【利用規約】", sections[2].QuerySelector("h2")!.TextContent);
+        Assert.Equal("個人利用のみ。", sections[2].QuerySelector("p.album-more-text")!.TextContent);
+    }
+
+    [Fact]
     public void TheOutfitPageShowsTheBoothInfoAndTheNameLinksToTheShopWhileTheListUsesTheBoothImage()
     {
         var page = Render<OutfitPageView>(p => p.Add(c => c.Id, "coat").Add(c => c.Name, "コート").Add(c => c.Shop, "店").Add(c => c.Url, "https://booth.pm/ja/items/1")

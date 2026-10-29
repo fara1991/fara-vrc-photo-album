@@ -23,7 +23,7 @@ public class WorldFetchTests
     private static HttpResponseMessage Json(string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
 
-    private static Task NoWait(CancellationToken _) => Task.CompletedTask;
+    private static Task NoWaitAsync(CancellationToken _) => Task.CompletedTask;
 
     private static byte[] Png()
     {
@@ -36,13 +36,15 @@ public class WorldFetchTests
     {
         var asked = new List<string>();
         var png = Png();
+#pragma warning disable CA2000 // 作った HttpClient（とハンドラー）を呼び出し側のテストへ返す。短命のテスト用オブジェクトで、各テストの終わりまで使う（破棄しても結果は変わらない）
         var http = WorldImageService.CreateClient(new FakeHandler(r =>
         {
             var path = r.RequestUri!.AbsolutePath;
             asked.Add(path);
             if (custom?.Invoke(path) is { } response) return response;
             return path.StartsWith("/api/1/worlds/", StringComparison.Ordinal) ? Json(Info()) : new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(png) };
-        }), NoWait);
+        }), NoWaitAsync);
+#pragma warning restore CA2000
         return (http, asked);
     }
 
@@ -197,7 +199,7 @@ public class WorldFetchTests
             () => throw new UsageException("R2_ACCESS_KEY_ID がありません"), StateFile(repo), Now, false, log.Add);
 
         Assert.Equal((0, 1), (result.Images, result.Stats));
-        Assert.Equal(1, asked.Count);                                                                       // 画像は取りに行かない
+        Assert.Single(asked);                                                                       // 画像は取りに行かない
         Assert.Contains(log, l => l.Contains("R2_ACCESS_KEY_ID") && l.Contains("情報だけ"));
         Assert.Null(repo.Editor.LoadContent().Worlds[RepoFixture.WorldOld].Image);
         Assert.Empty(WorldFetchService.State.Load(StateFile(repo)).Failures);

@@ -176,7 +176,7 @@ public sealed class SyncViewModel : PageViewModel
             Status = "R2 と比べています…";
             IReadOnlyList<SyncItem> items;
             using (var handle = _openStore(bucket))
-                items = await SettingsViewModel.Guard(bucket, () => ContentSyncService.CompareAsync(ContentDir, handle.Store, ct));
+                items = await SettingsViewModel.GuardAsync(bucket, () => ContentSyncService.CompareAsync(ContentDir, handle.Store, ct));
             foreach (var row in Rows) row.PropertyChanged -= OnRowChanged;
             Rows.Clear();
             foreach (var item in items)
@@ -247,7 +247,7 @@ public sealed class SyncViewModel : PageViewModel
             var actions = chosen.Select(r => (r.Path, r.Action)).ToList();
             SyncResult result;
             using (var handle = _openStore(bucket))
-                result = await SettingsViewModel.Guard(bucket, () => ContentSyncService.ApplyAsync(ContentDir, handle.Store, actions, safety, ct));
+                result = await SettingsViewModel.GuardAsync(bucket, () => ContentSyncService.ApplyAsync(ContentDir, handle.Store, actions, safety, ct));
             done = $"同期しました（R2 へ送った {result.Uploaded} 件・ローカルへ取り込んだ {result.Downloaded} 件・ローカルから消した {result.DeletedLocal} 件・R2 から消した {result.DeletedRemote} 件）。";
         }
         finally

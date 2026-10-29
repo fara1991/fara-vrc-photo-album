@@ -39,19 +39,22 @@ public sealed class AlbumStore(HttpClient http)
             var tags = TryGetAsync("data/tags.json", SiteJsonContext.Default.ListTagSummary);
             var archive = TryGetAsync("data/archive.json", SiteJsonContext.Default.DictionaryStringDictionaryStringInt32);
             await Task.WhenAll(settings, posts, tags, archive);
-            if (settings.Result is null || posts.Result is null) return false;
-            Settings = settings.Result;
+            var loadedSettings = await settings;
+            var loadedPosts = await posts;
+            if (loadedSettings is null || loadedPosts is null) return false;
+            Settings = loadedSettings;
             // 範囲外は、Build（SiteBuilder）が例外で止める（入力の誤りをビルドで気づかせる）。Web は、古い・壊れた data/site.json でも画面を開けるように既定の 12 に戻す（意図の違い）
             if (Settings.PostsPerPage is < 1 or > 100) Settings.PostsPerPage = 12;
-            Posts = posts.Result;
-            if (tags.Result is not null) _tags.Seed(tags.Result);                                 // 読めなかったときは、タグの一覧のページが取り直す
-            TagNames = TagNamesOf(tags.Result);
-            Archive = SiteRules.ArchiveYears(archive.Result);
+            Posts = loadedPosts;
+            var loadedTags = await tags;
+            if (loadedTags is not null) _tags.Seed(loadedTags);                                   // 読めなかったときは、タグの一覧のページが取り直す
+            TagNames = TagNamesOf(loadedTags);
+            Archive = SiteRules.ArchiveYears(await archive);
             return true;
         }
         catch (Exception e) when (IsReadFailure(e))
         {
-            Console.Error.WriteLine($"[album] data/*.json を読めません: {e.Message}");
+            await Console.Error.WriteLineAsync($"[album] data/*.json を読めません: {e.Message}");
             return false;
         }
     }

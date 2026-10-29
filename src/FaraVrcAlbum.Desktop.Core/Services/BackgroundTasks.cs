@@ -18,7 +18,9 @@ public static class BackgroundTasks
     {
         try
         {
+#pragma warning disable VSTHRD003 // 引数の Task を待つのがこのメソッドの目的（呼び出し側が始めた Task の例外を観測する）。別の文脈の Task を待つ危険（デッドロック）は、ここでは当たらない
             await task;
+#pragma warning restore VSTHRD003
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {

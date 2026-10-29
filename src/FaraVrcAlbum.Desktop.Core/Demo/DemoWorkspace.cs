@@ -13,7 +13,7 @@ public sealed record DemoLayout(string RepoRoot, string UploadRoot, string Sourc
 
 /// <summary>
 /// デモ用の合成データ（実在の人名・実在のワールド・実写真は使わない）。画面の確認と、スクリーンショット用。
-/// リポジトリは作業用フォルダに作る（実リポジトリの .env.local・台帳には触れない）。R2 は <see cref="SeedStore"/> のメモリだけ。
+/// リポジトリは作業用フォルダに作る（実リポジトリの .env.local・台帳には触れない）。R2 は <see cref="SeedStoreAsync"/> のメモリだけ。
 /// 含むもの: 取り込み待ちの PNG（XMP あり・なし・2025-11 より前・登録済み・削除済み）、本番の台帳（uploaded 4 件・removed 1 件）、
 /// 記事（公開 1・非公開 1）、R2 の写真（孤児を 1 つ含む）。
 /// </summary>
@@ -113,7 +113,7 @@ public static class DemoWorkspace
     }
 
 /// <summary>デモの R2（本番バケット）に、写真・孤児を入れる。</summary>
-    public static async Task SeedStore(IObjectStore store, PhotoLedger ledger, CancellationToken ct = default)
+    public static async Task SeedStoreAsync(IObjectStore store, PhotoLedger ledger, CancellationToken ct = default)
     {
         foreach (var entry in ledger.BySha.Values.Where(x => x.State == LedgerStates.Uploaded))
         {

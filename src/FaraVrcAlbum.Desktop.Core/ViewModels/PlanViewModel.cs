@@ -42,7 +42,7 @@ public sealed class PlanViewModel : PageViewModel
     {
         Rows = [];
         // 計画と実行は、どちらかが動いている間は両方とも不可（二重の書き込みや、途中の対象の差し替えを防ぐ）
-        DryRunCommand = Command(ct => RunAsync(apply: false, ct), () => _files.Count > 0 && !ExecuteCommand.IsRunning);
+        DryRunCommand = Command(ct => RunAsync(apply: false, ct), () => _files.Count > 0 && ExecuteCommand is not { IsRunning: true });
         ExecuteCommand = Command(ExecuteAsync, () => _dryRunDone && HasPlannedRows && !DryRunCommand.IsRunning);
         CancelCommand = new RelayCommand(Cancel, () => DryRunCommand.IsRunning || ExecuteCommand.IsRunning);
     }

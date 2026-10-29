@@ -56,8 +56,9 @@ public sealed class VerifyScopeTests : IDisposable
     {
         _fixture.WriteExistingPost("old-post", cover: RepoFixture.Key1);
         var scope = VerifyService.Plan(ContentLoader.Load(_fixture.ContentDir), null);
-        using var http = new HttpClient(new FakeHandler(request =>
-            new HttpResponseMessage(System.Net.HttpStatusCode.NotFound) { RequestMessage = request }));
+        using var handler = new FakeHandler(request =>
+            new HttpResponseMessage(System.Net.HttpStatusCode.NotFound) { RequestMessage = request });
+        using var http = new HttpClient(handler);
 
         var problems = await VerifyService.RunAsync(scope.Photos, "https://img.example.test/", http);
 

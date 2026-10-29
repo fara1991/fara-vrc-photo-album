@@ -121,7 +121,9 @@ public sealed class DesktopPreferences(string path, Action<string>? onRecovered 
         {
             onRecovered?.Invoke(aside);
         }
+#pragma warning disable CA1031 // 通知先（画面）のどんな例外も、設定の読み書きに伝えない（下のコメントのとおり）
         catch (Exception e)
+#pragma warning restore CA1031
         {
             // 通知の失敗（画面の例外など）で、設定の読み書きを失敗させない
             Debug.WriteLine($"DesktopPreferences: 退避の通知で例外: {e.GetType().Name}");

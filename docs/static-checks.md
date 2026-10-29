@@ -58,33 +58,40 @@ kit の詳しい中身は `external/fara-blazor-component/docs/layout-check.md`�
 
 ## 3. C# のアナライザー（ラチェット）
 
-方針: 今、違反が 0 件のルールだけ error（新しい違反を止める）。違反が残るルールは warning のまま（件数は下）。
+方針: 違反が 0 件のルールだけ error（新しい違反を止める）。
 
-`Directory.Build.props` が kit の `dotnet.editorconfig` を読む（error と warning の内容は kit のものをそのまま使う）。`Microsoft.VisualStudio.Threading.Analyzers` 17.14.15（`PrivateAssets="all"`）。
+`Directory.Build.props` が、kit の `dotnet.editorconfig`（CS4014・VSTHRD100・CA1816・IDE0059 は error、CA1031・CA2000 などは warning）を読み、そのあとに album 独自の `tools/lint/dotnet.album.editorconfig` を読む。album 側は `global_level = 1`（kit は 0）で、album の違反が 0 件になった warning を error にする。kit との差は下の表の「kit」と「album」の列。`Microsoft.VisualStudio.Threading.Analyzers` 17.14.15（`PrivateAssets="all"`）。
 
-error にしたルールは、違反を入れたファイルで、`dotnet build` が error を出すことを確かめた（2026-10-29。確かめたファイルは消した）。
+error にしたルールは、違反を入れたファイルで、`dotnet build` が error を出すことを確かめた（CS4014・VSTHRD100・CA1816・IDE0059 は 2026-10-29、album 側で上げた VSTHRD002 は 2026-10-29 に確認。確かめたファイルは消した）。
 
-| ルール | 重大度 | album の違反 | 中身 |
-| --- | --- | --- | --- |
-| CS4014 | error | 0 | async のメソッドの中で await していない呼び出し |
-| VSTHRD100 | error | 0 | `async void`（WPF のイベントの形でも報告される。起動の読み込みは `Task` を返すメソッドにした） |
-| CA1816 | error | 0 | Dispose で `GC.SuppressFinalize` を呼んでいない |
-| IDE0059 | error | 0 | 使われない代入 |
-| CA1031 | warning | 7 | 一般の例外（`Exception`）の catch |
-| CA2000 | warning | 40 | Dispose 漏れ（大半はテストの使い捨てのオブジェクト） |
-| VSTHRD002 | warning | 9 | 非同期の処理を同期で待つ（`.Result`・`.Wait()` など） |
-| VSTHRD003 | warning | 2 | 他のスレッドで開始した Task を await している |
-| VSTHRD103 | warning | 16 | async のメソッドの中で、同期の呼び出しを使っている（非同期版を使う） |
+| ルール | kit | album | album の違反 | 中身 |
+| --- | --- | --- | --- | --- |
+| CS4014 | error | error | 0 | async のメソッドの中で await していない呼び出し |
+| VSTHRD100 | error | error | 0 | `async void`（WPF のイベントの形でも報告される。起動の読み込みは `Task` を返すメソッドにした） |
+| CA1816 | error | error | 0 | Dispose で `GC.SuppressFinalize` を呼んでいない |
+| IDE0059 | error | error | 0 | 使われない代入 |
+| CA1031 | warning | error | 0 | 一般の例外（`Exception`）の catch。最上位のハンドラー 4 か所だけ、理由つきで抑止（下） |
+| CA2000 | warning | error | 0 | Dispose 漏れ。所有権を渡している 3 か所だけ、理由つきで抑止（下） |
+| VSTHRD002 | warning | error | 0 | 非同期の処理を同期で待つ。同期の入口 3 か所だけ、理由つきで抑止（下） |
+| VSTHRD003 | warning | error | 0 | 他のスレッドで開始した Task を await している。誤検知 2 か所だけ、理由つきで抑止（下） |
+| VSTHRD103 | warning | error | 0 | async のメソッドの中で、同期の呼び出しを使っている（非同期版を使う） |
+| VSTHRD200 | （既定） | error | 0 | `Async` の接尾辞（命名の規則。0 件にしたので error にした） |
 
-件数は、`FaraVrcAlbum.sln`（src・tests）と `src/FaraVrcAlbum.Desktop`（WPF。sln の外）を `--no-incremental` でビルドし、`ファイル・行・ルール` で重複を除いた数。kit（`external/`）の分は含めない（kit の docs の件数）。
+抑止（`#pragma warning disable`。すべて理由のコメントつき・その 1 文だけ）:
 
-ラチェットに入れていないもの（kit と同じ理由）: `VSTHRD200`（Async の接尾辞。album に 7 件。命名の規則であり、危険ではない）・`CS1998`・`CA2012`（この SDK では検出しなかった）・`CA2007`（使わない）。
+- CA1031: `Tools/Program.cs`（CLI の最上位）・`Desktop/App.xaml.cs`（起動の最上位）・`ContentEditor.TryRestore`（1 件の失敗で戻しを止めない）・`DesktopPreferences.NotifyRecovered`（通知先の例外を設定の読み書きに伝えない）
+- CA2000: `WorldImageService.CreateClient`（Throttle は HttpClient が持つ）・`ConnectIpv4FirstAsync`（Socket は NetworkStream が持つ。失敗は catch で破棄）・`Web/Program.cs`（アプリの存続中の HttpClient）・`WorldFetchTests.Client`（テスト用の HttpClient を返す）
+- VSTHRD002: `Build/PageRenderer`（同期 API。`Render`・`RenderFooter`）・`LaunchOptions.CreateSession`（WPF の OnStartup は同期）
+- VSTHRD003: `BackgroundTasks.ObserveAsync`（引数の Task を待つのが目的）・`IngestPlanTests.GatedDialogs`（テストの門）
+
+件数は、`FaraVrcAlbum.sln`（src・tests）と `src/FaraVrcAlbum.Desktop`（WPF。sln の外）を `--no-incremental` でビルドし、`ファイル・行・ルール` で重複を除いた数。kit（`external/`）の分は含めない（kit の docs の件数。kit の分の warning は kit 側で扱う）。
+
+ラチェットに入れていないもの: `CA2012`（この SDK では検出しなかった）・`CA2007`（使わない）。コンパイラーの警告（CS8602 など）と xUnit の解析は、今は 0 件。
 
 ### 新しい違反が出たら
 
-- error のルール（CS4014・VSTHRD100・CA1816・IDE0059）の違反は、直す（ビルドが止まる）。
-- warning のルールは、増やさない。直せるものは直し、件数を上の表に反映する（減らしたら減らした数を書く）。
-- 件数の残る warning を error にするのは、件数を 0 にしてから。
+- error のルールの違反は、直す（ビルドが止まる）。どうしても直せないときは、理由のコメントつきで、その 1 文だけ抑止し、この表の「抑止」に足す。
+- album の warning のルールは、今は無い（kit にあって album に無いルールを足すときは、先に件数を 0 にする）。
 
 ## 4. 限界
 

@@ -28,11 +28,13 @@ internal sealed class PageRenderer : IDisposable
 
     public string Render<TComponent>(IDictionary<string, object?> parameters) where TComponent : IComponent
     {
+#pragma warning disable VSTHRD002 // ビルドの CLI の同期 API（Render は同期のページ一覧づくりから呼ばれる）。UI スレッドも SynchronizationContext も無いので、同期で待ってもデッドロックしない
         return _renderer.Dispatcher.InvokeAsync(async () =>
         {
             var output = await _renderer.RenderComponentAsync<TComponent>(ParameterView.FromDictionary(parameters));
             return output.ToHtmlString();
         }).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
     }
 
     /// <summary>
@@ -51,11 +53,13 @@ internal sealed class PageRenderer : IDisposable
         services.AddSingleton<NavigationManager>(navigation);
         using var provider = services.BuildServiceProvider();
         using var renderer = new HtmlRenderer(provider, NullLoggerFactory.Instance);
+#pragma warning disable VSTHRD002 // 上の Render と同じ（ビルドの CLI の同期 API。同期コンテキストが無いのでデッドロックしない）
         return renderer.Dispatcher.InvokeAsync(async () =>
         {
             var output = await renderer.RenderComponentAsync<SiteFooter>(ParameterView.Empty);
             return output.ToHtmlString();
         }).GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
     }
 
     public void Dispose()

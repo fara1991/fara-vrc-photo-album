@@ -40,8 +40,10 @@ public sealed record LaunchOptions(string? RepoPath, string? UploadRoot, string?
         {
             var layout = DemoWorkspace.Create(DemoFolder);
             var demoSession = new AlbumSession(RepoContext.Discover(layout.RepoRoot), null, offline: true, sourceRoot: layout.SourceRoot);
-            DemoWorkspace.SeedStore(demoSession.DemoStore(demoSession.ProductionBucket), PhotoLedger.Load(demoSession.LedgerPath(demoSession.ProductionBucket)))
+#pragma warning disable VSTHRD002 // WPF の OnStartup（同期）から呼ぶ。SeedStoreAsync はメモリの R2 に入れるだけ（ConfigureAwait(false)・UI スレッドに戻らない）なので、UI スレッドで待ってもデッドロックしない
+            DemoWorkspace.SeedStoreAsync(demoSession.DemoStore(demoSession.ProductionBucket), PhotoLedger.Load(demoSession.LedgerPath(demoSession.ProductionBucket)))
                 .GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
             return demoSession;
         }
 

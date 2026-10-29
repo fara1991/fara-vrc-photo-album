@@ -94,8 +94,8 @@ public sealed class ContentSettingsTests : IDisposable
         Assert.Contains("控えを作りました", settings.Status);
         Assert.Contains("最後の控え", settings.BackupStatusText);
         var store = _ws.Session.DemoStore("demo-content-backup");
-        Assert.NotEmpty(store.Objects.Keys.Where(k => k.StartsWith("snapshots/", StringComparison.Ordinal)));
-        Assert.Empty(_ws.Session.DemoStore(_ws.Session.ProductionBucket).Objects.Keys.Where(k => k.StartsWith("snapshots/", StringComparison.Ordinal)));   // 写真のバケットには置かない
+        Assert.Contains(store.Objects.Keys, k => k.StartsWith("snapshots/", StringComparison.Ordinal));
+        Assert.DoesNotContain(_ws.Session.DemoStore(_ws.Session.ProductionBucket).Objects.Keys, k => k.StartsWith("snapshots/", StringComparison.Ordinal));   // 写真のバケットには置かない
 
         // 記事を直してから、控えから戻す
         var post = Directory.EnumerateFiles(Path.Combine(Content, "posts"), "*.json").First();

@@ -110,11 +110,14 @@ public static class SiteBuilder
         foreach (var arg in new[] { script, "--site", site, "--pages", pages, "--template", options.Template, "--out", options.Out, "--env", options.Env })
             info.ArgumentList.Add(arg);
         using var process = Process.Start(info) ?? throw new InvalidOperationException($"{options.Node} を起動できません");
-        var stdout = process.StandardOutput.ReadToEndAsync();
-        var stderr = process.StandardError.ReadToEndAsync();
+        // 標準エラーはイベントで受け、標準出力は同期で最後まで読む（どちらのパイプも埋まって止まらない。Task を同期で待たない）
+        var stderr = new StringBuilder();
+        process.ErrorDataReceived += (_, e) => { if (e.Data is not null) stderr.Append(e.Data).Append('\n'); };
+        process.BeginErrorReadLine();
+        var stdout = process.StandardOutput.ReadToEnd();
         process.WaitForExit();
         if (process.ExitCode != 0)
-            throw new InvalidOperationException($"fara-blazor-component の build-pages.mjs が失敗しました（終了コード {process.ExitCode}）:\n{stderr.Result}{stdout.Result}");
-        Console.WriteLine(stdout.Result.Trim());
+            throw new InvalidOperationException($"fara-blazor-component の build-pages.mjs が失敗しました（終了コード {process.ExitCode}）:\n{stderr}{stdout}");
+        Console.WriteLine(stdout.Trim());
     }
 }

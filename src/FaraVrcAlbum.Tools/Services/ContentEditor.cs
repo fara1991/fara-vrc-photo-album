@@ -40,7 +40,9 @@ public sealed class FileSnapshot
                     JsonFiles.WriteAtomic(path, bytes);
                 }
             }
+#pragma warning disable CA1031 // 1 件の戻しの失敗で止めず、残りも戻して、戻せなかったものを一覧にして返す（どの例外でも同じ扱い）
             catch (Exception r)
+#pragma warning restore CA1031
             {
                 failed.Add($"{path}: {r.Message}");
             }

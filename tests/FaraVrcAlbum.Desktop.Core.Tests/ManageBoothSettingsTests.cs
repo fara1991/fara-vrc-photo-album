@@ -196,10 +196,10 @@ public sealed class ManageBoothSettingsTests : IDisposable
         // 3D 衣装を 3 件に増やす
         using (var c = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = db, Pooling = false }.ToString()))
         {
-            c.Open();
+            await c.OpenAsync();
             using var cmd = c.CreateCommand();
             cmd.CommandText = "INSERT INTO booth_items VALUES (555, '青いワンピース', 'shop-a', 209), (666, '赤いコート', 'shop-a', 209);";
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync();
         }
         var library = Path.Combine(dir, "library");
         foreach (var id in new[] { "b111", "b444", "b555", "b666" }) Directory.CreateDirectory(Path.Combine(library, id));

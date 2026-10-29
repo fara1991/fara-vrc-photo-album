@@ -25,7 +25,7 @@ public class WorldImageTests
     private static HttpResponseMessage Json(string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
 
-    private static Task NoWait(CancellationToken _) => Task.CompletedTask;
+    private static Task NoWaitAsync(CancellationToken _) => Task.CompletedTask;
 
     private static void ThreeWorlds(RepoFixture repo, string firstImage = "") => RepoFixture.Write(repo.Worlds, $$"""
         {
@@ -40,7 +40,8 @@ public class WorldImageTests
     {
         var agents = new List<string>();
         var waits = 0;
-        using var http = WorldImageService.CreateClient(new FakeHandler(r => { agents.Add(r.Headers.UserAgent.ToString()); return Json(Info()); }), _ => { waits++; return Task.CompletedTask; });
+        using var handler = new FakeHandler(r => { agents.Add(r.Headers.UserAgent.ToString()); return Json(Info()); });
+        using var http = WorldImageService.CreateClient(handler, _ => { waits++; return Task.CompletedTask; });
 
         for (var i = 0; i < 3; i++) await WorldImageService.FetchInfoAsync(http, RepoFixture.WorldOld);
 
@@ -53,14 +54,16 @@ public class WorldImageTests
     public async Task TheWaitBetweenRequestsDoesNotCountTowardsTheRequestTimeout()
     {
         // 待ち時間（本番は 60 秒）が、通信の時間切れ（本番は 30 秒）を食わない
-        using var http = WorldImageService.CreateClient(new FakeHandler(_ => Json(Info())), c => Task.Delay(300, c), requestTimeout: TimeSpan.FromMilliseconds(200));
+        using var handler = new FakeHandler(_ => Json(Info()));
+        using var http = WorldImageService.CreateClient(handler, c => Task.Delay(300, c), requestTimeout: TimeSpan.FromMilliseconds(200));
         for (var i = 0; i < 3; i++) await WorldImageService.FetchInfoAsync(http, RepoFixture.WorldOld);
     }
 
     [Fact]
     public async Task StatsKeepOnlyWhatTheSiteShowsAndDropTheRealtimeCountAndUserIds()
     {
-        using var http = WorldImageService.CreateClient(new FakeHandler(_ => Json(Info())), NoWait);
+        using var handler = new FakeHandler(_ => Json(Info()));
+        using var http = WorldImageService.CreateClient(handler, NoWaitAsync);
         var info = await WorldImageService.FetchInfoAsync(http, RepoFixture.WorldOld);
 
         Assert.Equal(ImageUrl, info.ImageUrl);
@@ -82,7 +85,8 @@ public class WorldImageTests
         using var repo = new RepoFixture();
         ThreeWorlds(repo);
         var calls = 0;
-        using var http = WorldImageService.CreateClient(new FakeHandler(_ => ++calls <= 2 ? Json(Info(100 + calls)) : Json("{}", HttpStatusCode.TooManyRequests)), NoWait);
+        using var handler = new FakeHandler(_ => ++calls <= 2 ? Json(Info(100 + calls)) : Json("{}", HttpStatusCode.TooManyRequests));
+        using var http = WorldImageService.CreateClient(handler, NoWaitAsync);
         var now = new DateTimeOffset(2026, 10, 26, 3, 0, 0, TimeSpan.Zero);
 
         var result = await WorldImageService.UpdateStatsAsync(repo.Editor, http, now, apply: true);
@@ -100,7 +104,8 @@ public class WorldImageTests
     public async Task WorldStatsWithoutApplyWritesNothing()
     {
         using var repo = new RepoFixture();
-        using var http = WorldImageService.CreateClient(new FakeHandler(_ => Json(Info())), NoWait);
+        using var handler = new FakeHandler(_ => Json(Info()));
+        using var http = WorldImageService.CreateClient(handler, NoWaitAsync);
         var result = await WorldImageService.UpdateStatsAsync(repo.Editor, http, DateTimeOffset.UtcNow, apply: false);
         Assert.Equal(1, result.Updated);
         Assert.False(File.Exists(Path.Combine(repo.ContentDir, "world-stats.json")));
@@ -112,11 +117,12 @@ public class WorldImageTests
         using var repo = new RepoFixture();
         ThreeWorlds(repo, firstImage: """, "image": { "key": "worlds/00000000-0000-4000-8000-000000000001/file_00000000-0000-4000-8000-0000000000aa_3", "w": 1024, "h": 768 }""");
         var asked = new List<string>();
-        using var http = WorldImageService.CreateClient(new FakeHandler(r =>
+        using var handler = new FakeHandler(r =>
         {
             asked.Add(r.RequestUri!.ToString());
             return asked.Count == 1 ? Json(Info()) : Json("{}", HttpStatusCode.TooManyRequests);
-        }), NoWait);
+        });
+        using var http = WorldImageService.CreateClient(handler, NoWaitAsync);
 
         var plan = await WorldImageService.PlanImagesAsync(repo.Editor, http, refresh: false);
 
@@ -133,9 +139,10 @@ public class WorldImageTests
     {
         using var repo = new RepoFixture();
         var png = FakePng(1200, 900);
-        using var http = WorldImageService.CreateClient(new FakeHandler(r => r.RequestUri!.AbsolutePath.StartsWith("/api/1/worlds/")
+        using var handler = new FakeHandler(r => r.RequestUri!.AbsolutePath.StartsWith("/api/1/worlds/")
             ? Json(Info())
-            : new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(png) }), NoWait);
+            : new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(png) });
+        using var http = WorldImageService.CreateClient(handler, NoWaitAsync);
         var store = new MemoryStore();
 
         var plan = await WorldImageService.PlanImagesAsync(repo.Editor, http, refresh: false);
@@ -154,7 +161,8 @@ public class WorldImageTests
     public async Task ANetworkFailureShowsTheInnerReasonToo()
     {
         using var repo = new RepoFixture();
-        using var http = WorldImageService.CreateClient(new FakeHandler(_ => throw new HttpRequestException("The SSL connection could not be established", new IOException("接続が切られました"))), NoWait);
+        using var handler = new FakeHandler(_ => throw new HttpRequestException("The SSL connection could not be established", new IOException("接続が切られました")));
+        using var http = WorldImageService.CreateClient(handler, NoWaitAsync);
 
         var plan = await WorldImageService.PlanImagesAsync(repo.Editor, http, refresh: false);
 
@@ -168,8 +176,9 @@ public class WorldImageTests
     {
         var calls = 0;
         var waits = 0;
-        using var http = WorldImageService.CreateClient(new FakeHandler(_ =>
-            ++calls < 3 ? throw new HttpRequestException("ssl", new IOException("切断")) : Json(Info())), _ => { waits++; return Task.CompletedTask; });
+        using var handler = new FakeHandler(_ =>
+            ++calls < 3 ? throw new HttpRequestException("ssl", new IOException("切断")) : Json(Info()));
+        using var http = WorldImageService.CreateClient(handler, _ => { waits++; return Task.CompletedTask; });
 
         var info = await WorldImageService.FetchInfoAsync(http, RepoFixture.WorldOld);
 
@@ -180,7 +189,8 @@ public class WorldImageTests
     public async Task AConnectionThatKeepsBeingCutFailsAfterThreeTriesAndSaysSo()
     {
         var calls = 0;
-        using var http = WorldImageService.CreateClient(new FakeHandler(_ => { calls++; throw new HttpRequestException("ssl", new IOException("切断")); }), NoWait);
+        using var handler = new FakeHandler(_ => { calls++; throw new HttpRequestException("ssl", new IOException("切断")); });
+        using var http = WorldImageService.CreateClient(handler, NoWaitAsync);
 
         var e = await Assert.ThrowsAsync<HttpRequestException>(() => WorldImageService.FetchInfoAsync(http, RepoFixture.WorldOld));
 
@@ -192,7 +202,8 @@ public class WorldImageTests
     public async Task ABadAnswerIsNotRetried()
     {
         var calls = 0;
-        using var http = WorldImageService.CreateClient(new FakeHandler(_ => { calls++; return Json("{}", HttpStatusCode.NotFound); }), NoWait);
+        using var handler = new FakeHandler(_ => { calls++; return Json("{}", HttpStatusCode.NotFound); });
+        using var http = WorldImageService.CreateClient(handler, NoWaitAsync);
 
         await Assert.ThrowsAsync<HttpRequestException>(() => WorldImageService.FetchInfoAsync(http, RepoFixture.WorldOld));
 
@@ -203,9 +214,10 @@ public class WorldImageTests
     public async Task RedirectsAreFollowedWithoutWaitingAndAFailureNamesTheHost()
     {
         var waits = 0;
-        using var http = WorldImageService.CreateClient(new FakeHandler(r => r.RequestUri!.Host == "api.vrchat.cloud"
+        using var handler = new FakeHandler(r => r.RequestUri!.Host == "api.vrchat.cloud"
             ? new HttpResponseMessage(HttpStatusCode.Found) { Headers = { Location = new Uri("https://files.vrchat.cloud/x.png") } }
-            : throw new HttpRequestException("ssl", new IOException("切断"))), _ => { waits++; return Task.CompletedTask; });
+            : throw new HttpRequestException("ssl", new IOException("切断")));
+        using var http = WorldImageService.CreateClient(handler, _ => { waits++; return Task.CompletedTask; });
 
         var e = await Assert.ThrowsAsync<HttpRequestException>(() => http.GetAsync("https://api.vrchat.cloud/api/1/file/a/1/file"));
 
@@ -229,7 +241,7 @@ public class WorldImageTests
     [Fact]
     public async Task AStalledResponseBodyTimesOutInsteadOfWaitingForever()
     {
-        var stalled = new StalledStream();
+        using var stalled = new StalledStream();
 
         var e = await Assert.ThrowsAsync<HttpRequestException>(() => WorldImageService.ReadBodyAsync(
             t => new StreamContent(stalled).ReadAsByteArrayAsync(t), TimeSpan.FromMilliseconds(200), CancellationToken.None));
@@ -253,7 +265,8 @@ public class WorldImageTests
         ThreeWorlds(repo);
         using var cts = new CancellationTokenSource();
         var calls = 0;
-        using var http = WorldImageService.CreateClient(new FakeHandler(_ => { if (++calls == 1) cts.Cancel(); return Json(Info()); }), NoWait);
+        using var handler = new FakeHandler(_ => { if (++calls == 1) cts.Cancel(); return Json(Info()); });
+        using var http = WorldImageService.CreateClient(handler, NoWaitAsync);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             WorldImageService.UpdateStatsAsync(repo.Editor, http, DateTimeOffset.UtcNow, apply: false, ct: cts.Token));

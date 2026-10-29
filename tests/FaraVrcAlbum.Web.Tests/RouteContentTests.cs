@@ -15,6 +15,8 @@ namespace FaraVrcAlbum.Web.Tests;
 public sealed class RouteContentTests : BunitContext, IAsyncLifetime
 {
     private const string Site = "https://album.test/";
+    private Handler? _handler;
+    private HttpClient? _http;
     private const string Uuid = "00000000-0000-4000-8000-000000000001";
     private const string Key = "2026-10/20261023-213312-345_a1b2c3d4";
 
@@ -30,6 +32,11 @@ public sealed class RouteContentTests : BunitContext, IAsyncLifetime
     public RouteContentTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
+    }
+
+    // 部品の描画の前に、記事の一覧などを読んで登録する（コンストラクターでは非同期の読み込みを待てないので、ここで行う）
+    async Task IAsyncLifetime.InitializeAsync()
+    {
         var routes = new Dictionary<string, string>
         {
             ["/data/site.json"] = "{\"siteName\":\"Fara Photo Album\",\"author\":\"Fara\",\"imageBaseUrl\":\"https://i.test/\",\"postsPerPage\":2}",
@@ -42,17 +49,21 @@ public sealed class RouteContentTests : BunitContext, IAsyncLifetime
             ["/data/worlds/" + Uuid + ".json"] = "{\"id\":\"wrld_" + Uuid + "\",\"name\":\"ワールド\",\"photos\":["
                 + string.Join(",", Enumerable.Range(1, 3).Select(i => $"{{\"key\":\"{Key}\",\"w\":2,\"h\":1,\"slug\":\"p{i}\"}}")) + "]}",
         };
-        var http = new HttpClient(new Handler(routes)) { BaseAddress = new Uri(Site) };
-        var store = new AlbumStore(http);
-        Assert.True(store.LoadAsync().GetAwaiter().GetResult());
+        _handler = new Handler(routes);
+        _http = new HttpClient(_handler) { BaseAddress = new Uri(Site) };
+        var store = new AlbumStore(_http);
+        Assert.True(await store.LoadAsync());
         Services.AddSingleton(store);
         Services.AddFaraBlazorComponent(options => SiteInfo.Configure(options, store.Settings));
         Services.AddSingleton(MaintenanceInfo.Off);
     }
 
-    async Task IAsyncLifetime.DisposeAsync() => await base.DisposeAsync();
-
-    Task IAsyncLifetime.InitializeAsync() => Task.CompletedTask;
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        _http?.Dispose();
+        _handler?.Dispose();
+        await base.DisposeAsync();
+    }
 
     [Fact]
     public void TheArchiveShowsTheMonthsPostsInPagesAndNotFoundOtherwise()

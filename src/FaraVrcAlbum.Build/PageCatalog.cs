@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using FaraBlazorComponent.Core;
 using FaraVrcAlbum.Models;
 using FaraVrcAlbum.Pages;
 
@@ -17,7 +18,10 @@ internal static class PageCatalog
 {
     private const int MaxDescription = 150;
 
-    public static string BuildPagesJson(SiteModel model, PageRenderer renderer)
+    /// <summary>
+    /// 全ページの pages.json。origin は、このビルドの環境の URL（https://ホスト）。フッターは、Web と同じ SiteOptions（SiteInfo.Configure）で、ページごとに描く。
+    /// </summary>
+    public static string BuildPagesJson(SiteModel model, PageRenderer renderer, string origin)
     {
         var settings = model.Settings;
         var banner = renderer.Render<SiteBanner>(new Dictionary<string, object?>());               // 全ページの本文の最初（静的 HTML にも画像を入れる）
@@ -28,16 +32,26 @@ internal static class PageCatalog
         void PageOneRedirect(string firstPagePath) => redirects.Add(new JsonObject { ["from"] = firstPagePath + "/page/1", ["to"] = firstPagePath, ["status"] = 301 });
         var baseUrl = settings.ImageBaseUrl;                       // 画面の画像（確認用も本番と同じ R2）
         var publicBase = settings.PublicImageBaseUrl;               // og:image・JSON-LD（本番の R2 の URL）
+        var footerOptions = FooterOptions(settings);
 
         var tagNames = model.TagNameMap();
 
         string Render<T>(Dictionary<string, object?> parameters) where T : Microsoft.AspNetCore.Components.IComponent => renderer.Render<T>(parameters);
         string Suffix(int page) => page <= 1 ? "" : $"（{page} ページ目）";
+        string Footer(string path) => FooterHtml(footerOptions, origin, path);
+        // 1 ページ分（本文の最初に画像、そのあとに本文、最後にフッター）
+        JsonObject Page(string path, string title, string description, string body) => new()
+        {
+            ["path"] = path,
+            ["title"] = title,
+            ["description"] = description,
+            ["bodyHtml"] = $"<main class=\"entry-static\">{banner}{body}</main>" + Footer(path),
+        };
 
         // 一覧の 1 ページ分を pages に足す（題名に「ページ目」、noindex と OGP 画像は載せる記事から決める）
         void Listing(string path, string title, string description, string body, IReadOnlyList<PostSource> posts)
         {
-            var node = Page(banner, path, title, description, body);
+            var node = Page(path, title, description, body);
             if (SiteModel.AllNoindex(posts)) node["noindex"] = true;
             if (SiteModel.OgCoverKey(posts) is { } key) node["ogImage"] = SiteRules.OgImageUrl(publicBase, key);
             pages.Add(node);
@@ -67,7 +81,7 @@ internal static class PageCatalog
         {
             var page = model.ToPage(post);
             var body = Render<PostArticleView>(new Dictionary<string, object?> { ["Post"] = page, ["BaseUrl"] = baseUrl, ["TagNames"] = tagNames });
-            var node = Page(banner, SiteRules.PostPath(post.Slug), $"{post.Title} | {settings.SiteName}", Shorten(page.Summary, "VRChat で撮った写真の記事です。"), body);
+            var node = Page(SiteRules.PostPath(post.Slug), $"{post.Title} | {settings.SiteName}", Shorten(page.Summary, "VRChat で撮った写真の記事です。"), body);
             node["ogType"] = "article";
             node["lastmod"] = SiteRules.FormatIsoDate(post.UpdatedAt ?? post.PublishedAt);
             if (post.Noindex) node["noindex"] = true;
@@ -204,10 +218,10 @@ internal static class PageCatalog
         }
 
         // 固定ページ
-        pages.Add(Page(banner, "/privacy", $"プライバシーポリシー | {settings.SiteName}", "このサイトが取得する情報と、写真の掲載・削除依頼についての方針です。",
+        pages.Add(Page("/privacy", $"プライバシーポリシー | {settings.SiteName}", "このサイトが取得する情報と、写真の掲載・削除依頼についての方針です。",
             Render<PrivacyView>(new Dictionary<string, object?> { ["ImageHost"] = new Uri(settings.PublicImageBaseUrl).Authority })));
 
-        var report = Page(banner, "/report", $"作者へ報告 | {settings.SiteName}", "作者への報告・削除依頼のフォームです。",
+        var report = Page("/report", $"作者へ報告 | {settings.SiteName}", "作者への報告・削除依頼のフォームです。",
             Render<LoadingView>(new Dictionary<string, object?> { ["Title"] = "作者へ報告" }));
         report["noindex"] = true;
         pages.Add(report);
@@ -220,14 +234,43 @@ internal static class PageCatalog
         return root.ToJsonString(new JsonSerializerOptions { WriteIndented = true });
     }
 
-    /// <summary>1 ページ分。banner は、各ページの本文の最初に入れる画像（SiteBanner の HTML。静的 HTML にも画像を入れる）。</summary>
-    private static JsonObject Page(string banner, string path, string title, string description, string bodyHtml) => new()
+    /// <summary>フッターの SiteOptions。Web の起動時（Program.cs）と同じ Configure を使う（値は Shared の SiteInfo だけが持つ）。</summary>
+    private static SiteOptions FooterOptions(SiteSettings settings)
     {
-        ["path"] = path,
-        ["title"] = title,
-        ["description"] = description,
-        ["bodyHtml"] = $"<main class=\"entry-static\">{banner}{bodyHtml}</main>",
-    };
+        var options = new SiteOptions();
+        SiteInfo.Configure(options, settings);
+        return options;
+    }
+
+    /// <summary>
+    /// フッターの HTML（kit の SiteFooter を描いたもの）。class に entry-static を足す: 読み込み表示の間は、boot-indicator.js が #app の直下の
+    /// entry-static を inert にする（Tab と読み上げから外す）。フッターは本文（main）の外にあるので、印を付けるのはここ。
+    /// </summary>
+    private static string FooterHtml(SiteOptions options, string origin, string pagePath)
+    {
+        const string plain = "<footer class=\"fbc-footer\">";
+        var html = PageRenderer.RenderFooter(options, origin, pagePath);
+        if (html.IndexOf(plain, StringComparison.Ordinal) < 0 || html.IndexOf(plain, StringComparison.Ordinal) != html.LastIndexOf(plain, StringComparison.Ordinal))
+            throw new InvalidOperationException("kit の SiteFooter の出力が想定と違います（footer.fbc-footer が 1 つ無い）");
+        return html.Replace(plain, "<footer class=\"fbc-footer entry-static\">", StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// 404.html の本文（JavaScript が無いときも、404 の案内とフッターが読める）。Web の 404（NotFoundView）と同じ文言。
+    /// 問い合わせの ?from= は付けない（どの URL か、ビルドでは分からないため。Web では実際の URL が入る）。
+    /// </summary>
+    public static string NotFoundBodyHtml(SiteModel model, PageRenderer renderer, string origin)
+    {
+        var banner = renderer.Render<SiteBanner>(new Dictionary<string, object?>());
+        const string notFoundPath = "/%E3%83%9A";        // fara-labs と同じ。% を含むので、問い合わせの ?from= は付かない（ReportForm.CleanPage）
+        var body = "<section class=\"fbc-not-found\">"
+            + "<p class=\"fbc-not-found-code\" aria-hidden=\"true\">404</p>"
+            + "<h1>ページが見つかりません</h1>"
+            + "<p class=\"fbc-not-found-lead\">URL が間違っているか、ページが移動した可能性があります。</p>"
+            + "<p><a href=\"./\">ホームへ戻る</a></p>"
+            + "</section>";
+        return $"<main class=\"entry-static\">{banner}{body}</main>" + FooterHtml(FooterOptions(model.Settings), origin, notFoundPath);
+    }
 
     private static string Shorten(string text, string fallback)
     {

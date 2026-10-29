@@ -12,4 +12,9 @@
     <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- SiteInfo（サイトの値を SiteOptions に入れる）。Core は素の C#（MudBlazor を入れない） -->
+    <ProjectReference Include="..\..\external\fara-blazor-component\src\FaraBlazorComponent.Core\FaraBlazorComponent.Core.csproj" />
+  </ItemGroup>
+
 </Project>

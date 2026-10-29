@@ -1,12 +1,12 @@
 // 既定のテーマ（ダーク）と、保存のキーの一致のテスト。  node --test tests/js/theme-default.test.mjs
-// 同じキーを 3 か所に書く（SiteInfo.cs・index.html の theme-init.js の data-*・js/theme-default.js）。ずれると、テーマが描画の前と後で別の場所を見る。
+// 同じキーを 3 か所に書く（Shared の SiteInfo.cs・index.html の theme-init.js の data-*・js/theme-default.js）。ずれると、テーマが描画の前と後で別の場所を見る。
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), "utf8");
-const siteInfo = read("src/FaraVrcAlbum.Web/Services/SiteInfo.cs");
+const siteInfo = read("src/FaraVrcAlbum.Shared/SiteInfo.cs");
 const indexHtml = read("src/FaraVrcAlbum.Web/wwwroot/index.html");
 const themeDefault = read("src/FaraVrcAlbum.Web/wwwroot/js/theme-default.js");
 

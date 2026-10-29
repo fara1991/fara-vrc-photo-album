@@ -17,6 +17,8 @@
     <ProjectReference Include="..\FaraVrcAlbum.Content\FaraVrcAlbum.Content.csproj" />
     <ProjectReference Include="..\FaraVrcAlbum.Shared\FaraVrcAlbum.Shared.csproj" />
     <ProjectReference Include="..\FaraVrcAlbum.Pages\FaraVrcAlbum.Pages.csproj" />
+    <!-- 静的 HTML のフッター（kit の SiteFooter を HtmlRenderer で描く。Web と同じ部品。値は Shared の SiteInfo.Configure） -->
+    <ProjectReference Include="..\..\external\fara-blazor-component\src\FaraBlazorComponent.Razor\FaraBlazorComponent.Razor.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,6 @@
 using FaraBlazorComponent.Core;
 using FaraBlazorComponent.Razor;
+using FaraVrcAlbum.Models;
 using FaraVrcAlbum.Web;
 using FaraVrcAlbum.Web.Services;
 using Microsoft.AspNetCore.Components.Web;

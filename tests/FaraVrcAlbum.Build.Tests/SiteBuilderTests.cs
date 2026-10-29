@@ -134,6 +134,45 @@ public class SiteBuilderTests
     }
 
     [Fact]
+    public void EveryStaticPageHasTheSiteFooterWithTheFourSocialLinksWithoutJavaScript()
+    {
+        var (f, prod, develop) = Build();
+        using var _ = f;
+        // 本番と確認用の、出力のすべての HTML（404 を含む）。JavaScript が無くても、Web で起動したあとと同じフッターと SNS 4 つが読める
+        foreach (var (dir, author) in new[] { (prod, "https://fara-labs.com/"), (develop, "https://dev.fara-labs.com/") })
+        {
+            var names = Directory.EnumerateFiles(dir, "*.html", SearchOption.AllDirectories)
+                .Select(p => Path.GetRelativePath(dir, p).Replace('\\', '/')).ToList();
+            Assert.Contains("404.html", names);
+            foreach (var name in names)
+            {
+                var html = Read(dir, name);
+                var footers = Regex.Matches(html, "<footer class=\"fbc-footer entry-static\">.*?</footer>", RegexOptions.Singleline);
+                Assert.True(footers.Count == 1, name + ": フッターが 1 つではありません");
+                Assert.Contains("</main><footer class=\"fbc-footer entry-static\">", html);      // 本文（main）の後ろ・#app の直下（読み込み表示の inert の対象）
+                var footer = footers[0].Value;
+                Assert.Equal(4, Regex.Matches(footer, "<a class=\"fbc-footer-social fbc-service-").Count);
+                Assert.Contains("href=\"https://github.com/fara1991\"", footer);
+                Assert.Contains("href=\"https://twitter.com/game_fara\"", footer);
+                Assert.Contains("href=\"https://twitch.tv/game_fara\"", footer);
+                Assert.Contains("href=\"https://discord.com/invite/B38eCSYyk5\"", footer);
+                Assert.Contains("href=\"privacy\"", footer);
+                Assert.Contains("© 2026 ", footer);
+                Assert.Contains($"href=\"{author}\"", footer);                                    // 作者のホーム（確認用は dev のホストへ）
+            }
+        }
+
+        // 問い合わせの ?from= は、ページの URL（Web と同じ）。404 には付けない
+        Assert.Contains("href=\"report?from=%2Fposts%2Ffirst-post\"", Footer(prod, "posts/first-post.html"));
+        Assert.Contains("href=\"report?from=%2F\"", Footer(prod, "index.html"));
+        Assert.Contains("href=\"report\"", Footer(prod, "404.html"));
+        Assert.Contains("<h1>ページが見つかりません</h1>", Read(prod, "404.html"));
+    }
+
+    private static string Footer(string dir, string name) =>
+        Regex.Match(Read(dir, name), "<footer class=\"fbc-footer entry-static\">.*?</footer>", RegexOptions.Singleline).Value;
+
+    [Fact]
     public void TheHomePageHasStaticTextForSearchEnginesAndNoJavaScript()
     {
         var (f, prod, _) = Build();

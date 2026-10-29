@@ -1388,3 +1388,157 @@ small.fbc-muted { font-size: 12px; }
     padding-bottom: 0.55rem;
   }
 }
+
+/* ---- 読みやすさの見直し（ページ内のレイアウト）。上の規則に重ねる ---- */
+
+/* 見出しは、行の長さをそろえて折り返す（最後の行に 1〜2 文字だけ残さない）。外部リンク付きの題は、文字の大きさと左の余白をそろえる */
+.album-heading,
+.album-subheading {
+  text-wrap: balance;
+}
+
+.album-heading .album-external {
+  margin-left: 0;
+  font-size: inherit;
+}
+
+/* 「VRChat ↗」などの小さい外部リンクは、12px 以上 */
+.album-external {
+  font-size: 0.875em;
+}
+
+.album-lead {
+  line-height: 1.7;
+}
+
+/* 記事の本文: 16px・行の高さ 1.85・1 行 42rem（全角で約 40 文字）まで。写真の並びは今までどおり 56rem。段落・見出し・リストの余白は kit の reset で無いので、ここで付ける */
+.album-post-body {
+  max-width: 42rem;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.album-post-body p,
+.album-post-body ul,
+.album-post-body ol,
+.album-post-body blockquote {
+  margin: 0 0 1em;
+}
+
+.album-post-body ul,
+.album-post-body ol {
+  padding-left: 1.5em;
+}
+
+.album-post-body h2,
+.album-post-body h3 {
+  margin: 1.6em 0 0.5em;
+  line-height: 1.5;
+}
+
+.album-post-body > :last-child {
+  margin-bottom: 0;
+}
+
+.album-post-meta {
+  margin: 0 0 1rem;
+}
+
+/* ワールド・服の情報（項目名 + 値）: 項目名を上、値を下にした枠で並べる。折り返しの位置が、項目の途中にならない */
+.album-world-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  background: var(--album-card-bg);
+  border: 1px solid var(--album-card-border);
+  border-radius: var(--album-radius);
+}
+
+.album-world-info div {
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.album-world-info dt {
+  font-size: 0.8rem;
+}
+
+.album-world-info dd {
+  overflow-wrap: anywhere;
+}
+
+/* 長い説明文: 16px 弱・行の高さ 1.8・1 行 44rem まで。「続きを見る」は、押しやすい 44px の高さ・リンクの色（下線つき） */
+.album-world-description {
+  max-width: 44rem;
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
+.album-more-label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 0;
+  padding: 0 0.25rem;
+  font-size: 0.9rem;
+  color: var(--album-link-text);
+}
+
+/* 服の説明の節（「対応アバター」「利用規約」）。節ごとに見出しを付けて、それぞれ 3 行で折りたたむ */
+.album-outfit-section {
+  margin: 0 0 0.75rem;
+}
+
+.album-outfit-section .album-subheading {
+  margin: 1rem 0 0.35rem;
+  font-size: 1rem;
+}
+
+/* タグの一覧: タグごとの丸い枠（リンクだと分かる・押しやすい 44px）。枠のどこを押してもリンク */
+.album-taglist {
+  gap: 0.6rem;
+}
+
+.album-taglist li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  background: var(--album-card-bg);
+  border: 1px solid var(--album-card-border);
+  border-radius: 999px;
+}
+
+.album-taglist a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.album-taglist a::after {
+  content: "";
+  position: absolute;
+  inset: -12px -0.9rem;
+}
+
+/* カードの中のタグは、短い名前でも横 44px の押せる範囲 */
+.album-card-tags a {
+  justify-content: center;
+  min-width: 44px;
+}
+
+/* プライバシーポリシー: 文章は 46rem（全角で約 45 文字）まで。表は 56rem のまま */
+.album-privacy {
+  font-size: 0.95rem;
+}
+
+.album-privacy > :not(.album-table-wrap) {
+  max-width: 46rem;
+}

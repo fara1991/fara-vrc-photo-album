@@ -14,8 +14,8 @@
 
   <!--
     C# の静的解析（ラチェット）。kit の docs/lint.md（2. C#）の「各サイトへの取り込み」と同じ形。
-    重大度は kit の tools/lint/dotnet.editorconfig を読む（error: CS4014・VSTHRD100・CA1816・IDE0059 ／ warning: CA1031・CA2000・VSTHRD002・VSTHRD003・VSTHRD103）。
-    album は違反が 0 件の error だけを使う（件数と理由は docs/static-checks.md の「3. C# のアナライザー」）。album 独自の上書きは tools/lint/dotnet.album.editorconfig（kit の後に読み、global_level で kit の重大度を上書きする）。
+    重大度は kit v1.0.1 の tools/lint/dotnet.editorconfig を読む（CS4014・VSTHRD100・CA1816・IDE0059・CA1031・CA2000・VSTHRD002・VSTHRD003・VSTHRD103 はすべて error）。
+    album 独自の上書きは tools/lint/dotnet.album.editorconfig（kit の後に読む。kit に無い VSTHRD200 だけ。件数と理由は docs/static-checks.md の「3. C# のアナライザー」）。
     EnforceCodeStyleInBuild: IDE の規則（IDE0059 など）を dotnet build でも見る。
     Microsoft.VisualStudio.Threading.Analyzers: async void・同期の待ち（VSTHRD）。PrivateAssets=all なので、参照するプロジェクトには流れない。
   -->

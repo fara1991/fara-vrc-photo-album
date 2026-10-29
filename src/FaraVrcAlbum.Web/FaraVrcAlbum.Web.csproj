@@ -2,7 +2,7 @@
 
   <!--
     サイトの画面（Blazor WebAssembly + MudBlazor）。記事・データは Content を参照せず、Build が書いた data/*.json と静的 HTML を読む。
-    レイアウト・テーマ・フッター・報告フォームなどの共通部品は fara-blazor-component（external/fara-blazor-component。v1.0.0 に固定）。
+    レイアウト・テーマ・フッター・報告フォームなどの共通部品は fara-blazor-component（external/fara-blazor-component。v1.0.1 に固定）。
     ページの部品は Pages（Razor クラスライブラリ）。Build の HtmlRenderer（本文入りの静的 HTML）と共用する。
   -->
   <PropertyGroup>

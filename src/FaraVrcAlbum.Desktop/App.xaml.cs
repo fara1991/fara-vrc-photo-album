@@ -43,8 +43,11 @@ public partial class App : Application
         }
     }
 
-    /// <summary>表示の直前に、R2 の値（環境変数と、開いたリポジトリの .env.local）と認証情報の形を消す。</summary>
-    private static void ShowError(Exception ex)
+    /// <summary>
+    /// 表示の直前に、R2 の値（環境変数と、開いたリポジトリの .env.local）と認証情報の形を消す。
+    /// 画面（MainWindow・WpfDialogService）が観測した Task の例外も、この経路だけで出す（internal。ほかの場所で MessageBox を作らない）。
+    /// </summary>
+    internal static void ShowError(Exception ex)
     {
         var text = Secrets.Redact(ex.Message, _repo);
         MessageBox.Show(

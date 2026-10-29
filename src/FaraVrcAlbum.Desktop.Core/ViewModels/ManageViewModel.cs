@@ -115,7 +115,7 @@ public sealed class ManageViewModel : PageViewModel
         set
         {
             if (!Set(ref _includeLedger, value)) return;
-            _ = ScopeCommand.RunAsync();
+            BackgroundTasks.Fire(ScopeCommand.RunAsync(), Dialogs.ReportError);
         }
     }
 

@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using FaraVrcAlbum.Desktop.Services;
 using FaraVrcAlbum.Desktop.ViewModels;
 
 namespace FaraVrcAlbum.Desktop;
@@ -40,7 +41,8 @@ public partial class MainWindow : Window
             }
         };
         _vm.PropertyChanged += OnViewModelChanged;
-        Loaded += (_, _) => _ = LoadOnStartupAsync();
+        // 起動の読み込みの例外は、捨てた Task に閉じ込めず、観測して App の ShowError で即座に出す
+        Loaded += (_, _) => BackgroundTasks.Fire(LoadOnStartupAsync(), App.ShowError);
         KeyDown += OnKeyDown;
         // 確認ダイアログを閉じた後などに、フォーカスが無効になったボタンに残ると Alt+数字が届かない。その時はタブに戻す
         Activated += (_, _) =>
@@ -50,12 +52,14 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 起動のとき（Loaded）の読み込み。async void（イベントの形）にしない（VSTHRD100）。投げた例外は App の UnobservedTaskException で表示する
-    /// （RunAsync は例外を onError へ渡すので、ここで投げるのは画面の初期化の失敗だけ）。
+    /// 起動のとき（Loaded）の読み込み。async void（イベントの形）にしない（VSTHRD100）。
+    /// 呼び出しは BackgroundTasks.Fire で観測し、投げた例外は App.ShowError で直ちに出す（UnobservedTaskException は GC まで発火しないため、頼らない）。
+    /// 退避した設定の知らせは、画面が出た後（ここ）で 1 回だけ行う。
     /// </summary>
     private async Task LoadOnStartupAsync()
     {
         SyncNavigation();
+        await _vm.NotifyStartupPreferencesAsync();
         await _vm.Ingest.RefreshCommand.RunAsync();
     }
 

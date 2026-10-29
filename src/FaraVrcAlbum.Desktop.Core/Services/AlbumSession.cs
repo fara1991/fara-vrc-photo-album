@@ -24,9 +24,32 @@ public sealed class AlbumSession
         _explicitUploadRoot = uploadRoot;
         _explicitSourceRoot = sourceRoot;
         IsOffline = offline;
+        StartupPreferencesAside = RecoverBrokenPreferences();
     }
 
     public RepoContext Repo { get; private set; }
+
+    /// <summary>
+    /// 起動（作成）のときに、壊れていた desktop.json を退避したときの退避先。無ければ null。
+    /// 画面（MainViewModel）が、起動後に 1 回だけ知らせる。
+    /// </summary>
+    public string? StartupPreferencesAside { get; }
+
+    private string PreferencesPath => Path.Combine(Repo.LocalDir, "desktop.json");
+
+    /// <summary>起動のときの 1 回だけの確認。壊れていれば退避する。失敗しても起動は止めない（書くときに、もう一度退避を試す）。</summary>
+    private string? RecoverBrokenPreferences()
+    {
+        try
+        {
+            return new DesktopPreferences(PreferencesPath).RecoverIfBroken();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            System.Diagnostics.Debug.WriteLine($"AlbumSession: 設定の起動時の確認で例外: {e.GetType().Name}");
+            return null;
+        }
+    }
 
     /// <summary>設定（.env.local・local/album.local.json）を読み直す（設定画面で保存したあと）。フォルダの変更もすぐ反映される。</summary>
     public void Reload() => Repo = new RepoContext(Repo.Root);
@@ -70,7 +93,7 @@ public sealed class AlbumSession
     public string LockPath => Path.Combine(Repo.LocalDir, "album.lock");
 
     /// <summary>デスクトップ版の手元の設定（既定のアバター）。</summary>
-    public DesktopPreferences Preferences => new(Path.Combine(Repo.LocalDir, "desktop.json"), aside => PreferencesRecovered?.Invoke(aside));
+    public DesktopPreferences Preferences => new(PreferencesPath, aside => PreferencesRecovered?.Invoke(aside));
 
     /// <summary>設定（desktop.json）が壊れて作り直されたときの通知（退避先のパス）。画面（MainViewModel）が 1 つだけ設定する（+= ではなく =）。</summary>
     public Action<string>? PreferencesRecovered { get; set; }

@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using FaraVrcAlbum.Desktop.Services;
 
 namespace FaraVrcAlbum.Desktop.Mvvm;
 
@@ -29,7 +30,8 @@ public sealed class AsyncCommand(Func<CancellationToken, Task> execute, Action<E
 
     public bool CanExecute(object? parameter) => !IsRunning && (canExecute?.Invoke() ?? true);
 
-    public void Execute(object? parameter) => _ = RunAsync();
+    // RunAsync は例外を onError に渡して終わる。それでも onError 自体が投げた場合に、Task を捨てずに観測する
+    public void Execute(object? parameter) => BackgroundTasks.Fire(RunAsync(), onError);
 
     /// <summary>実行する（テストや、ボタン以外の呼び出しから使う）。例外は onError に渡す。</summary>
     public async Task RunAsync()

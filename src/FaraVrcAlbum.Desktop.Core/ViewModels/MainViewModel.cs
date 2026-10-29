@@ -11,10 +11,14 @@ public sealed class MainViewModel : ObservableObject
 {
     private PageViewModel? _current;
 
+    /// <summary>起動のときに退避した設定の退避先。知らせたら null に戻す（1 回だけ知らせる）。</summary>
+    private string? _startupPreferencesAside;
+
     public MainViewModel(AlbumSession session, IDialogService dialogs)
     {
         App = new AppState(session);
         Dialogs = dialogs;
+        _startupPreferencesAside = session.StartupPreferencesAside;
         Ingest = new IngestViewModel(App, dialogs);
         Manage = new ManageViewModel(App, dialogs);
         AvatarOutfit = new AvatarOutfitViewModel(App, dialogs);
@@ -34,9 +38,28 @@ public sealed class MainViewModel : ObservableObject
         ];
 
         Current = Ingest;
-        session.PreferencesRecovered = aside => _ = dialogs.InformAsync("設定ファイルを作り直しました",
-            $"設定ファイル（desktop.json）が壊れていたので、中身を「{System.IO.Path.GetFileName(aside)}」に残して、新しく作り直しました。必要なら手で戻してください。");
+        session.PreferencesRecovered = aside => Fire(dialogs.InformAsync(PreferencesRecoveredTitle, PreferencesRecoveredMessage(aside)));
     }
+
+    private const string PreferencesRecoveredTitle = "設定ファイルを退避しました";
+
+    /// <summary>退避したことを知らせる文（起動のときも、書くときも同じ）。</summary>
+    private static string PreferencesRecoveredMessage(string aside) =>
+        $"設定ファイル（desktop.json）が壊れていたので退避しました（{aside}）。既定の値で動きます。必要なら、退避したファイルの中身を手で戻してください。";
+
+    /// <summary>
+    /// 起動のときに退避した設定を、画面が出てから 1 回だけ知らせる（MainWindow の起動の読み込みから呼ぶ）。
+    /// 退避していなければ何もしない。
+    /// </summary>
+    public Task NotifyStartupPreferencesAsync()
+    {
+        if (_startupPreferencesAside is not { } aside) return Task.CompletedTask;
+        _startupPreferencesAside = null;
+        return Dialogs.InformAsync(PreferencesRecoveredTitle, PreferencesRecoveredMessage(aside));
+    }
+
+    /// <summary>待たずに投げる Task の例外を、App と同じ経路で報告する（捨てない）。</summary>
+    private void Fire(Task task) => BackgroundTasks.Fire(task, Dialogs.ReportError);
 
     public AppState App { get; }
 
@@ -76,16 +99,16 @@ public sealed class MainViewModel : ObservableObject
         switch (page)
         {
             case IngestViewModel ingest:
-                _ = ingest.RefreshCommand.RunAsync();
+                Fire(ingest.RefreshCommand.RunAsync());
                 break;
             case PostEditorViewModel editor:
-                _ = editor.RefreshCommand.RunAsync();
+                Fire(editor.RefreshCommand.RunAsync());
                 break;
             case AvatarOutfitViewModel avatarOutfit:
-                _ = avatarOutfit.RefreshCommand.RunAsync();
+                Fire(avatarOutfit.RefreshCommand.RunAsync());
                 break;
             case ManageViewModel manage:
-                _ = manage.ScopeCommand.RunAsync();                                     // 確認する写真を、開いたときに数える
+                Fire(manage.ScopeCommand.RunAsync());                                   // 確認する写真を、開いたときに数える
                 manage.LoadAuditRows();                                                 // 点検する写真の一覧も
                 break;
             case PublishViewModel publish:

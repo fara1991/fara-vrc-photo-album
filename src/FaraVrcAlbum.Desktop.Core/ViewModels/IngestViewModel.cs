@@ -127,7 +127,7 @@ public sealed class IngestViewModel : PageViewModel
             _refreshPending = true;
             return;
         }
-        _ = RefreshCommand.RunAsync();
+        BackgroundTasks.Fire(RefreshCommand.RunAsync(), Dialogs.ReportError);
     }
 
     private async Task RefreshLoopAsync(CancellationToken ct)

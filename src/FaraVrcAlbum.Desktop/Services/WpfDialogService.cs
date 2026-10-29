@@ -22,6 +22,9 @@ public sealed class WpfDialogService(Func<Window?> owner) : IDialogService
         return Task.CompletedTask;
     }
 
+    /// <summary>観測していない Task の例外を、App と同じ経路（秘密を消してから表示）で出す。UI スレッドから呼ばれる（BackgroundTasks の継続）。</summary>
+    public void ReportError(Exception error) => App.ShowError(error);
+
     public string? PickFolder(string title, string? initial)
     {
         var dialog = new Microsoft.Win32.OpenFolderDialog { Title = title };

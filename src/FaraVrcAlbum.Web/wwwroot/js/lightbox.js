@@ -127,7 +127,7 @@
         dialog = element("dialog", "album-lb");
         dialog.setAttribute("role", "dialog");
         dialog.setAttribute("aria-modal", "true");
-        dialog.setAttribute("aria-label", "写真ビューア");
+        dialog.setAttribute("aria-label", "写真ビューアー");
 
         var bar = element("div", "album-lb-bar");
         parts.count = element("span", "album-lb-count");

@@ -111,8 +111,8 @@ public class PagesTests : BunitContext
         Assert.Equal("Fara Photo Album", first.Find("h1").TextContent);
         Assert.Contains("visually-hidden", first.Find("h1").ClassName);                // 視覚的に隠した h1
         var lead = first.Find(".album-lead");
-        Assert.Contains("Faraです。インバイトで良く引きこもってます。", lead.TextContent);
-        Assert.Contains("たまにVRC潜って撮った写真や、フレンドに撮ってもらった写真をこのサイトに載せていきます。", lead.TextContent);
+        Assert.Contains("Fara です。インバイトでよく引きこもっています。", lead.TextContent);
+        Assert.Contains("たまに VRChat に潜って撮った写真や、フレンドに撮ってもらった写真を、このサイトに載せていきます。", lead.TextContent);
         Assert.Single(lead.QuerySelectorAll("br"));                                     // 2 行（改行は <br>）
 
         var second = Render<HomeView>(p => p.Add(c => c.SiteName, "Fara Photo Album").Add(c => c.BaseUrl, Base).Add(c => c.Page, 2).Add(c => c.PageCount, 3).Add(c => c.Posts, new[] { Summary("a", Photo()) }));

@@ -37,13 +37,13 @@ function over(fg, bg, alpha) {
 test("選択中の文字色のトークンは、サイドバーの最も明るい背景の上で AA（4.5:1）に届く", () => {
   const token = css.match(/--album-nav-active:\s*(#[0-9a-f]{6})/i);
   assert.ok(token, "--album-nav-active がありません");
-  // サイドバーの下端（#2d1b4e を 0.92 で #1a0d33 に重ねる）に、選択中の薄い白 8% を重ねた色（最も明るい場合）
-  const sidebarBottom = over(hex("#2d1b4e"), hex("#1a0d33"), 0.92);
+  // サイドバーの下端（#421a2d を 0.92 で #1e0d17 に重ねる。app.css のテーマの --fbc-sidebar-bg・--album-sidebar-solid）に、選択中の薄い白 8% を重ねた色（最も明るい場合）
+  const sidebarBottom = over(hex("#421a2d"), hex("#1e0d17"), 0.92);
   const activeBg = over([255, 255, 255], sidebarBottom, 0.08);
   assert.ok(ratio(hex(token[1]), activeBg) >= 4.5, `比 ${ratio(hex(token[1]), activeBg).toFixed(2)} は 4.5 未満`);
 });
 
-test("選択中のナビの文字色は、MudBlazor の Primary（#a855f7・#7c3aed）ではなく、トークンを使う（同じ詳細度以上の規則）", () => {
+test("選択中のナビの文字色は、MudBlazor の Primary（ダーク #d6336c・ライト #b83a64）ではなく、トークンを使う（同じ詳細度以上の規則）", () => {
   const rule = css.match(/([^{}]*\.fbc-sidebar\s+\.mud-navmenu\.mud-navmenu-default\s+\.mud-nav-link\.active)\s*\{([^}]*)\}/);
   assert.ok(rule, "選択中の項目の規則がありません（.fbc-sidebar .mud-navmenu.mud-navmenu-default .mud-nav-link.active）");
   assert.match(rule[2], /color:\s*var\(--album-nav-active\)/);

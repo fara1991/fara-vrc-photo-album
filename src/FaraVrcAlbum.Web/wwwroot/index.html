@@ -28,28 +28,28 @@
     <script src="js/theme-default.js"></script>
     <!-- 起動までの読み込み表示の CSS（起動の前から当てる。60 秒の保険は、kit の boot-indicator.js の RELEASE_MS と同じ秒数） -->
     <style>
-        html, body { background: #f7f4fd; }
-        html[data-bs-theme="dark"], html[data-bs-theme="dark"] body { background: #0c0616; }
+        html, body { background: #fdf6f8; }
+        html[data-bs-theme="dark"], html[data-bs-theme="dark"] body { background: #130a0e; }
         #boot-indicator {
             position: fixed; inset: 0; z-index: 2147483000;
             display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem;
             box-sizing: border-box; padding: 1.5rem;
-            background: #f7f4fd; color: #3b2a5c;
+            background: #fdf6f8; color: #4a2a38;
             font-family: "Zen Kaku Gothic New", "Yu Gothic", system-ui, sans-serif;
             animation: boot-indicator-release 0s linear 60s forwards;
         }
         @keyframes boot-indicator-release { to { visibility: hidden; } }
-        html[data-bs-theme="dark"] #boot-indicator { background: #0c0616; color: #e9e3f5; }
+        html[data-bs-theme="dark"] #boot-indicator { background: #130a0e; color: #f3e4ea; }
         .boot-indicator-spinner {
             width: 3rem; height: 3rem; box-sizing: border-box;
-            border: 0.3rem solid #7c3aed; border-right-color: transparent; border-radius: 50%;
+            border: 0.3rem solid #b83a64; border-right-color: transparent; border-radius: 50%;
             animation: boot-indicator-spin 0.75s linear infinite;
         }
-        html[data-bs-theme="dark"] .boot-indicator-spinner { border-color: #a855f7; border-right-color: transparent; }
+        html[data-bs-theme="dark"] .boot-indicator-spinner { border-color: #f472a8; border-right-color: transparent; }
         .boot-indicator-label { font-size: 0.95rem; font-weight: 700; line-height: 1.6; text-align: center; max-width: 24rem; }
         .boot-indicator-label:empty::before { content: "読み込み中…"; }
-        .boot-indicator-label a { color: #7c3aed; font-weight: 700; text-decoration: underline; pointer-events: auto; }
-        html[data-bs-theme="dark"] .boot-indicator-label a { color: #a855f7; }
+        .boot-indicator-label a { color: #a3204f; font-weight: 700; text-decoration: underline; pointer-events: auto; }
+        html[data-bs-theme="dark"] .boot-indicator-label a { color: #f7a8c4; }
         #boot-indicator[data-state="slow"] .boot-indicator-spinner { animation: none; }
         @keyframes boot-indicator-spin { to { transform: rotate(360deg); } }
         @media (prefers-reduced-motion: reduce) {

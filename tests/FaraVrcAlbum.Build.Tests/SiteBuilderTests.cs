@@ -200,7 +200,7 @@ public class SiteBuilderTests
     }
 
     // プライバシーポリシーの制定日・最終改定日（PrivacyView.razor の Enacted / Revised）。改定したら両方そろえて直す
-    private const string PrivacyDate = "2026 年 10 月 29 日";
+    private const string PrivacyDate = "2026年10月29日";
 
     [Fact]
     public void ThePrivacyPageHasTheSameSectionsAsTheOtherSitesAndDescribesTheImplementation()
@@ -237,8 +237,8 @@ public class SiteBuilderTests
         Assert.Contains(" 枚", body);           // 日本語が文字参照（&#x…;）になっていない
         Assert.DoesNotContain("&#x", body);
         Assert.Contains("<h1 class=\"visually-hidden\">Fara Photo Album</h1>", body);       // 視覚的に隠した h1（ヘッダーは画像の『Fara』）
-        Assert.Contains("Faraです。インバイトで良く引きこもってます。<br", body);
-        Assert.Contains("たまにVRC潜って撮った写真や、フレンドに撮ってもらった写真をこのサイトに載せていきます。", body);
+        Assert.Contains("Faraです。2021/7からVRChat始めてますがインバイトで良く引きこもってます。<br", body);
+        Assert.Contains("たまにVRC潜って撮った写真や、フレンドに撮ってもらった写真をこのサイトに載せてます。", body);
         Assert.Contains("href=\"posts/first-post\"", body);  // 相対リンク（base href=/ の下で解決）
         Assert.Matches("<img[^>]+width=\"2048\"[^>]+height=\"1152\"", body);
         Assert.DoesNotContain("下書き", body);
@@ -355,13 +355,13 @@ public class SiteBuilderTests
         }
         using var prodArchive = JsonDocument.Parse(Read(prod, "data/archive.json"));
         Assert.False(prodArchive.RootElement.TryGetProperty("2099", out var year2099));
-        Assert.Contains("(1)", Body(Read(prod, "tags.html")));                      // night は first-post の 1 件だけ
+        Assert.Contains("（1）", Body(Read(prod, "tags.html")));                      // night は first-post の 1 件だけ
 
         // 確認用: 出る（確認できるように）
         Assert.True(Exists(dev, "posts/scheduled-post.html"));
         Assert.True(Exists(dev, "archive/2099/01.html"));
         Assert.Contains("予約公開の記事", Read(dev, "data/posts-index.json"));
-        Assert.Contains("(2)", Body(Read(dev, "tags.html")));
+        Assert.Contains("（2）", Body(Read(dev, "tags.html")));
     }
 
     [Fact]

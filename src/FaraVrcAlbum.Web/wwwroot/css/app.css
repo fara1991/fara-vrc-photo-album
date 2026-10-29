@@ -63,6 +63,24 @@ html {
   scroll-padding-top: calc(var(--album-header-h) + 0.5rem);
 }
 
+/* 行頭禁則: 句読点・閉じ括弧・小さい仮名が行頭に来ないようにする（line-break: strict）。kit は本文の枠（.fbc-page-column）の中だけなので、
+   記事ページ（枠の外）・ヘッダー・ドロワー・フッターも含めて、全体に当てる（継承される）。見出し・キャプション・カードの題は、語（文節）の途中でも切らない（auto-phrase。対応しないブラウザでは通常の折り返し）。 */
+body {
+  line-break: strict;
+}
+
+h1,
+h2,
+h3,
+figcaption,
+.album-card-title,
+.album-prevnext-title,
+.album-breadcrumb {
+  word-break: normal;
+  word-break: auto-phrase;
+  overflow-wrap: break-word;
+}
+
 /* 各ページの本文の最初の画像（SiteBanner。960×240 の WebP）。本文の幅の半分（狭い画面でも 200px 以上。左寄せ）で出し、縦横比 4:1 で場所を空ける（画像が来る前から高さが決まる = CLS が出ない）。
    静的 HTML（main.entry-static）にも同じものが入る。 */
 .album-banner {

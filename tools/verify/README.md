@@ -7,7 +7,7 @@ CI では動かさない（この確認は手元で行う）。`playwright-core`
 npm run preview                       # http://localhost:8787（本番用の出力。確認用は npm run preview:develop）
 ```
 
-- `report-form.mjs` … `/report` の確認: 連絡先（Twitter のユーザー名）の必須表示・検査（空 / @なし / 16 文字 / 全角＠ / 前後の空白）・送信の内容。Turnstile と /api/report は route で代役。
+- `report-form.mjs` … `/report` の確認: 連絡先が任意であること（空でも送れる・前後の空白は除く）・送信の内容。Turnstile と /api/report は route で代役。
 - `lib.mjs` … 上の確認の共通部分（ブラウザの起動・ビューポート・CSP 違反の収集）。
 - `image-diff.py` … 画像の比較（Pillow が要る）。
 

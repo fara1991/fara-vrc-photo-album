@@ -183,6 +183,22 @@ public class SiteBuilderTests
         Assert.Contains("<a href=\"report\">問い合わせ</a>", Body(Read(prod, "privacy.html")));
     }
 
+    [Fact]
+    public void ThePrivacyPageIsStaticAndDescribesTheServicesWithoutPlaceholderNotes()
+    {
+        var (f, prod, _) = Build();
+        using var _ = f;
+        var body = Body(Read(prod, "privacy.html"));
+        Assert.DoesNotContain("雛形", body);
+        Assert.DoesNotContain("Twitter（", body);
+        Assert.DoesNotContain("&#x", body);
+        Assert.Contains("<table", body);
+        Assert.Contains("booth.pximg.net", body);
+        Assert.Contains("Twitter", body);
+        Assert.Contains("最終改定: 2026 年 10 月 29 日", body);
+        Assert.Contains("7 日以内", body);
+    }
+
     private static string Footer(string dir, string name) =>
         Regex.Match(Read(dir, name), "<footer class=\"fbc-footer entry-static\">.*?</footer>", RegexOptions.Singleline).Value;
 

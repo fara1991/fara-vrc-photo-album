@@ -1216,3 +1216,23 @@ html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
 
 /* 注記の文字（kit の small.fbc-muted は 11.3px）は 12px 以上 */
 small.fbc-muted { font-size: 12px; }
+
+/* プライバシーポリシーの表（外部サービスとの通信）。狭い画面では横にスクロールする */
+.album-table-wrap {
+  overflow-x: auto;
+  margin: 0 0 1rem;
+}
+
+.album-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 36rem;
+}
+
+.album-table th,
+.album-table td {
+  border: 1px solid var(--album-card-border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  vertical-align: top;
+}

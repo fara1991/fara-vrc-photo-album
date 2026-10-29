@@ -81,12 +81,12 @@ figcaption,
   overflow-wrap: break-word;
 }
 
-/* 各ページの本文の最初の画像（SiteBanner。960×240 の WebP）。本文の幅の半分（狭い画面でも 200px 以上。左寄せ）で出し、縦横比 4:1 で場所を空ける（画像が来る前から高さが決まる = CLS が出ない）。
-   静的 HTML（main.entry-static）にも同じものが入る。 */
+/* 各ページの本文の最初の画像（SiteBanner。960×240 の WebP）。本文の幅の半分（狭い画面でも 200px 以上）を、本文の領域の中央に置いて出し、縦横比 4:1 で場所を空ける（画像が来る前から高さが決まる = CLS が出ない）。
+   中央線は、その下の内容の列（.fbc-page-column・.album-post など。どれも margin: auto で本文の領域の中央）と同じ。静的 HTML（main.entry-static）にも同じものが入る。 */
 .album-banner {
   width: 50%;
   min-width: min(100%, 200px);
-  margin: 0 0 1rem;
+  margin: 0 auto 1rem;
   line-height: 0;
 }
 
@@ -1242,10 +1242,9 @@ html[data-bs-theme="light"] .mud-alert-outlined-warning .mud-alert-message {
 small.fbc-muted { font-size: 12px; }
 
 /* プライバシーポリシー。kit の reset で段落・見出し・リストの余白が無いので、このページの中だけで整える。
-   行が長くなりすぎないよう、PC でも 56rem までにする（kit の --wide は 72rem） */
+   行が長くなりすぎないよう、PC でも 56rem までにする（kit の --wide は 72rem）。列は本文の領域の中央（バナーと同じ中央線） */
 .fbc-page-column.fbc-page-column--wide.album-privacy {
   max-width: 56rem;
-  margin-left: 0;
   line-height: 1.8;
 }
 

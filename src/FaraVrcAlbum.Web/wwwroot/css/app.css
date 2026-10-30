@@ -2079,7 +2079,7 @@ h1.album-heading {
        本文の枠（.mud-main-content）を画面の高さ以上の縦並びにして、本文（main）が余りを取り、フッターが一番下に来るようにする
    (2) フッターのリンクの当たり判定（::after の 44px）が、フッターの下に 11px はみ出し、padding-bottom 8px を超えた 3px が文書のスクロール範囲に入る。
        padding-bottom を 11px にして収める（iPhone のホームバーの分は safe-area で足す）
-   overscroll-behavior は、この下の iOS（WebKit）だけに付ける（Android の引っ張って更新を無効にしてしまうため） */
+   （html に overscroll-behavior-y: none は付けない。iOS の Chrome で「引っ張って更新」が無効になるため） */
 @media (max-width: 767.98px) {
   .fbc-page.fbc-page-scroll .mud-main-content {
     display: flex;
@@ -2119,11 +2119,4 @@ h1.album-heading {
    iOS（WebKit）は background-attachment: fixed を無視し、ゴム伸びの領域に背景が塗られないと黒く見えるため */
 html {
   background-color: var(--fbc-body-bg, #0c0616);
-}
-
-/* iOS（WebKit）だけ、ページ端のゴム伸びを止める。Android の Chrome の「引っ張って更新」は残す（-webkit-touch-callout は iOS の WebKit だけが持つ） */
-@supports (-webkit-touch-callout: none) {
-  html {
-    overscroll-behavior-y: none;
-  }
 }

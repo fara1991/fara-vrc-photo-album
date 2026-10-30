@@ -1,0 +1,39 @@
+@page "/posts/{Slug}"
+@inject AlbumStore Store
+
+@if (!loaded)
+{
+    @* 読み込み中は、画面の高さの空きだけを置く（静的 HTML の本文が消えてフッターが上に跳ねたあと、本文で下へ動く = スマホの CLS を防ぐ） *@
+    <div class="album-pending" aria-hidden="true"></div>
+}
+else if (post is null)
+{
+    <PageTitle>見つかりません | @Store.Settings.SiteName</PageTitle>
+    <NotFoundView HomeHref="./" NoIndex="false" />
+}
+else
+{
+    <PageTitle>@post.Title | @Store.Settings.SiteName</PageTitle>
+    <PostArticleView Post="post" BaseUrl="@Store.Settings.ImageBaseUrl" TagNames="Store.TagNames" />
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private PostPage? post;
+    private bool loaded;
+    private int _request;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // 同じ記事のまま（URL の # だけが変わった: ライトボックスの #photo-N など）なら、読み直さない（読み直すと写真が一度消えて点滅する）
+        if (loaded && post is not null && string.Equals(post.Slug, Slug, StringComparison.Ordinal)) return;
+        // 読み込みの途中でパラメータが変わったら、古い応答は捨てる（後から届いた古い応答で、新しい表示を上書きしない）
+        var request = ++_request;
+        loaded = false;
+        var found = await Store.GetPostAsync(Slug);
+        if (request != _request) return;
+        post = found;
+        loaded = true;
+    }
+}

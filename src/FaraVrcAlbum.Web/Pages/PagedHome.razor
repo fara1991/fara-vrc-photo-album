@@ -1,0 +1,7 @@
+@page "/page/{Page:int}"
+
+<HomeContent Page="Page" />
+
+@code {
+    [Parameter] public int Page { get; set; }
+}

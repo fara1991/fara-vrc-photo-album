@@ -1,0 +1,24 @@
+@inject AlbumStore Store
+
+@* サイドバーの最上段のプロフィールカード（A 案）。バナー画像（960×240 の WebP。4:1 のまま）・丸いアバター（同じ画像の Fara の顔を丸く切り出したもの。下端に重なる）・名前・説明・件数。
+   件数は、サイト自体のデータ（公開中の記事の数と写真の枚数）。「オンライン」のような実体の無い状態は出さない。画像はこのカードのためだけに、起動の後に読む（静的 HTML には無い）。 *@
+<div class="album-profile">
+    <div class="album-profile-banner">
+        <img src="@SiteRules.HeaderImage" alt="" width="@SiteRules.HeaderImageWidth" height="@SiteRules.HeaderImageHeight" decoding="async" />
+    </div>
+    <div class="album-profile-body">
+        <span class="album-avatar" role="img" aria-label="@($"{Name} のアイコン")">
+            <img src="@SiteRules.HeaderImage" alt="" width="@SiteRules.HeaderImageWidth" height="@SiteRules.HeaderImageHeight" decoding="async" />
+        </span>
+        <p class="album-profile-name">@Name</p>
+        <p class="album-profile-sub">VRChat の写真ブログ</p>
+        <ul class="album-profile-stats" aria-label="件数">
+            <li><b>@Store.Posts.Count</b> 記事</li>
+            <li><b>@Store.Posts.Sum(p => p.PhotoCount)</b> 写真</li>
+        </ul>
+    </div>
+</div>
+
+@code {
+    private string Name => string.IsNullOrWhiteSpace(Store.Settings.Author) ? "Fara" : Store.Settings.Author;
+}

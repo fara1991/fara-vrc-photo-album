@@ -1,0 +1,11 @@
+@page "/archive/{Year:int}/{Month:int}/page/{Page:int}"
+
+<ArchiveContent Year="Year" Month="Month" Page="Page" />
+
+@code {
+    [Parameter] public int Year { get; set; }
+
+    [Parameter] public int Month { get; set; }
+
+    [Parameter] public int Page { get; set; }
+}

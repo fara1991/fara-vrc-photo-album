@@ -1,0 +1,34 @@
+@inject AlbumStore Store
+
+@* 公開月（JST）別の記事の一覧。記事が 1 件も無い月・範囲外のページは 404 の画面。静的 HTML の title（Build の PageCatalog）と同じ規則。 *@
+@if (posts.Count == 0 || Page < 1 || Page > pageCount)
+{
+    <PageTitle>見つかりません | @Store.Settings.SiteName</PageTitle>
+    <NotFoundView HomeHref="./" NoIndex="false" />
+}
+else
+{
+    <PageTitle>@Heading@(Page > 1 ? $"（{Page} ページ目）" : "") | @Store.Settings.SiteName</PageTitle>
+    <ListPageView Heading="@Heading" Lead="@($"{Year}年{Month}月に公開した記事の一覧です（{posts.Count} 件）。")"
+                  Posts="@SiteRules.Slice(posts, Page, Store.Settings.PostsPerPage)" BaseUrl="@Store.Settings.ImageBaseUrl" TagNames="Store.TagNames"
+                  Page="Page" PageCount="pageCount" HrefFor="@(n => SiteRules.ArchiveHref(Year, Month, n))" />
+}
+
+@code {
+    [Parameter] public int Year { get; set; }
+
+    [Parameter] public int Month { get; set; }
+
+    [Parameter] public int Page { get; set; } = 1;
+
+    private IReadOnlyList<PostSummary> posts = Array.Empty<PostSummary>();
+    private int pageCount = 1;
+
+    private string Heading => $"{Year}年{Month}月の記事";
+
+    protected override void OnParametersSet()
+    {
+        posts = Store.PostsOfMonth(Year, Month);
+        pageCount = SiteRules.PageCount(posts.Count, Store.Settings.PostsPerPage);
+    }
+}

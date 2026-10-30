@@ -1,0 +1,70 @@
+@* 記事の一覧（カード）。カバー写真（640px 版）・題・公開日・タグ・枚数。カード全体は題のリンクで押せる（リンクの入れ子を避けるため、題の ::after で広げる。タグは別のリンク）。
+   画面で最初の 1 枚だけ優先して読む（eager + fetchpriority=high）。カバーの画像は、題が隣にあるので alt は空（飾り）。 *@
+@if (Posts.Count == 0)
+{
+    <p class="album-empty">まだ記事がありません。</p>
+}
+else
+{
+    <ul class="@(Featured ? "album-grid album-grid--feature" : "album-grid")">
+        @for (var i = 0; i < Posts.Count; i++)
+        {
+            var post = Posts[i];
+            <li class="@(Featured ? "album-card album-card--feature" : "album-card")">
+                @if (post.Cover is not null)
+                {
+                    <div class="album-card-media">
+                        <PhotoImg Photo="post.Cover" BaseUrl="@BaseUrl" Alt="" Eager="@(EagerFirst && i == 0)" />
+                    </div>
+                }
+                <div class="album-card-body">
+                    @if (Featured)
+                    {
+                        <span class="album-pill">最新</span>
+                    }
+                    @if (Nested)
+                    {
+                        <h3 class="album-card-title"><a class="album-card-link" href="@SiteRules.PostHref(post.Slug)">@post.Title</a></h3>
+                    }
+                    else
+                    {
+                        <h2 class="album-card-title"><a class="album-card-link" href="@SiteRules.PostHref(post.Slug)">@post.Title</a></h2>
+                    }
+                    @if (post.PhotoCount > 0)
+                    {
+                        <p class="album-card-meta"><span>@post.PhotoCount 枚</span></p>
+                    }
+                    @if (post.Tags.Count > 0)
+                    {
+                        <ul class="album-card-tags" aria-label="タグ">
+                            @foreach (var slug in post.Tags)
+                            {
+                                <li><a class="album-tag" href="@SiteRules.TagHref(slug)">@TagName(slug)</a></li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<PostSummary> Posts { get; set; } = Array.Empty<PostSummary>();
+
+    [Parameter, EditorRequired] public string BaseUrl { get; set; } = "";
+
+    /// <summary>タグの slug → 表示名（無ければ slug を出す）。</summary>
+    [Parameter] public IReadOnlyDictionary<string, string>? TagNames { get; set; }
+
+    /// <summary>1 枚目を優先して読むか（ページの最初の一覧のとき true。関連する記事など、画面の下にある一覧は false）。</summary>
+    [Parameter] public bool EagerFirst { get; set; } = true;
+
+    /// <summary>「最新の記事」の大きなカード 1 枚にするか（トップの 1 ページ目の先頭。写真を左に大きく、題を右に。「最新」のラベル付き）。</summary>
+    [Parameter] public bool Featured { get; set; }
+
+    /// <summary>見出しの階層を 1 つ下げる（記事ページの「関連する記事」の中のカード。h2 の下なので h3）。</summary>
+    [Parameter] public bool Nested { get; set; }
+
+    private string TagName(string slug) => TagNames is not null && TagNames.TryGetValue(slug, out var name) ? name : slug;
+}

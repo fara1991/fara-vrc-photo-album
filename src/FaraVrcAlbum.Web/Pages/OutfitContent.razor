@@ -1,0 +1,43 @@
+@inject AlbumStore Store
+
+@* 服（マスタの id）を着て撮った写真の一覧。服が無い・id の形式が不正・範囲外のページは 404 の画面。 *@
+@if (!loaded)
+{
+    @* 読み込み中は、画面の高さの空きだけを置く（静的 HTML の本文が消えてフッターが上に跳ねるのを防ぐ） *@
+    <div class="album-pending" aria-hidden="true"></div>
+}
+else if (outfit is null || Page < 1 || Page > pageCount)
+{
+    <PageTitle>見つかりません | @Store.Settings.SiteName</PageTitle>
+    <NotFoundView HomeHref="./" NoIndex="false" />
+}
+else
+{
+    <PageTitle>@outfit.Name の写真@(Page > 1 ? $"（{Page} ページ目）" : "") | @Store.Settings.SiteName</PageTitle>
+    <OutfitPageView Id="@outfit.Id" Name="@outfit.Name" Shop="@outfit.Shop" Url="@outfit.Url" Thumbnail="@outfit.Thumbnail" Description="@outfit.Description" Tags="@outfit.Tags"
+                    PublishedAt="@outfit.PublishedAt" UpdatedAt="@outfit.UpdatedAt" FetchedAt="@outfit.FetchedAt" Photos="@SiteRules.Slice(outfit.Photos, Page, Store.Settings.PostsPerPage)"
+                    Total="outfit.Photos.Count" BaseUrl="@Store.Settings.ImageBaseUrl" Page="Page" PageCount="pageCount" PerPage="Store.Settings.PostsPerPage" />
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+
+    [Parameter] public int Page { get; set; } = 1;
+
+    private OutfitPage? outfit;
+    private int pageCount = 1;
+    private bool loaded;
+    private int _request;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // 読み込みの途中でパラメータが変わったら、古い応答は捨てる（後から届いた古い応答で、新しい表示を上書きしない）
+        var request = ++_request;
+        loaded = false;
+        var found = await Store.GetOutfitAsync(Id);
+        if (request != _request) return;
+        outfit = found;
+        pageCount = SiteRules.PageCount(outfit?.Photos.Count ?? 0, Store.Settings.PostsPerPage);
+        loaded = true;
+    }
+}

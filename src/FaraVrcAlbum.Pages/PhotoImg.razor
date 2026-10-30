@@ -1,0 +1,42 @@
+@* 写真 1 枚の <img>。width / height / aspect-ratio と背景色（代表色）で、読み込みによるレイアウトのずれ（CLS）を防ぐ。
+   静的 HTML と Blazor の描画で同じ属性にする（同じ部品から出すので一致する）。画像の URL は ImageBaseUrl + key + "_640|1280|2048.webp"。
+   一覧のカードは 640 / 1280 の srcset（既定）、記事の写真は 640 / 1280 / 2048（本文の標準は 1280）。 *@
+@{
+    var style = string.IsNullOrEmpty(Photo.Color)
+        ? $"aspect-ratio: {Photo.W} / {Photo.H}"
+        : $"aspect-ratio: {Photo.W} / {Photo.H}; background-color: #{Photo.Color}";
+}
+<img src="@SiteRules.ImageUrl(BaseUrl, Photo.Key, DefaultSize)"
+     srcset="@Srcset"
+     sizes="@Sizes"
+     width="@Photo.W" height="@Photo.H"
+     alt="@Alt"
+     loading="@(Eager ? "eager" : "lazy")"
+     decoding="async"
+     fetchpriority="@(Eager ? "high" : null)"
+     style="@style" />
+
+@code {
+    /// <summary>写真。</summary>
+    [Parameter, EditorRequired] public PhotoInfo Photo { get; set; } = new();
+
+    /// <summary>画像の基準 URL（末尾 /）。</summary>
+    [Parameter, EditorRequired] public string BaseUrl { get; set; } = "";
+
+    /// <summary>alt（キャプションから作る。飾りの画像は空）。</summary>
+    [Parameter] public string Alt { get; set; } = "";
+
+    /// <summary>画面の最初に見える写真（ページで 1 枚目）だけ true（遅延読み込みにしない・優先して取る）。</summary>
+    [Parameter] public bool Eager { get; set; }
+
+    /// <summary>src に使う長辺（srcset に載せるものから選ぶ）。</summary>
+    [Parameter] public int DefaultSize { get; set; } = 640;
+
+    /// <summary>sizes 属性（M1 から変えない: 1200px 以上は 3 列 = 360px、600px 以上は 2 列 = 45vw、それ未満は 1 列 = 92vw）。</summary>
+    [Parameter] public string Sizes { get; set; } = SiteRules.CardSizes;
+
+    /// <summary>srcset に載せる長辺（既定は 640 と 1280。一覧のカードで Retina の画面は 1280 を取る）。</summary>
+    [Parameter] public int[] SrcsetSizes { get; set; } = [640, 1280];
+
+    private string Srcset => string.Join(", ", SrcsetSizes.Select(s => $"{SiteRules.ImageUrl(BaseUrl, Photo.Key, s)} {s}w"));
+}

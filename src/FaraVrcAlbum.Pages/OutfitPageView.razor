@@ -1,0 +1,164 @@
+@* 服のページ（/outfits/{id}、/outfits/{id}/page/{n}）。先頭に BOOTH の商品の画像、その下に服の名前（商品ページへのリンク）と BOOTH の情報、その下にその服を着て撮った写真。
+   画像・情報は、アプリが BOOTH Library Manager から取り込んだもの（閲覧時に BOOTH へ問い合わせない。画像だけ BOOTH のサーバーから読む）。無い項目は出さない。 *@
+<div class="album-list fbc-page-column fbc-page-column--wide">
+    @if (!string.IsNullOrWhiteSpace(Thumbnail))
+    {
+        @if (!string.IsNullOrWhiteSpace(Url))
+        {
+            <a class="album-outfit-hero" href="@Url" target="_blank" rel="noopener noreferrer nofollow" aria-label="@($"{Name} の商品ページを見る（新しいタブ）")">
+                <img src="@Thumbnail" width="300" height="300" alt="@($"{Name} の商品の画像")" loading="@(Page == 1 ? "eager" : "lazy")" decoding="async" referrerpolicy="no-referrer" />
+            </a>
+        }
+        else
+        {
+            <span class="album-outfit-hero">
+                <img src="@Thumbnail" width="300" height="300" alt="@($"{Name} の商品の画像")" loading="@(Page == 1 ? "eager" : "lazy")" decoding="async" referrerpolicy="no-referrer" />
+            </span>
+        }
+    }
+    <h1 class="album-heading">
+        @if (!string.IsNullOrWhiteSpace(Url))
+        {
+            <a class="album-external" href="@Url" target="_blank" rel="noopener noreferrer nofollow" aria-label="@($"{Name} の商品ページを見る（新しいタブ）")">@Name</a>
+        }
+        else
+        {
+            @Name
+        }
+    </h1>
+    @if (HasInfo)
+    {
+        <dl class="album-world-info">
+            @if (!string.IsNullOrWhiteSpace(Shop))
+            {
+                <div><dt>お店</dt><dd>@Shop</dd></div>
+            }
+            @if (Date(PublishedAt) is { } published)
+            {
+                <div><dt>公開日</dt><dd>@published</dd></div>
+            }
+            @if (Date(UpdatedAt) is { } updated)
+            {
+                <div><dt>更新日</dt><dd>@updated</dd></div>
+            }
+            @if (Tags is { Count: > 0 })
+            {
+                <div><dt>タグ</dt><dd>@string.Join("、", Tags)</dd></div>
+            }
+        </dl>
+        @if (!string.IsNullOrWhiteSpace(Description))
+        {
+            @for (var s = 0; s < DescriptionSections.Count; s++)
+            {
+                var section = DescriptionSections[s];
+                <section class="album-outfit-section">
+                    @if (section.Heading is not null)
+                    {
+                        <h2 class="album-subheading">@section.Heading</h2>
+                    }
+                    <FoldedText Text="@section.Body" Id="@(s == 0 ? "outfit" : "outfit-" + (s + 1))" />
+                </section>
+            }
+        }
+        @if (Date(FetchedAt) is { } at)
+        {
+            <p class="album-note">@(at)時点の BOOTH の情報です。</p>
+        }
+    }
+    <p class="album-lead album-lead--after-info">この服を着て撮った写真です（@Total 枚）。</p>
+    @if (Photos.Count == 0)
+    {
+        <p class="album-empty">写真がありません。</p>
+    }
+    else
+    {
+        <ul class="album-grid album-grid--photos">
+            @for (var i = 0; i < Photos.Count; i++)
+            {
+                var photo = Photos[i];
+                <li class="album-card album-card--photo">
+                    <a class="album-card-link album-card-link--photo" href="@SiteRules.PostHref(photo.Slug)">
+                        <div class="album-card-media">
+                            <PhotoImg Photo="photo.ToPhotoInfo()" BaseUrl="@BaseUrl" Alt="@($"{Name} を着て撮った写真（{(Page - 1) * PerPage + i + 1}）")" Eager="@(i == 0)" />
+                        </div>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+    <Pager Page="Page" PageCount="PageCount" HrefFor="@(n => SiteRules.OutfitHref(Id, n))" />
+</div>
+
+@code {
+    /// <summary>服のマスタの id。</summary>
+    [Parameter, EditorRequired] public string Id { get; set; } = "";
+
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+
+    /// <summary>お店の名前（あれば）。</summary>
+    [Parameter] public string? Shop { get; set; }
+
+    /// <summary>商品ページ（https）。無ければ、名前・画像はリンクにしない。</summary>
+    [Parameter] public string? Url { get; set; }
+
+    /// <summary>BOOTH の商品の画像（https）。</summary>
+    [Parameter] public string? Thumbnail { get; set; }
+
+    [Parameter] public string? Description { get; set; }
+
+    [Parameter] public IReadOnlyList<string>? Tags { get; set; }
+
+    /// <summary>BOOTH での公開日・更新日（ISO 8601）。</summary>
+    [Parameter] public string? PublishedAt { get; set; }
+
+    [Parameter] public string? UpdatedAt { get; set; }
+
+    /// <summary>BOOTH の情報を取り込んだ日時（ISO 8601）。</summary>
+    [Parameter] public string? FetchedAt { get; set; }
+
+    /// <summary>このページの写真（新しい記事の順）。</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<PhotoRef> Photos { get; set; } = Array.Empty<PhotoRef>();
+
+    /// <summary>この服の写真の枚数。</summary>
+    [Parameter] public int Total { get; set; }
+
+    [Parameter, EditorRequired] public string BaseUrl { get; set; } = "";
+
+    [Parameter] public int Page { get; set; } = 1;
+
+    [Parameter] public int PageCount { get; set; } = 1;
+
+    /// <summary>1 ページの写真の数（alt の通し番号に使う）。</summary>
+    [Parameter] public int PerPage { get; set; } = 12;
+
+    /// <summary>説明（「【対応アバター】」「【利用規約】」の見出し行で区切られた文章）を、見出しごとの節に分ける。見出しが無ければ 1 節（見出しなし）。文字は欠落させない（見出し行は見出しとして出す）。</summary>
+    private IReadOnlyList<(string? Heading, string Body)> DescriptionSections
+    {
+        get
+        {
+            var sections = new List<(string? Heading, List<string> Lines)>();
+            foreach (var line in (Description ?? "").Replace("\r\n", "\n").Split('\n'))
+            {
+                var trimmed = line.Trim();
+                if (trimmed.Length > 2 && trimmed[0] == '【' && trimmed[^1] == '】') sections.Add((trimmed, new List<string>()));
+                else
+                {
+                    if (sections.Count == 0) sections.Add((null, new List<string>()));
+                    sections[^1].Lines.Add(line);
+                }
+            }
+            return sections
+                .Select(s => (s.Heading, Body: string.Join("\n", s.Lines).Trim('\n', ' ')))
+                .Where(s => s.Body.Length > 0)
+                .ToList();
+        }
+    }
+
+    private static readonly System.Globalization.CultureInfo Invariant = System.Globalization.CultureInfo.InvariantCulture;
+
+    private bool HasInfo => !string.IsNullOrWhiteSpace(Shop) || !string.IsNullOrWhiteSpace(Description) || Tags is { Count: > 0 } || Date(PublishedAt) is not null || Date(UpdatedAt) is not null;
+
+    /// <summary>ISO 8601 → 「2026年10月26日」（JST）。読めなければ null。</summary>
+    private static string? Date(string? iso) =>
+        DateTimeOffset.TryParse(iso, Invariant, System.Globalization.DateTimeStyles.None, out var value) ? SiteRules.FormatDate(value) : null;
+}

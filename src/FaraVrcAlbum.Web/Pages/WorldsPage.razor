@@ -1,0 +1,24 @@
+@page "/worlds"
+@inject AlbumStore Store
+
+<PageTitle>ワールド | @Store.Settings.SiteName</PageTitle>
+
+@if (worlds is not null)
+{
+    <WorldListView Worlds="worlds" BaseUrl="@Store.Settings.ImageBaseUrl" />
+}
+else if (failed)
+{
+    <NotFoundView HomeHref="./" NoIndex="false" Title="読み込めませんでした" Lead="ワールドの一覧を読み込めませんでした。しばらくしてから、もう一度お試しください。" />
+}
+
+@code {
+    private List<WorldSummary>? worlds;
+    private bool failed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        worlds = await Store.GetWorldsAsync();
+        failed = worlds is null;
+    }
+}

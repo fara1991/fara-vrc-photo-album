@@ -1,0 +1,118 @@
+@implements IDisposable
+@inject AlbumStore Store
+@inject NavigationManager Nav
+
+@* サイドバーのメニュー（A 案）。大きな角丸ボタンの縦の並び: 左にアイコン・中央にラベル・右に「>」。件数はバッジ。現在のページは紫の塗りつぶし（aria-current="page"）。
+   ナビは 3 つ（メイン・アーカイブ・サポート）。ランドマークは aria-label で区別する。入れ子の <nav> は作らない（axe の landmark-unique）。
+   項目は素の <a href>（相対 URL。<base href="/"> の下で Blazor が画面の移動にする）。スマホでメニューを閉じるのは、kit の SiteLayout が画面の移動で行う。
+   アーカイブの年は、ネイティブの <details>（MudNavGroup は入れ子の <nav> を出すため使わない）。
+   PC でサイドバーを細くしている間は、アイコンだけにする（ラベル・バッジ・「>」・アーカイブは app.css が隠す。ラベルは読み上げのために残す）。 *@
+
+<nav class="album-nav" aria-label="メイン">
+    @foreach (var item in MainItems)
+    {
+        var current = IsCurrent(item);
+        <a class="album-nav-item@(current ? " active" : "")" href="@item.Href" aria-current="@(current ? "page" : null)" title="@item.Label">
+            <span class="album-nav-ic" aria-hidden="true"><MudIcon Icon="@item.Icon" Color="Color.Inherit" /></span>
+            <span class="album-nav-label">@item.Label</span>
+            @if (item.Count is int count)
+            {
+                <NavBadge Count="count" />
+            }
+            <span class="album-nav-chev" aria-hidden="true"><MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Inherit" /></span>
+        </a>
+    }
+</nav>
+
+@if (Store.Archive.Count > 0)
+{
+    @* 公開月別のアーカイブ（新しい月が上。最新の年は開く） *@
+    <nav class="album-nav album-archive" aria-label="アーカイブ（公開月別）">
+        <div class="album-nav-section">アーカイブ</div>
+        @for (var y = 0; y < Store.Archive.Count; y++)
+        {
+            var year = Store.Archive[y];
+            <details class="album-archive-year" open="@(y == 0 || year.Months.Any(m => IsCurrentMonth(year.Year, m.Month)))">
+                <summary class="album-nav-item album-archive-summary">
+                    <span class="album-nav-ic" aria-hidden="true"><MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Inherit" /></span>
+                    <span class="album-nav-label">@($"{year.Year}年")</span>
+                    <NavBadge Count="year.Count" />
+                    <span class="album-nav-chev album-archive-more" aria-hidden="true"><MudIcon Icon="@Icons.Material.Filled.ExpandMore" Color="Color.Inherit" /></span>
+                </summary>
+                <ul class="album-archive-months">
+                    @foreach (var month in year.Months)
+                    {
+                        var current = IsCurrentMonth(year.Year, month.Month);
+                        <li>
+                            <a class="album-nav-item album-nav-sub@(current ? " active" : "")" href="@SiteRules.ArchiveHref(year.Year, month.Month)" aria-current="@(current ? "page" : null)">
+                                <span class="album-nav-label">@($"{month.Month}月")</span>
+                                <NavBadge Count="month.Count" />
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </details>
+        }
+    </nav>
+}
+
+@* サポート（問い合わせ・プライバシーポリシー）。メインのナビと区別するため、名前（aria-label）を付ける *@
+<nav class="album-nav" aria-label="サポート">
+    <div class="album-nav-section">サポート</div>
+    @foreach (var item in SupportItems)
+    {
+        var current = IsCurrent(item);
+        <a class="album-nav-item@(current ? " active" : "")" href="@item.Href" aria-current="@(current ? "page" : null)" title="@item.Label">
+            <span class="album-nav-ic" aria-hidden="true"><MudIcon Icon="@item.Icon" Color="Color.Inherit" /></span>
+            <span class="album-nav-label">@item.Label</span>
+            <span class="album-nav-chev" aria-hidden="true"><MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Inherit" /></span>
+        </a>
+    }
+</nav>
+
+@code {
+    /// <summary>メニューの 1 項目。Count は、サイト自体のデータから分かる件数（無ければ null でバッジを出さない）。</summary>
+    private sealed record Item(string Href, string Label, string Icon, int? Count = null);
+
+    private IEnumerable<Item> MainItems => new[]
+    {
+        new Item("", "ホーム", Icons.Material.Filled.Home),
+        new Item("worlds", "ワールド", Icons.Material.Filled.Public),
+        new Item("outfits", "服", Icons.Material.Filled.Checkroom),
+        new Item("tags", "タグ", Icons.Material.Filled.Sell, TagCount),
+    };
+
+    private static readonly Item[] SupportItems =
+    {
+        new("report", "問い合わせ", Icons.Material.Filled.MailOutline),
+        new("privacy", "プライバシーポリシー", Icons.Material.Filled.PrivacyTip),
+    };
+
+    /// <summary>記事に付いているタグの種類の数（タグの一覧のページを開かなくても分かる値）。0 のときはバッジを出さない。</summary>
+    private int? TagCount => Store.Posts.SelectMany(p => p.Tags).Distinct().Count() is var n and > 0 ? n : null;
+
+    protected override void OnInitialized() => Nav.LocationChanged += OnLocationChanged;
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+
+    /// <summary>いま開いているページの、サイト内のパス（先頭の / と ?・# を除く）。</summary>
+    private string CurrentPath => Nav.ToBaseRelativePath(Nav.Uri).Split('?', '#')[0].Trim('/');
+
+    /// <summary>この項目のページか（下位のページも含む。ホームは / と /page/n だけ）。</summary>
+    private bool IsCurrent(Item item)
+    {
+        var path = CurrentPath;
+        if (item.Href.Length == 0) return path.Length == 0 || path.StartsWith("page/", StringComparison.Ordinal);
+        return path == item.Href || path.StartsWith(item.Href + "/", StringComparison.Ordinal);
+    }
+
+    /// <summary>この月のアーカイブ（/archive/yyyy/MM とそのページ送り）か。</summary>
+    private bool IsCurrentMonth(int year, int month)
+    {
+        var path = CurrentPath;
+        var href = SiteRules.ArchiveHref(year, month);
+        return path == href || path.StartsWith(href + "/", StringComparison.Ordinal);
+    }
+}

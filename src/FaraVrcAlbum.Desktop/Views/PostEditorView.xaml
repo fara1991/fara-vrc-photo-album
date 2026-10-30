@@ -1,0 +1,193 @@
+<UserControl x:Class="FaraVrcAlbum.Desktop.Views.PostEditorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:FaraVrcAlbum.Desktop.Views"
+             xmlns:vm="clr-namespace:FaraVrcAlbum.Desktop.ViewModels;assembly=FaraVrcAlbum.Desktop.Core"
+             xmlns:conv="clr-namespace:FaraVrcAlbum.Desktop.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <UserControl.Resources>
+        <!-- ツールバーのアイコンボタン（枠なし・押せるところだけ薄く色が付く） -->
+        <Style x:Key="ToolIcon" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Foreground" Value="#454545"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E3E6E3"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#D3D8D3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+    <DockPanel>
+        <views:PageHeader DockPanel.Dock="Top" Title="記事（日付で選ぶ）"
+                          Description="上の「日付」を選ぶと、その日の記事を編集できます（記事の URL 名は日付になります）。まだ作っていない日付を選ぶと、その日にアップロードした写真が入った新しい記事（非公開）の編集になり、題には日付（例: 2026/10/24）が入るので、必要なら直して保存すると作られます。左の入力欄に、文章と写真の行を並べて記事を書きます（写真の行は ![写真の説明](写真の URL) の形で、行ごと動かすと写真の順番も変わります）。右に、サイトでの見た目に近いプレビューが出ます。写真の下には、日付・服・ワールドの行が自動で入ります（分からない行は出ません。この 3 種類の行は写真の情報から作るので、書き換えても、保存すると元に戻ります）。表紙と SNS で共有したときの画像は、本文の最初の写真に自動で設定されます。「公開する」を押すと、公開する記事になります（非公開に戻す・記事の削除もこの画面で行えます）。"/>
+
+        <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <TextBlock Text="日付" Style="{StaticResource Label}" Margin="0,0,8,8"/>
+            <ComboBox ItemsSource="{Binding Dates}" SelectedItem="{Binding SelectedDate}" DisplayMemberPath="Text" Width="520" Margin="0,0,12,8"
+                      AutomationProperties.Name="記事の日付"/>
+            <Button Content="読み直す(_R)" Command="{Binding RefreshCommand}"/>
+            <Button Content="変更を取り消す" Command="{Binding RevertCommand}"/>
+            <Button Content="保存する(_S)" Style="{StaticResource Primary}" Command="{Binding SaveCommand}"/>
+            <Button Content="公開する" Command="{Binding PublishCommand}"
+                    ToolTip="非公開の記事を公開にします（サイトには、アプリの「公開」で公開したあとに出ます）。保存していない変更があるときは、先に保存するか取り消してください。"
+                    AutomationProperties.Name="公開する"/>
+            <Button Content="非公開にする" Command="{Binding UnpublishCommand}"
+                    ToolTip="公開している記事を非公開にします（サイトに出なくなります）。保存していない変更があるときは、先に保存するか取り消してください。"
+                    AutomationProperties.Name="非公開にする"/>
+            <Button Content="記事を削除する" Style="{StaticResource DangerButton}" Command="{Binding DeletePostCommand}"
+                    ToolTip="この記事のファイルを消します（消す前の内容は local/deleted-posts に残ります。写真は消しません）。"
+                    AutomationProperties.Name="記事を削除する"/>
+            <TextBlock Text="（保存していない変更があります）" Foreground="{StaticResource Accent}" VerticalAlignment="Center" Margin="4,0,0,8"
+                       Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibility}}"/>
+        </WrapPanel>
+
+        <Grid x:Name="EditGrid" IsEnabled="{Binding HasPost}" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="380"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*" MinWidth="380"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 左: 入力 -->
+            <DockPanel x:Name="LeftPane">
+                <StackPanel x:Name="FieldsPanel" DockPanel.Dock="Top">
+                    <TextBox Text="{Binding Title, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="題" materialDesign:HintAssist.IsFloating="True"
+                             AutomationProperties.Name="記事の題"/>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="今にする" Command="{Binding PublishNowCommand}" MinWidth="0" Margin="8,0,0,8"/>
+                        <TextBox Text="{Binding PublishedAt, UpdateSourceTrigger=PropertyChanged}"
+                                 materialDesign:HintAssist.Hint="公開日時（日本時間。例: 2026-10-24 20:00）" materialDesign:HintAssist.IsFloating="True"
+                                 AutomationProperties.Name="公開日時"/>
+                    </DockPanel>
+                    <TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}"
+                             materialDesign:HintAssist.Hint="タグ（自由に入力。読点「、」かカンマで区切ると複数つけられます）" materialDesign:HintAssist.IsFloating="True"
+                             AutomationProperties.Name="タグ"/>
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Bottom" Text="{Binding DocumentError}" Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                <TextBlock x:Name="BodyHint" DockPanel.Dock="Top" Text="本文（文章と写真の行。上のツールバーで太字・見出しなどを付けられます）" Style="{StaticResource Note}" Margin="0,6,0,2"/>
+                <!-- ツールバーと入力欄を 1 つの枠にまとめた、テキストエディタの形。ボタンは選んでいる文字（行）に Markdown の記号を付ける（右のプレビューで見た目を確かめられる） -->
+                <Border BorderBrush="#BDBDBD" BorderThickness="1" CornerRadius="3" Background="White">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Background="#F1F3F1" BorderBrush="#D6D6D6" BorderThickness="0,0,0,1" Padding="4,2" CornerRadius="3,3,0,0">
+                            <WrapPanel VerticalAlignment="Center">
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="太字（Ctrl+B）" Click="Bold_Click" AutomationProperties.Name="太字">
+                                <materialDesign:PackIcon Kind="FormatBold" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="斜体（Ctrl+I）" Click="Italic_Click" AutomationProperties.Name="斜体">
+                                <materialDesign:PackIcon Kind="FormatItalic" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="下線（Ctrl+U。++文字++）" Click="Underline_Click" AutomationProperties.Name="下線">
+                                <materialDesign:PackIcon Kind="FormatUnderline" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="引用（行の先頭に > を付ける）" Click="Quote_Click" AutomationProperties.Name="引用">
+                                <materialDesign:PackIcon Kind="FormatQuoteClose" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="取り消し線（~~文字~~）" Click="Strike_Click" AutomationProperties.Name="取り消し線">
+                                <materialDesign:PackIcon Kind="FormatStrikethrough" Width="18" Height="18"/>
+                            </Button>
+                            <Border Width="1" Background="#D6D6D6" Margin="5,5"/>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="箇条書き（行の先頭に - を付ける）" Click="Bullet_Click" AutomationProperties.Name="箇条書き">
+                                <materialDesign:PackIcon Kind="FormatListBulleted" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="番号つきの一覧（行の先頭に 1. を付ける）" Click="Number_Click" AutomationProperties.Name="番号つきの一覧">
+                                <materialDesign:PackIcon Kind="FormatListNumbered" Width="18" Height="18"/>
+                            </Button>
+                            <Border Width="1" Background="#D6D6D6" Margin="5,5"/>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="左揃え（中央・右の囲みを外す）" Click="AlignLeft_Click" AutomationProperties.Name="左揃え">
+                                <materialDesign:PackIcon Kind="FormatAlignLeft" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="中央揃え（:::center で囲む）" Click="AlignCenter_Click" AutomationProperties.Name="中央揃え">
+                                <materialDesign:PackIcon Kind="FormatAlignCenter" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="右揃え（:::right で囲む）" Click="AlignRight_Click" AutomationProperties.Name="右揃え">
+                                <materialDesign:PackIcon Kind="FormatAlignRight" Width="18" Height="18"/>
+                            </Button>
+                            <Border Width="1" Background="#D6D6D6" Margin="5,5"/>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="元に戻す（Ctrl+Z）" Click="Undo_Click" AutomationProperties.Name="元に戻す">
+                                <materialDesign:PackIcon Kind="Undo" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="やり直し（Ctrl+Y）" Click="Redo_Click" AutomationProperties.Name="やり直し">
+                                <materialDesign:PackIcon Kind="Redo" Width="18" Height="18"/>
+                            </Button>
+                            <Border Width="1" Background="#D6D6D6" Margin="5,5"/>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="リンク（[文字](URL) の形にする。URL は https:// で始まるもの）" Click="Link_Click" AutomationProperties.Name="リンク">
+                                <materialDesign:PackIcon Kind="LinkVariant" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="見出し（行の先頭に ## を付ける・もう一度押すと外す）" Click="Heading_Click" AutomationProperties.Name="見出し">
+                                <materialDesign:PackIcon Kind="FormatHeader2" Width="18" Height="18"/>
+                            </Button>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="区切り線（--- の行を入れる）" Click="Rule_Click" AutomationProperties.Name="区切り線">
+                                <materialDesign:PackIcon Kind="Minus" Width="18" Height="18"/>
+                            </Button>
+                            <Border Width="1" Background="#D6D6D6" Margin="5,5"/>
+                            <Button Style="{StaticResource ToolIcon}" ToolTip="入力欄を広げる・もとに戻す" Click="Expand_Click" AutomationProperties.Name="全画面">
+                                <materialDesign:PackIcon Kind="Fullscreen" Width="18" Height="18" x:Name="ExpandIcon"/>
+                            </Button>
+                            </WrapPanel>
+                        </Border>
+                        <TextBox x:Name="DocumentBox" Text="{Binding Document, UpdateSourceTrigger=PropertyChanged, Delay=300}" PreviewKeyDown="DocumentBox_PreviewKeyDown"
+                                 Style="{x:Null}" BorderThickness="0" Background="Transparent"
+                                 AcceptsReturn="True" AcceptsTab="False" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"
+                                 VerticalContentAlignment="Top" FontSize="13.5" Padding="10"
+                                 AutomationProperties.Name="本文"/>
+                    </DockPanel>
+                </Border>
+            </DockPanel>
+
+            <!-- 右: プレビュー（サイトでの見た目に近いもの） -->
+            <Border x:Name="PreviewPane" Grid.Column="2" BorderBrush="{StaticResource Accent}" BorderThickness="1.5" CornerRadius="6" Background="White">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="{StaticResource PanelBrush}" CornerRadius="6,6,0,0" Padding="10,4">
+                        <TextBlock Text="プレビュー（サイトでの見た目の目安）" FontWeight="SemiBold" Foreground="{StaticResource Accent}"/>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="18,12">
+                        <StackPanel>
+                            <TextBlock Text="{Binding PreviewTitle}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding PreviewMeta}" Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,12"/>
+                            <ItemsControl ItemsSource="{Binding PreviewBlocks}">
+                                <ItemsControl.Resources>
+                                    <DataTemplate DataType="{x:Type vm:PreviewTextBlock}">
+                                        <TextBlock conv:MarkdownLite.Text="{Binding Text}" TextWrapping="Wrap" LineHeight="22" Margin="0,0,0,12"
+                                                   TextAlignment="{Binding Align, Converter={StaticResource AlignToTextAlignment}}"/>
+                                    </DataTemplate>
+                                    <DataTemplate DataType="{x:Type vm:PreviewPhotoBlock}">
+                                        <StackPanel Margin="0,0,0,16">
+                                            <Border Background="{StaticResource PanelBrush}" CornerRadius="4" MinHeight="120">
+                                                <Grid>
+                                                    <TextBlock Text="（写真）" Foreground="{StaticResource Muted}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <Image Source="{Binding PreviewUrl, Converter={StaticResource PreviewImage}}" Stretch="Uniform" MaxHeight="420"/>
+                                                </Grid>
+                                            </Border>
+                                            <TextBlock Text="{Binding Caption}" TextWrapping="Wrap" Margin="0,6,0,0"
+                                                       Visibility="{Binding HasCaption, Converter={StaticResource BoolToVisibility}}"/>
+                                            <TextBlock Text="{Binding AutoText}" Foreground="{StaticResource Muted}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.Resources>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>

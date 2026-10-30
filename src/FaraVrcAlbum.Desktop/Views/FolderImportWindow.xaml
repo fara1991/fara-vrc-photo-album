@@ -1,0 +1,48 @@
+<Window x:Class="FaraVrcAlbum.Desktop.Views.FolderImportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="900" Height="680" MinWidth="560" MinHeight="420" WindowStartupLocation="CenterOwner"
+        Background="{StaticResource PanelBrush}" ShowInTaskbar="False">
+    <DockPanel Margin="14">
+        <TextBlock DockPanel.Dock="Top" x:Name="HintText" TextWrapping="Wrap" Style="{StaticResource Note}" Margin="0,0,0,8"/>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <Button DockPanel.Dock="Right" Content="フォルダを選ぶ" Command="{Binding BrowseCommand}"/>
+            <TextBox Text="{Binding Folder, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="フォルダ"/>
+        </DockPanel>
+        <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+            <Button Content="読み直す(_R)" Command="{Binding ScanCommand}"/>
+            <Button x:Name="ImportButton" Content="インポート(_I)" Style="{StaticResource Primary}" Command="{Binding ImportCommand}"/>
+            <Button Content="閉じる" IsCancel="True" Click="Close_Click"/>
+            <TextBlock Text="{Binding CheckedCount, StringFormat='選択 {0} 件'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,0,8"/>
+            <Button x:Name="ApplyRegisteredButton" Content="登録済みのアバターに予測した服を着せる(_L)" Command="{Binding ApplyRegisteredCommand}" Visibility="Collapsed"
+                    ToolTip="すでに登録してあるアバター（チェックしたもの）に、アバター名から予測した服を着せます"/>
+            <CheckBox x:Name="OverwriteBox" Content="すでに服があるものも置き換える" IsChecked="{Binding LinkOverwrite}" VerticalAlignment="Center" Margin="10,0,0,8"
+                      Visibility="Collapsed"/>
+            <CheckBox x:Name="LinkBox" Content="予測した服も着せる" IsChecked="{Binding LinkSuggested}" VerticalAlignment="Center" Margin="14,0,0,8"
+                      Visibility="Collapsed" ToolTip="アバター名から予測した服を、登録するアバターに着せます（あとで直せます）"/>
+        </WrapPanel>
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,2"/>
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Notice}" TextWrapping="Wrap" Foreground="{StaticResource Accent}" Margin="0,0,0,6"/>
+        <DataGrid ItemsSource="{Binding Candidates}" AutoGenerateColumns="False" CanUserAddRows="False" SelectionMode="Single"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="フォルダから読んだ名前の一覧">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Width="64" CanUserSort="False">
+                    <DataGridTemplateColumn.Header>
+                        <CheckBox IsChecked="{Binding DataContext.AllChecked, RelativeSource={RelativeSource AncestorType=DataGrid}}" IsThreeState="True" HorizontalAlignment="Center"
+                                  ToolTip="選べるものを全部選ぶ・選択を外す" AutomationProperties.Name="全部を選ぶ"/>
+                    </DataGridTemplateColumn.Header>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanCheck}"
+                                      HorizontalAlignment="Center" AutomationProperties.Name="この名前を登録する"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="状態" Binding="{Binding StateText}" IsReadOnly="True" Width="90"/>
+                <DataGridTextColumn Header="名前" Binding="{Binding Name}" IsReadOnly="True" Width="3*"/>
+                <DataGridTextColumn x:Name="ShopColumn" Header="お店" Binding="{Binding Detail}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn x:Name="SuggestColumn" Header="着ている服（予測）" Binding="{Binding Suggestion}" IsReadOnly="True" Width="2*" Visibility="Collapsed"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

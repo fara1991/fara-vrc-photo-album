@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <!--
+    ページの部品（Razor クラスライブラリ）。Web（Blazor WebAssembly）と、Build の HtmlRenderer（本文入りの静的 HTML）で共用する（二重実装しない）。
+    素の HTML だけで書く（MudBlazor の部品は入れない。HtmlRenderer 側に MudBlazor のサービス登録が要らないように）。
+    リンクは相対パス（index.html の base href="/" の下で解決する）。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FaraVrcAlbum.Pages</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FaraVrcAlbum.Shared\FaraVrcAlbum.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

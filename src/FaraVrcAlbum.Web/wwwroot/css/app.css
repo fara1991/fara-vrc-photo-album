@@ -2073,3 +2073,57 @@ h1.album-heading {
     height: 22px;
   }
 }
+
+/* スマホのフッターの下の余計なスクロール・空白（kit の fara-blazor-component.css の挙動を上書き。kit は変更しない）
+   (1) 短いページ（404・問い合わせ・タグなど）で、フッターが画面の下端に付かず、下に空白が出る。
+       本文の枠（.mud-main-content）を画面の高さ以上の縦並びにして、本文（main）が余りを取り、フッターが一番下に来るようにする
+   (2) フッターのリンクの当たり判定（::after の 44px）が、フッターの下に 11px はみ出し、padding-bottom 8px を超えた 3px が文書のスクロール範囲に入る。
+       padding-bottom を 11px にして収める（iPhone のホームバーの分は safe-area で足す）
+   overscroll-behavior は、この下の iOS（WebKit）だけに付ける（Android の引っ張って更新を無効にしてしまうため） */
+@media (max-width: 767.98px) {
+  .fbc-page.fbc-page-scroll .mud-main-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .fbc-page.fbc-page-scroll .mud-main-content > main {
+    flex: 1 0 auto;
+  }
+
+  .fbc-page.fbc-page-scroll .fbc-footer {
+    flex: none;
+  }
+
+  /* 起動前の静的 HTML（#app の直下に main.entry-static とフッター）も、同じ形にする。起動の前後でフッターの位置が大きくずれないようにするため */
+  #app:has(> main.entry-static) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  #app:has(> main.entry-static) > main.entry-static {
+    flex: 1 0 auto;
+  }
+}
+
+@media (max-width: 599.98px) {
+  .fbc-footer {
+    padding-bottom: calc(11px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* html には、グラデーションや background-attachment: fixed とは別に、必ず単色の背景色を持たせる（ダーク／ライトは --fbc-body-bg が切り替える）。
+   iOS（WebKit）は background-attachment: fixed を無視し、ゴム伸びの領域に背景が塗られないと黒く見えるため */
+html {
+  background-color: var(--fbc-body-bg, #0c0616);
+}
+
+/* iOS（WebKit）だけ、ページ端のゴム伸びを止める。Android の Chrome の「引っ張って更新」は残す（-webkit-touch-callout は iOS の WebKit だけが持つ） */
+@supports (-webkit-touch-callout: none) {
+  html {
+    overscroll-behavior-y: none;
+  }
+}

@@ -11,7 +11,8 @@
 :root {
   /* ---- 形（レイアウトは変えない。角丸・影・見出しの飾りだけ） ---- */
   --album-gap: 1rem;
-  --album-radius: 0.75rem;              /* カード・画像の角丸 */
+  --album-radius: 0.75rem;              /* 画像・小さなカードの角丸 */
+  --album-radius-lg: 1.125rem;          /* 大きなカード（紹介・記事の一覧のカード・記事の本文）の角丸（見本 A の 18px） */
   --album-card-shadow: 0 1px 3px rgba(90, 60, 160, 0.1);
   --album-card-shadow-hover: 0 4px 14px rgba(90, 60, 160, 0.18);
 
@@ -1918,4 +1919,136 @@ h1.album-heading {
 /* 主ボタン（問い合わせの送信）: kit の背景は #a855f7 → #7c3aed のグラデーションで、明るい側が白文字に対して 3.96:1（AA 未満）。明るい側だけ #9333ea（5.38:1）にする。形・影は kit のまま */
 .fbc-btn-primary.mud-button-root {
   background: linear-gradient(135deg, #9333ea, #7c3aed);
+}
+
+/* =====================================================================================================
+   ホームと記事ページの構成（A 案）。素の HTML だけ（Pages の Razor クラスライブラリ。静的 HTML の Build と共用）
+   ===================================================================================================== */
+
+/* 一覧のカード・前後の記事は、大きな角丸（見本 A の 18px）。画像の枠（.album-card-media）は、カードの overflow: hidden で角が切られる */
+.album-card,
+.album-prevnext-link {
+  border-radius: var(--album-radius-lg);
+}
+
+/* 紹介カード（リード文。文面は SiteRules.HomeLead。ここでは変えない） */
+.album-about {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--album-card-bg);
+  border: 1px solid var(--album-card-border);
+  border-radius: var(--album-radius-lg);
+  box-shadow: var(--album-card-shadow);
+}
+
+.album-about-ic {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--album-current-from), var(--album-current-to));
+  border-radius: 16px;
+}
+
+.album-about .album-lead {
+  margin: 0;
+  color: var(--album-text);
+  font-size: 0.95rem;
+}
+
+/* 節の見出し（最新の記事・これまでの記事）。左に紫の縦線 */
+.album-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.album-section-heading::before {
+  content: "";
+  flex: none;
+  width: 4px;
+  height: 1.1em;
+  background: linear-gradient(180deg, var(--album-accent), var(--album-current-to));
+  border-radius: 2px;
+}
+
+/* 最新の記事（大きなカード 1 枚）: 写真を左に大きく、題を右に（PC）。画面が狭い間（サイドバーがあるので 1200px 未満）は、写真の上・題の下 */
+.album-grid--feature {
+  grid-template-columns: 1fr;
+}
+
+.album-card--feature {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.album-card--feature .album-card-body {
+  gap: 0.5rem;
+  padding: 16px 20px 18px;
+}
+
+.album-card--feature .album-card-title {
+  font-size: 1.2rem;
+}
+
+.album-pill {
+  align-self: flex-start;
+  padding: 2px 12px;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--album-current-from), var(--album-current-to));
+  border-radius: 999px;
+}
+
+@media (min-width: 1200px) {
+  .album-grid--feature {
+    grid-template-columns: 1fr;
+  }
+
+  .album-card--feature {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+
+  .album-card--feature .album-card-media {
+    aspect-ratio: auto;
+    min-height: 300px;
+  }
+
+  .album-card--feature .album-card-body {
+    justify-content: center;
+    padding: 20px 24px;
+  }
+
+  .album-card--feature .album-card-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* 記事ページ: 本文全体を 1 枚の角丸カードに入れる（写真ギャラリー・ライトボックスは変えない） */
+.album-post.album-post-card {
+  box-sizing: border-box;
+  margin-top: 0.75rem;
+  padding: 24px 28px 28px;
+  background: var(--album-card-bg);
+  border: 1px solid var(--album-card-border);
+  border-radius: var(--album-radius-lg);
+  box-shadow: var(--album-card-shadow);
+}
+
+@media (max-width: 767.98px) {
+  .album-post.album-post-card {
+    padding: 16px;
+  }
+
+  .album-about {
+    padding: 14px;
+  }
 }

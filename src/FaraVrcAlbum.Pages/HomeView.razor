@@ -1,19 +1,38 @@
-@* 新着一覧のページ（/ と /page/N）の本文。トップは、視覚的に隠した h1（サイト名『Fara Photo Album』）+ サイトの説明（リード文。改行で行を分ける）。ヘッダーの名前と同じ文字なので、何のサイトかはこの説明で伝える。ヒーロー画像は置かない。 *@
+@* 新着一覧のページ（/ と /page/N）の本文。素の HTML だけ（静的 HTML の Build と共用。MudBlazor は使えない）。
+   トップ（1 ページ目）は A 案の構成: 視覚的に隠した h1（サイト名『Fara Photo Album』）→ 紹介カード（サイトの説明＝リード文。ユーザー本人の文。改行で行を分ける）→「最新の記事」（大きなカード 1 枚）→「これまでの記事」（3 列のカードのグリッド）。
+   2 ページ目以降は、見出し + 記事のグリッド。ヒーロー画像は置かない（バナーはサイドバーのプロフィールカード）。 *@
 <div class="album-home fbc-page-column fbc-page-column--wide">
     @if (Page <= 1)
     {
         <h1 class="visually-hidden">@SiteName</h1>
-        <p class="album-lead">@for (var i = 0; i < LeadLines.Length; i++)
+        <section class="album-about" aria-label="サイトの紹介">
+            <span class="album-about-ic" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" focusable="false"><path fill="currentColor" d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" /></svg></span>
+            <p class="album-lead">@for (var i = 0; i < LeadLines.Length; i++)
+            {
+                if (i > 0) { <br /> }
+                @LeadLines[i]
+            }</p>
+        </section>
+        @if (Posts.Count == 0)
         {
-            if (i > 0) { <br /> }
-            @LeadLines[i]
-        }</p>
+            <PostListView Posts="Posts" BaseUrl="@BaseUrl" TagNames="TagNames" />
+        }
+        else
+        {
+            <h2 class="album-section-heading">最新の記事</h2>
+            <PostListView Posts="Latest" BaseUrl="@BaseUrl" TagNames="TagNames" Featured="true" Nested="true" />
+            @if (Earlier.Count > 0)
+            {
+                <h2 class="album-section-heading">これまでの記事</h2>
+                <PostListView Posts="Earlier" BaseUrl="@BaseUrl" TagNames="TagNames" EagerFirst="false" Nested="true" />
+            }
+        }
     }
     else
     {
         <h1 class="album-heading">新着の記事（@Page ページ目）</h1>
+        <PostListView Posts="Posts" BaseUrl="@BaseUrl" TagNames="TagNames" />
     }
-    <PostListView Posts="Posts" BaseUrl="@BaseUrl" TagNames="TagNames" />
     <Pager Page="Page" PageCount="PageCount" HrefFor="@SiteRules.HomeHref" />
 </div>
 
@@ -29,6 +48,12 @@
     [Parameter] public string Lead { get; set; } = SiteRules.HomeLead;
 
     private string[] LeadLines => Lead.Replace("\r\n", "\n").Split('\n');
+
+    /// <summary>「最新の記事」（1 ページ目の先頭の 1 件）。</summary>
+    private IReadOnlyList<PostSummary> Latest => Posts.Take(1).ToList();
+
+    /// <summary>「これまでの記事」（残り）。</summary>
+    private IReadOnlyList<PostSummary> Earlier => Posts.Skip(1).ToList();
 
     /// <summary>タグの slug → 表示名。</summary>
     [Parameter] public IReadOnlyDictionary<string, string>? TagNames { get; set; }

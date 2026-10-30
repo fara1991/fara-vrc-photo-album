@@ -1,0 +1,6 @@
+@* サイドバーの件数のバッジ。見た目は数字だけなので、読み上げ用の名前（「3 件」）を付ける。 *@
+<span class="album-nav-badge" role="img" aria-label="@($"{Count} 件")">@Count</span>
+
+@code {
+    [Parameter, EditorRequired] public int Count { get; set; }
+}

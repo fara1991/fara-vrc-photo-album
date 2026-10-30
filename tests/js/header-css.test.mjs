@@ -1,4 +1,4 @@
-// ヘッダーの高さ（PC 112px・スマホ 72px。768px で切り替え）が app.css に正しく書かれているかのテスト。  node --test tests/js/header-css.test.mjs
+// ヘッダーの高さ（PC・スマホとも 3.5rem）が app.css に正しく書かれているかのテスト。  node --test tests/js/header-css.test.mjs
 // 実際の描画（高さ・本文の上余白・ドロワーの上端）は、以前は tools/verify/m2-check.mjs（Playwright）で確かめた（削除。git 履歴 18603ce）。
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -39,13 +39,13 @@ test("kit の 3.5rem 固定のヘッダー・ツールバーと、MudBlazor の 
   assert.match(rule("html"), /scroll-padding-top:\s*calc\(var\(--album-header-h\)/);
 });
 
-test("本文の最初の画像（.album-banner）は本文の幅の半分・中央・縦横比 4:1 で場所を空ける", () => {
-  const wrap = rule(".album-banner");
-  assert.match(wrap, /width:\s*50%/);
-  assert.match(wrap, /min-width:\s*min\(100%, 200px\)/);
-  assert.match(wrap, /margin:\s*0 auto 1rem/); // 本文の領域の中央（内容の列と同じ中央線）
-  const img = rule(".album-banner img");
+test("バナー画像はサイドバーのプロフィールカードにある（本文の先頭には出さない）。縦横比 4:1 のまま幅に収める", () => {
+  assert.doesNotMatch(css, /\.album-banner/);          // 本文の先頭の画像（以前の .album-banner）は無い
+  const img = rule(".album-profile-banner img");
   assert.match(img, /width:\s*100%/);
   assert.match(img, /aspect-ratio:\s*4 \/ 1/);
-  assert.doesNotMatch(css, /\.album-brand/);          // ヘッダーの画像は無い（名前は kit の文字）
+});
+
+test("ヘッダーの名前（.album-brand）は文字とマーク（SVG）で、画像は使わない", () => {
+  assert.doesNotMatch(css, /\.album-brand img/);
 });

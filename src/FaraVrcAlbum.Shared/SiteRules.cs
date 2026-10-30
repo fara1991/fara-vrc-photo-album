@@ -7,7 +7,7 @@ namespace FaraVrcAlbum;
 public static partial class SiteRules
 {
     /// <summary>
-    /// 各ページの本文の最初に出す画像（文字『Fara』が焼き込み済みの WebP。960×240。元は 1920×480。tools/make-header-image.py）。ヘッダーの名前は文字（サイト名『Fara Photo Album』）。サイト内の images/ から読む。
+    /// サイドバーのプロフィールカードに出す画像（本文の先頭には出さない）（文字『Fara』が焼き込み済みの WebP。960×240。元は 1920×480。tools/make-header-image.py）。ヘッダーの名前は文字（サイト名『Fara Photo Album』）。サイト内の images/ から読む。
     /// ファイル名の 8 桁は内容の SHA-256 の先頭（キャッシュのため。差し替えるときは名前の 8 桁も変える: tests/FaraVrcAlbum.Web.Tests が一致を確かめる）。docs/header-image.md。
     /// </summary>
     public const string HeaderImage = "images/header-43454dfe.webp";

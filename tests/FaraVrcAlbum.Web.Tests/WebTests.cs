@@ -52,26 +52,33 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
     }
 
     [Fact]
-    public async Task TheHeaderBrandIsTheSiteNameTextAndTheImageIsAtTheStartOfTheBody()
+    public async Task TheHeaderBrandIsTheSiteNameTextAndTheBannerIsInTheSidebarProfileCard()
     {
         var cut = await RenderLayoutAsync();
 
         var brand = cut.Find(".fbc-header a.fbc-brand");
         Assert.Equal("./", brand.GetAttribute("href"));
         Assert.Equal("ホームへ", brand.GetAttribute("title"));
-        Assert.Equal("Fara Photo Album", brand.TextContent.Trim());         // ヘッダーの名前は文字（サイト名）
+        Assert.Equal("Fara Photo Album", brand.TextContent.Trim());         // ヘッダーの名前は文字（サイト名。マークは飾りの SVG）
         Assert.Empty(brand.QuerySelectorAll("img"));
-        var img = cut.Find(".album-banner img");                            // 画像は本文の最初（本文より前）
-        Assert.Equal("", img.GetAttribute("alt"));
-        Assert.Equal(SiteRules.HeaderImage, img.GetAttribute("src"));
-        Assert.Equal("960", img.GetAttribute("width"));                     // CLS: 寸法を指定（表示の高さは CSS）
-        Assert.Equal("240", img.GetAttribute("height"));
-        Assert.Equal("high", img.GetAttribute("fetchpriority"));
-        Assert.Null(img.GetAttribute("loading"));                            // 遅延読み込みにしない
-        Assert.True(cut.Markup.IndexOf("album-banner", StringComparison.Ordinal) < cut.Markup.IndexOf("body-text", StringComparison.Ordinal));
-        Assert.Single(cut.FindAll("a.fbc-brand"));          // kit の文字リンクが重ならない
-        Assert.Empty(cut.FindAll(".fbc-header h1"));        // ヘッダーの表示名は h1 にしない
-        Assert.Contains("Fara Photo Album", cut.Find("footer").TextContent);     // フッターのサイト名も同じ
+        Assert.Empty(cut.FindAll(".album-banner"));                          // 本文の先頭にはバナーを出さない（サイドバーに移した）
+        Assert.Single(cut.FindAll("a.fbc-brand"));                           // kit の文字リンクが重ならない
+        Assert.Empty(cut.FindAll(".fbc-header h1"));                         // ヘッダーの表示名は h1 にしない
+        Assert.Contains("Fara Photo Album", cut.Find("footer").TextContent); // フッターのサイト名も同じ
+
+        // プロフィールカード: バナー画像（4:1 の寸法つき）・丸いアバター（role=img）・名前・説明・件数
+        var banner = cut.Find(".album-profile-banner img");
+        Assert.Equal("", banner.GetAttribute("alt"));                        // 飾り（名前は文字で出ている）
+        Assert.Equal(SiteRules.HeaderImage, banner.GetAttribute("src"));     // 画像の URL は変えない（同じファイル）
+        Assert.Equal("960", banner.GetAttribute("width"));                   // CLS: 寸法を指定（表示の高さは CSS）
+        Assert.Equal("240", banner.GetAttribute("height"));
+        var avatar = cut.Find(".album-profile .album-avatar");
+        Assert.Equal("img", avatar.GetAttribute("role"));
+        Assert.Equal("Fara のアイコン", avatar.GetAttribute("aria-label"));
+        Assert.Equal(SiteRules.HeaderImage, avatar.QuerySelector("img")!.GetAttribute("src"));   // バナーの Fara の顔を丸く切り出す（新しい画像は作らない）
+        Assert.Equal("Fara", cut.Find(".album-profile-name").TextContent.Trim());
+        Assert.Equal(["0 記事", "0 写真"], cut.FindAll(".album-profile-stats li").Select(li => li.TextContent.Trim()).ToList());   // 実体の無い「オンライン」などは出さない
+        Assert.DoesNotContain("オンライン", cut.Find(".album-profile").TextContent);
     }
 
     [Fact]
@@ -123,10 +130,41 @@ public sealed class WebTests : BunitContext, IAsyncLifetime
         Assert.Equal("NAV", archive.TagName);
         Assert.Equal("アーカイブ（公開月別）", archive.GetAttribute("aria-label"));                              // ランドマークに名前（メインのナビと区別）
         Assert.Empty(archive.QuerySelectorAll("nav"));                                                       // nav を入れ子にしない（axe landmark-unique）
-        Assert.Equal(["2026年（14）", "2025年（1）"], archive.QuerySelectorAll("summary").Select(e => e.TextContent.Trim()).ToList());
+        Assert.Equal(["2026年", "2025年"], archive.QuerySelectorAll("summary .album-nav-label").Select(e => e.TextContent.Trim()).ToList());
+        Assert.Equal(["14", "1"], archive.QuerySelectorAll("summary .album-nav-badge").Select(e => e.TextContent.Trim()).ToList());
+        Assert.Equal(["14 件", "1 件"], archive.QuerySelectorAll("summary .album-nav-badge").Select(e => e.GetAttribute("aria-label")).ToList());   // バッジは読み上げ用の名前つき
         Assert.Equal([true, false], archive.QuerySelectorAll("details").Select(d => d.HasAttribute("open")));   // 最新の年だけ開く
-        var links = archive.QuerySelectorAll("a.album-archive-link").Select(a => (a.GetAttribute("href"), a.TextContent.Trim())).ToList();
-        Assert.Equal([("archive/2026/10", "10月（12）"), ("archive/2026/09", "9月（2）"), ("archive/2025/12", "12月（1）")], links);
+        var links = archive.QuerySelectorAll("a.album-nav-sub").Select(a => (a.GetAttribute("href"), a.QuerySelector(".album-nav-label")!.TextContent.Trim(), a.QuerySelector(".album-nav-badge")!.TextContent.Trim())).ToList();
+        Assert.Equal([("archive/2026/10", "10月", "12"), ("archive/2026/09", "9月", "2"), ("archive/2025/12", "12月", "1")], links);
+    }
+
+    [Fact]
+    public async Task TheMainMenuHasFourItemsAndMarksTheCurrentPageWithAriaCurrent()
+    {
+        var cut = await RenderLayoutAsync();
+
+        var main = cut.Find("nav[aria-label=メイン]");
+        Assert.Equal(["ホーム", "ワールド", "服", "タグ"], main.QuerySelectorAll("a .album-nav-label").Select(e => e.TextContent.Trim()).ToList());
+        Assert.Equal(["", "worlds", "outfits", "tags"], main.QuerySelectorAll("a").Select(a => a.GetAttribute("href")).ToList());
+        // いまのページ（テストの URL は https://localhost/）はホーム。印は aria-current="page" だけ
+        Assert.Equal("page", main.QuerySelector("a[href='']")!.GetAttribute("aria-current"));
+        Assert.Single(cut.FindAll("[aria-current=page]"));
+        Assert.Equal(3, cut.FindAll("nav").Count);                    // メイン・アーカイブ・サポート（どれも名前つき）
+        Assert.All(cut.FindAll("nav"), n => Assert.False(string.IsNullOrEmpty(n.GetAttribute("aria-label"))));
+    }
+
+    [Fact]
+    public async Task TheCurrentMenuItemFollowsNavigation()
+    {
+        var cut = await RenderLayoutAsync();
+        var nav = Services.GetRequiredService<NavigationManager>();
+
+        nav.NavigateTo("worlds/00000000-0000-4000-8000-000000000001");
+        cut.WaitForAssertion(() => Assert.Equal("ワールド", cut.Find("[aria-current=page] .album-nav-label").TextContent.Trim()));
+        nav.NavigateTo("archive/2026/09/page/2");
+        cut.WaitForAssertion(() => Assert.Equal("9月", cut.Find("[aria-current=page] .album-nav-label").TextContent.Trim()));
+        nav.NavigateTo("privacy");
+        cut.WaitForAssertion(() => Assert.Equal("プライバシーポリシー", cut.Find("[aria-current=page] .album-nav-label").TextContent.Trim()));
     }
 
     [Fact]

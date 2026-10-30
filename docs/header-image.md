@@ -34,3 +34,11 @@
 - ヘッダーの名前は kit 既定の文字 **『Fara Photo Album』**（サイト名。`appsettings.json` の `SiteName`。`<title>`・`og:site_name`・RSS のタイトル・フッター・プライバシーポリシーと同じ。`SiteLayout` の `Brand` は使わない）。ヘッダーの高さは kit 既定の 3.5rem（`--album-header-h`。PC・スマホとも同じ）。**上の M0〜M2 のヘッダー画像・高さ（112px・72px）・`SiteInfo.BrandName` の記述は、この変更で置き換わった。**
 - 画像（`SiteRules.HeaderImage`。960×240 の WebP）は、**すべてのページの本文の最初**に、本文の幅の半分（狭い画面でも 200px 以上）を、本文の領域の中央に置いて出す（コンポーネント `SiteBanner`、CSS は `.album-banner`。以前は本文の幅いっぱいだった）。縦横比は 4:1（`aspect-ratio`）で、画像が来る前から高さが決まる。alt は空（名前は文字で出ているので飾り）。
 - **静的 HTML にも同じものを入れる**（`PageCatalog` が全ページの `<main class="entry-static">` の先頭に `SiteBanner` を足す）。起動の前後で画像が動かない（CLS）。
+
+## A 案: 画像はサイドバーのプロフィールカードへ（現在の形）
+
+- **本文の先頭の画像（`SiteBanner`・`.album-banner`）は廃止した**。同じ画像（`SiteRules.HeaderImage`。960×240 の WebP。URL・サイズは変えない）を、サイドバーの最上段のプロフィールカード（`Components/SidebarProfile.razor`）に出す。バナーは 4:1 のまま、サイドバーの幅（パネル 304px の中のカード）に収める（`.album-profile-banner img { width:100%; aspect-ratio:4/1 }`）。alt は空（名前は文字で出ている飾り）。
+- **丸いアバター**は、新しい画像ではなく、同じバナー画像の Fara の顔を CSS で丸く切り出したもの（`.album-avatar img { width:480%; left:-190% }`）。`role="img"`・`aria-label="Fara のアイコン"`。
+- **静的な入口ページ（JS 無し）にはサイドバーが無い**ので、バナーは起動の後に出る。`Build/PageCatalog.cs` は本文の先頭に画像を足さない（`SiteBuilderTests` が `album-banner`・`images/header-` が無いことを確かめる）。起動の前後で本文が動かないよう、静的 HTML の左余白は、起動後のドロワーの幅（`--mud-drawer-width-left`。無いとき `--album-drawer-w` = 328px）に合わせる。
+- ヘッダー（細いバー）の高さは kit 既定の 3.5rem のまま（`--album-header-h`）。名前は文字（サイト名）の前に、飾りのマーク（SVG）を付けた。
+- 以降の「M3: 画像は各ページの本文の最初へ」の記述（本文の幅の半分・`SiteBanner`・静的 HTML にも入れる）は、この変更で置き換わった。

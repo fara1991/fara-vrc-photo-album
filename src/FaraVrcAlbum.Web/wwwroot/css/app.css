@@ -353,9 +353,9 @@ html:root[data-bs-theme="dark"] {
 .fbc-sidebar.mud-drawer--closed:not(:hover) .album-side,
 .fbc-sidebar.mud-drawer-mini:not(.mud-drawer--open):not(:hover) .album-side {
   gap: 6px;
-  margin: 8px 4px;
+  margin: 8px 2px;                      /* 細い列は 56px。項目の幅を 44px 以上にするため、余白を 2px に（56 - 4 - 2 - 4 = 46px） */
   height: calc(100% - 16px);
-  padding: 4px;
+  padding: 2px;
   border-radius: 14px;
 }
 
@@ -439,8 +439,15 @@ html:root[data-bs-theme="dark"] {
 
 /* ライト／ダークの切り替えのボタン（スマホのドロワーの下）。タップの当たり判定は 44px 以上。PC はヘッダーのスイッチなので隠す */
 .album-side-theme {
+  position: sticky;
+  bottom: -10px;                        /* .album-side の下の余白（10px）まで張り付けて、背景でパネルの下端を覆う */
+  z-index: 1;
   flex: none;
-  margin-top: auto;
+  margin: auto -10px -10px;             /* 上は auto（内容が短いときは下に寄せる）。左右・下は .album-side の余白を打ち消す */
+  padding: 10px 10px;
+  background: var(--album-sidebar-panel);
+  border-top: 1px solid var(--album-sidebar-border);
+  box-shadow: 0 -8px 12px -6px rgba(0, 0, 0, 0.45);   /* 上にスクロールできる内容があることを示す */
 }
 
 .album-side-theme .mud-button-root {
@@ -2009,10 +2016,6 @@ h1.album-heading {
 }
 
 @media (min-width: 1200px) {
-  .album-grid--feature {
-    grid-template-columns: 1fr;
-  }
-
   .album-card--feature {
     grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   }

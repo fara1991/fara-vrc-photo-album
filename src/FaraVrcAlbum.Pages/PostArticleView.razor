@@ -1,4 +1,4 @@
-@* 記事ページの本文: パンくず・題（月のアーカイブへのリンク。公開日は題の下には出さない）・タグ・本文（Markdown 変換済みの HTML）・写真ギャラリー・前後の記事・関連する記事。
+@* 記事ページの本文（A 案: 本文全体を 1 枚の角丸カード .album-post-card に入れる。写真ギャラリー・ライトボックスは従来どおり）: パンくず・題（月のアーカイブへのリンク。公開日は題の下には出さない）・タグ・本文（Markdown 変換済みの HTML）・写真ギャラリー・前後の記事・関連する記事。
    ギャラリーの写真は <a href="2048px の画像"><img></a>（JS が無くてもフルサイズの画像へ行ける）。起動後に js/lightbox.js が、クリック・Enter・Space でライトボックスを開く。
    撮影者・写っている人は持たない。ワールド名は静的 HTML に出し、VRChat のワールドページへのリンクにする（作者へのクレジット）。Blazor が R2 画像の alt を作る（キャプションから）。 *@
 <nav class="album-breadcrumb" aria-label="パンくずリスト">
@@ -8,7 +8,7 @@
         <li aria-current="page"><span class="album-breadcrumb-current">@Post.Title</span></li>
     </ol>
 </nav>
-<article class="album-post">
+<article class="album-post album-post-card">
     <header>
         <h1 class="album-heading"><a class="album-heading-link" href="@SiteRules.ArchiveHref(Month.Year, Month.Month)">@Post.Title</a></h1>
         @if (Post.Tags.Count > 0)

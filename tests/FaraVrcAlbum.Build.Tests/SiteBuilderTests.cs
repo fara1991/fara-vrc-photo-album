@@ -308,7 +308,29 @@ public class SiteBuilderTests
         Assert.Contains("/page/1 / 301", Read(prod, "_redirects"));
         Assert.Contains("rel=\"next\" href=\"page/2\"", Body(Read(prod, "index.html")));
         Assert.Contains("href=\"https://vrc-album.fara-labs.com/page/2\"", Head(Read(prod, "page/2.html")));
-        Assert.Equal(3, Regex.Matches(Body(Read(prod, "index.html")), "class=\"album-card\"").Count);
+        Assert.Equal(3, Regex.Matches(Body(Read(prod, "index.html")), "class=\"album-card( album-card--feature)?\"").Count);       // 先頭の 1 件は「最新の記事」の大きなカード（album-card--feature）、残りが 3 列のグリッド
+        Assert.Single(Regex.Matches(Body(Read(prod, "index.html")), "album-card--feature\"").ToList());
+        Assert.Equal(2, Regex.Matches(Body(Read(prod, "index.html")), "<h2 class=\"album-section-heading\">").Count);                       // 最新の記事・これまでの記事
+        Assert.DoesNotContain("album-card--feature", Body(Read(prod, "page/2.html")));                                                       // 2 ページ目以降は通常のグリッド
+    }
+
+    [Fact]
+    public void TheHomeHasTheIntroCardThenTheLatestPostAsOneBigCardThenTheGridAndThePostIsOneCard()
+    {
+        var (f, prod, _) = Build();
+        using var _ = f;
+        var home = Body(Read(prod, "index.html"));
+        // 紹介カード（リード文は SiteRules.HomeLead のまま）→ 最新の記事（大きなカード 1 枚）→ これまでの記事（グリッド）。素の HTML だけ（MudBlazor の class は無い）
+        var about = home.IndexOf("class=\"album-about\"", StringComparison.Ordinal);
+        var latest = home.IndexOf("最新の記事", StringComparison.Ordinal);
+        var earlier = home.IndexOf("これまでの記事", StringComparison.Ordinal);
+        Assert.True(0 < about && about < latest && latest < earlier);
+        Assert.DoesNotContain("mud-", home);
+        foreach (var line in SiteRules.HomeLead.Replace("\r\n", "\n").Split('\n')) Assert.Contains(line, home);
+        Assert.Contains("<span class=\"album-pill\">最新</span>", home);
+        Assert.Contains("<h3 class=\"album-card-title\">", home);          // 節の見出し（h2）の下のカードの題は h3
+        // 記事ページは、本文全体が 1 枚のカード
+        Assert.Contains("<article class=\"album-post album-post-card\">", Body(Read(prod, "posts/first-post.html")));
     }
 
     [Fact]

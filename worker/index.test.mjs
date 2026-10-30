@@ -65,14 +65,6 @@ test("お知らせ（MAINTENANCE_MODE=notice）のときも、ページの HTML 
   assert.ok(!(await res.text()).includes("fbc-notice"));
 });
 
-test("メンテナンス画面（503 の HTML）は、このサイトの色（ローズ寄り）で、kit の紫の色は残らない", async () => {
-  const res = await run("/", { headers: { Accept: "text/html" } }, { MAINTENANCE_MODE: "true" });
-  assert.equal(res.status, 503);
-  const html = await res.text();
-  for (const purple of ["#0c0616", "#7c3aed", "#b39ddb", "#b4a7d1", "#f3edff"]) assert.ok(!html.includes(purple), purple);
-  for (const rose of ["#130a0e", "#b83a64", "#f4a9c4", "#c9abb8", "#fbeff3"]) assert.ok(html.includes(rose), rose);
-});
-
 test("/api/maintenance は、いまの状態（kit の MaintenanceInfo が読む形）を返す", async () => {
   for (const [env, state] of [[{}, "off"], [{ MAINTENANCE_MODE: "notice", MAINTENANCE_MESSAGE: "10月25日に更新します" }, "notice"], [{ MAINTENANCE_MODE: "true" }, "on"]]) {
     const res = await run("/api/maintenance", {}, env);

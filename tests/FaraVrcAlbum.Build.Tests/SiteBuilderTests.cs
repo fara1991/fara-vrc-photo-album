@@ -127,8 +127,9 @@ public class SiteBuilderTests
             Assert.Contains("<meta property=\"og:site_name\" content=\"Fara Photo Album\" />", head);
             Assert.Contains("<meta name=\"twitter:card\"", head);
             Assert.Single(Regex.Matches(html, "<main class=\"entry-static\">"));
-            Assert.StartsWith("<main class=\"entry-static\"><div class=\"album-banner\"><img src=\"images/header-", Body(html));   // 全ページの本文の最初に画像（寸法つき = CLS なし）
-            Assert.Contains("width=\"960\" height=\"240\"", Body(html));
+            Assert.StartsWith("<main class=\"entry-static\">", Body(html));
+            Assert.DoesNotContain("album-banner", Body(html));          // バナー画像はサイドバーのプロフィールカード（起動の後）に移した。静的 HTML には入れない
+            Assert.DoesNotContain("images/header-", Body(html));
             Assert.Contains("rel=\"alternate\" type=\"application/rss+xml\"", html);       // RSS の発見用
         }
     }

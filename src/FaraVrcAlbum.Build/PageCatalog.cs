@@ -24,7 +24,6 @@ internal static class PageCatalog
     public static string BuildPagesJson(SiteModel model, PageRenderer renderer, string origin)
     {
         var settings = model.Settings;
-        var banner = renderer.Render<SiteBanner>(new Dictionary<string, object?>());               // 全ページの本文の最初（静的 HTML にも画像を入れる）
         var perPage = settings.PostsPerPage;
         var pages = new List<JsonObject>();
         // /…/page/1 は 1 ページ目と同じ内容なので 301 で 1 ページ目へ（/page/1 → / と同じ扱い。各ページは自分自身が canonical）
@@ -39,13 +38,13 @@ internal static class PageCatalog
         string Render<T>(Dictionary<string, object?> parameters) where T : Microsoft.AspNetCore.Components.IComponent => renderer.Render<T>(parameters);
         string Suffix(int page) => page <= 1 ? "" : $"（{page} ページ目）";
         string Footer(string path) => FooterHtml(footerOptions, origin, path);
-        // 1 ページ分（本文の最初に画像、そのあとに本文、最後にフッター）
+        // 1 ページ分（本文、最後にフッター。バナー画像はサイドバーのプロフィールカードに移したので、静的 HTML には入れない）
         JsonObject Page(string path, string title, string description, string body) => new()
         {
             ["path"] = path,
             ["title"] = title,
             ["description"] = description,
-            ["bodyHtml"] = $"<main class=\"entry-static\">{banner}{body}</main>" + Footer(path),
+            ["bodyHtml"] = $"<main class=\"entry-static\">{body}</main>" + Footer(path),
         };
 
         // 一覧の 1 ページ分を pages に足す（題名に「ページ目」、noindex と OGP 画像は載せる記事から決める）
@@ -261,7 +260,6 @@ internal static class PageCatalog
     /// </summary>
     public static string NotFoundBodyHtml(SiteModel model, PageRenderer renderer, string origin)
     {
-        var banner = renderer.Render<SiteBanner>(new Dictionary<string, object?>());
         const string notFoundPath = "/%E3%83%9A";        // fara-labs と同じ。% を含むので、問い合わせの ?from= は付かない（ReportForm.CleanPage）
         var body = "<section class=\"fbc-not-found\">"
             + "<p class=\"fbc-not-found-code\" aria-hidden=\"true\">404</p>"
@@ -269,7 +267,7 @@ internal static class PageCatalog
             + "<p class=\"fbc-not-found-lead\">URL が間違っているか、ページが移動した可能性があります。</p>"
             + "<p><a href=\"./\">ホームへ戻る</a></p>"
             + "</section>";
-        return $"<main class=\"entry-static\">{banner}{body}</main>" + FooterHtml(FooterOptions(model.Settings), origin, notFoundPath);
+        return $"<main class=\"entry-static\">{body}</main>" + FooterHtml(FooterOptions(model.Settings), origin, notFoundPath);
     }
 
     private static string Shorten(string text, string fallback)

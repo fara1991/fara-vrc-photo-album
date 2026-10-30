@@ -1,20 +1,23 @@
-// テーマ（ローズ寄りの色）の整合のテスト。  node --test tests/js/album-theme.test.mjs
-// app.css の先頭の「テーマ」ブロックの色と、Layout/AlbumTheme.cs（MudBlazor のパレット）が同じ値か。kit の既定（紫）が残っていないか。
-// 文字の色の比（WCAG AA）は、テーマの色の組み合わせで計算する。
+// テーマ（紫）の整合のテスト。  node --test tests/js/album-theme.test.mjs
+// app.css の先頭の「テーマ」ブロックは、kit の既定の紫を上書きしすぎない（上書きは --fbc-focus だけ）。MudBlazor のパレットは kit の既定のまま（AlbumTheme.cs は角丸だけ）。
+// 文字の色の比（WCAG AA）は、テーマの色と kit の既定の色の組み合わせで計算する。
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const css = readFileSync(new URL("../../src/FaraVrcAlbum.Web/wwwroot/css/app.css", import.meta.url), "utf8");
 const cs = readFileSync(new URL("../../src/FaraVrcAlbum.Web/Layout/AlbumTheme.cs", import.meta.url), "utf8");
+const kitCss = readFileSync(new URL("../../external/fara-blazor-component/src/FaraBlazorComponent.Razor/wwwroot/css/fara-blazor-component.css", import.meta.url), "utf8");
 
 /** 「テーマ」ブロック（先頭から「テーマのブロックはここまで」まで）。 */
 const themeBlock = css.slice(0, css.indexOf("（テーマのブロックはここまで）"));
-const lightBlock = themeBlock.slice(themeBlock.indexOf(":root {"), themeBlock.indexOf(':root[data-bs-theme="dark"] {'));
-const darkBlock = themeBlock.slice(themeBlock.indexOf(':root[data-bs-theme="dark"] {'));
+const lightBlock = themeBlock.slice(themeBlock.search(/^:root \{/m), themeBlock.indexOf('html:root[data-bs-theme="dark"] {'));
+const darkBlock = themeBlock.slice(themeBlock.indexOf('html:root[data-bs-theme="dark"] {'));
 
 const variable = (block, name) => block.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1].toLowerCase();
-const palette = (kind, name) => cs.match(new RegExp(`Palette${kind}\\.${name} = "(#[0-9a-fA-F]{6})"`))?.[1].toLowerCase();
+// kit の既定（:root と :root[data-bs-theme="dark"]）
+const kitLight = kitCss.slice(kitCss.search(/^:root \{/m), kitCss.indexOf(':root[data-bs-theme="dark"] {'));
+const kitDark = kitCss.slice(kitCss.indexOf(':root[data-bs-theme="dark"] {'), kitCss.search(/^html,/m));
 
 const hex = (v) => [1, 3, 5].map((i) => parseInt(v.slice(i, i + 2), 16));
 const lum = ([r, g, b]) => {
@@ -25,51 +28,40 @@ const ratio = (a, b) => { const x = lum(hex(a)); const y = lum(hex(b)); return (
 
 test("ダークのテーマの変数は、kit の :root[data-bs-theme=dark] に負けない詳細度（html:root[...]）で書いている", () => {
   assert.ok(themeBlock.includes('html:root[data-bs-theme="dark"] {'), "html:root[data-bs-theme=\"dark\"] がありません");
-  assert.doesNotMatch(themeBlock, /\nhtml\[data-bs-theme="dark"\] \{\n {2}--fbc-/);
 });
 
-test("MudBlazor のパレット（AlbumTheme.cs）は、CSS のテーマの色と同じ値", () => {
-  const pairs = [
-    ["Light", "Primary", lightBlock, "--fbc-brand"],
-    ["Light", "Background", lightBlock, "--fbc-body-bg"],
-    ["Light", "TextPrimary", lightBlock, "--album-text"],
-    ["Light", "TextSecondary", lightBlock, "--fbc-muted"],
-    ["Light", "DrawerBackground", lightBlock, "--album-sidebar-solid"],
-    ["Dark", "Primary", darkBlock, "--fbc-brand"],
-    ["Dark", "Background", darkBlock, "--fbc-body-bg"],
-    ["Dark", "Surface", darkBlock, "--album-card-bg"],
-    ["Dark", "TextPrimary", darkBlock, "--album-text"],
-    ["Dark", "TextSecondary", darkBlock, "--fbc-muted"],
-  ];
-  for (const [kind, name, block, v] of pairs) {
-    const fromCss = variable(block, v);
-    const fromCs = palette(kind, name);
-    assert.ok(fromCss && fromCs, `${kind}.${name} / ${v} を読めません`);
-    assert.equal(fromCs, fromCss, `${kind}.${name} (${fromCs}) と ${v} (${fromCss}) が違います`);
-  }
+test("kit の変数（--fbc-*）の上書きは、フォーカス枠だけ（それ以外は kit の既定の紫に任せる）", () => {
+  const overridden = [...new Set([...themeBlock.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/(--fbc-[a-z-]+)\s*:/g)].map((m) => m[1]))];
+  assert.deepEqual(overridden, ["--fbc-focus"]);
 });
 
-test("kit の既定の紫の色が、テーマの値に残っていない", () => {
-  for (const purple of ["#7c3aed", "#a855f7", "#c084fc", "#e879f9", "#e9d5ff", "#f7f4fd", "#0c0616"]) {
-    assert.ok(!themeBlock.replace(/\/\*[\s\S]*?\*\//g, "").toLowerCase().includes(purple), `テーマのブロックに ${purple} があります`);
-    assert.ok(!cs.toLowerCase().includes(purple), `AlbumTheme.cs に ${purple} があります`);
-  }
+test("MudBlazor のパレットは kit の既定のまま（AlbumTheme.cs は色を上書きしない）", () => {
+  assert.doesNotMatch(cs, /Palette(Light|Dark)\./);
+});
+
+test("kit の既定の色が紫（この前提が変わったら、このサイトの色も見直す）", () => {
+  assert.equal(variable(kitLight, "--fbc-brand"), "#7c3aed");
+  assert.equal(variable(kitDark, "--fbc-brand"), "#a855f7");
+  assert.equal(variable(kitLight, "--fbc-body-bg"), "#f7f4fd");
+  assert.equal(variable(kitDark, "--fbc-body-bg"), "#0c0616");
 });
 
 test("文字の色の比は AA（通常 4.5:1）以上（ライト・ダークとも）", () => {
+  const lightBg = variable(kitLight, "--fbc-body-bg");
+  const darkBg = variable(kitDark, "--fbc-body-bg");
   const checks = [
-    ["ライト 本文", variable(lightBlock, "--album-text"), variable(lightBlock, "--fbc-body-bg")],
-    ["ライト 補足", variable(lightBlock, "--fbc-muted"), variable(lightBlock, "--fbc-body-bg")],
-    ["ライト リンク", variable(lightBlock, "--album-link-text"), variable(lightBlock, "--fbc-body-bg")],
+    ["ライト 本文", variable(lightBlock, "--album-text"), lightBg],
+    ["ライト 補足", variable(kitLight, "--fbc-muted"), lightBg],
     ["ライト 補足（カードの上）", variable(lightBlock, "--album-muted"), variable(lightBlock, "--album-card-bg")],
-    ["ライト 主ボタン（白文字）", "#ffffff", variable(lightBlock, "--fbc-brand")],
-    ["ライト フォーカス枠", variable(lightBlock, "--fbc-focus"), variable(lightBlock, "--fbc-body-bg")],
-    ["ダーク 本文", variable(darkBlock, "--album-text"), variable(darkBlock, "--fbc-body-bg")],
-    ["ダーク 補足", variable(darkBlock, "--fbc-muted"), variable(darkBlock, "--fbc-body-bg")],
-    ["ダーク リンク（カードの上）", variable(darkBlock, "--album-link-text"), variable(darkBlock, "--album-card-bg")],
+    ["ライト リンク", variable(lightBlock, "--album-link-text"), lightBg],
+    ["ライト 主ボタン（白文字）", "#ffffff", variable(kitLight, "--fbc-brand")],
+    ["ライト フォーカス枠", variable(lightBlock, "--fbc-focus"), lightBg],
+    ["ダーク 本文", variable(darkBlock, "--album-text"), darkBg],
+    ["ダーク 補足", variable(kitDark, "--fbc-muted"), darkBg],
     ["ダーク 補足（カードの上）", variable(darkBlock, "--album-muted"), variable(darkBlock, "--album-card-bg")],
-    ["ダーク 主ボタン（白文字）", "#ffffff", variable(darkBlock, "--fbc-brand")],
-    ["ダーク フォーカス枠", variable(darkBlock, "--fbc-focus"), variable(darkBlock, "--fbc-body-bg")],
+    ["ダーク リンク（カードの上）", variable(darkBlock, "--album-link-text"), variable(darkBlock, "--album-card-bg")],
+    ["主ボタン（問い合わせの送信。グラデーションの明るい側と白文字）", "#ffffff", css.match(/\.fbc-btn-primary\.mud-button-root \{\s*background: linear-gradient\(135deg, (#[0-9a-f]{6})/i)?.[1]],
+    ["ダーク フォーカス枠", variable(darkBlock, "--fbc-focus"), darkBg],
   ];
   for (const [name, fg, bg] of checks) {
     assert.ok(fg && bg, `${name}: 色を読めません`);

@@ -10,17 +10,6 @@ import { errorSummary } from "../external/fara-blazor-component/worker/error-sum
 // 報告の 1 日の送信回数の制限（送信元ごと・3 回まで）の Durable Object。wrangler.jsonc の REPORT_LIMITER が指す（docs/usage.md の 2.2）
 export { ReportRateLimiter } from "../external/fara-blazor-component/worker/report-rate-limit.js";
 
-// メンテナンス画面は kit が作る（色は紫系の直書き）。このサイトの色（ローズ寄り。app.css の「テーマ」ブロックの --fbc-maintenance-*）にそろえる。kit は変更しない
-const MAINTENANCE_COLORS = [["#0c0616", "#130a0e"], ["#f3edff", "#fbeff3"], ["#b39ddb", "#f4a9c4"], ["#b4a7d1", "#c9abb8"], ["#7c3aed", "#b83a64"]];
-
-async function themedMaintenance(pending) {
-  const response = await pending;
-  if (!(response.headers.get("Content-Type") ?? "").includes("text/html")) return response;
-  let html = await response.text();
-  for (const [from, to] of MAINTENANCE_COLORS) html = html.split(from).join(to);
-  return new Response(html, { status: response.status, headers: response.headers });
-}
-
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -31,7 +20,7 @@ export default {
         headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
       });
     }
-    if (maintenance.state === "on") return themedMaintenance(maintenanceResponse(request, maintenance, "Fara Album"));
+    if (maintenance.state === "on") return maintenanceResponse(request, maintenance, "Fara Album");
 
     // 作者への報告の受け口（external/fara-blazor-component/worker/report.js。ポケモン・アバター・Bot と同じファイル）
     if (url.pathname === "/api/report" || url.pathname === "/api/report/config") {

@@ -2052,3 +2052,21 @@ h1.album-heading {
     padding: 14px;
   }
 }
+
+/* 360px 前後では、紹介カードのアイコンを小さくして、文の幅を広げる */
+@media (max-width: 479.98px) {
+  .album-about {
+    gap: 12px;
+  }
+
+  .album-about-ic {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .album-about-ic svg {
+    width: 22px;
+    height: 22px;
+  }
+}

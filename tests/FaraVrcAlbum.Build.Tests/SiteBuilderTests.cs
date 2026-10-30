@@ -315,6 +315,25 @@ public class SiteBuilderTests
     }
 
     [Fact]
+    public void TheHomeHasTheIntroCardThenTheLatestPostAsOneBigCardThenTheGridAndThePostIsOneCard()
+    {
+        var (f, prod, _) = Build();
+        using var _ = f;
+        var home = Body(Read(prod, "index.html"));
+        // 紹介カード（リード文は SiteRules.HomeLead のまま）→ 最新の記事（大きなカード 1 枚）→ これまでの記事（グリッド）。素の HTML だけ（MudBlazor の class は無い）
+        var about = home.IndexOf("class=\"album-about\"", StringComparison.Ordinal);
+        var latest = home.IndexOf("最新の記事", StringComparison.Ordinal);
+        var earlier = home.IndexOf("これまでの記事", StringComparison.Ordinal);
+        Assert.True(0 < about && about < latest && latest < earlier);
+        Assert.DoesNotContain("mud-", home);
+        foreach (var line in SiteRules.HomeLead.Replace("\r\n", "\n").Split('\n')) Assert.Contains(line, home);
+        Assert.Contains("<span class=\"album-pill\">最新</span>", home);
+        Assert.Contains("<h3 class=\"album-card-title\">", home);          // 節の見出し（h2）の下のカードの題は h3
+        // 記事ページは、本文全体が 1 枚のカード
+        Assert.Contains("<article class=\"album-post album-post-card\">", Body(Read(prod, "posts/first-post.html")));
+    }
+
+    [Fact]
     public void TheDataJsonIsReadableByTheAppsSerializerContext()
     {
         var (f, prod, _) = Build();

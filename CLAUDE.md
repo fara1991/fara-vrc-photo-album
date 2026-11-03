@@ -40,7 +40,7 @@ Fara Photo Album（VRChat の写真ブログ。本番 https://vrc-album.fara-lab
 - 台帳 `content/catalog/photos.json`（元写真の内容ハッシュ → キー・状態・寸法・色・ワールド ID）は `content/` の一部（Git 管理外）。元ファイル名の控えを含む。Build は読まない
 - **`_og.jpg` はカバー写真だけ**（`album cover <key> --apply`）。`verify` と `audit` も表紙だけを見る
 - 写真の取り込みは既定がドライラン。`--apply` が無いと R2・台帳・記事に書かない。バケット名は `^[a-z0-9][a-z0-9-]{2,62}$`
-- **デスクトップ版（取り込み（アップロードまで）・記事（下書きと編集）・アバター・服・管理・設定の画面。`npm run desktop`）**: `src/FaraVrcAlbum.Desktop`（WPF・net10.0-windows。Windows 専用。**`FaraVrcAlbum.sln` に入れない**＝ubuntu の CI の `dotnet build` を壊さないため）と `src/FaraVrcAlbum.Desktop.Core`（ViewModel とロジック。net10.0。sln 内。テストは Linux でも動く）。ロジックは Tools の公開 API を呼ぶだけで、CLI と同じ安全策。`--demo <作業フォルダ>` は合成データで R2 に接続しない起動（実バケットには触れない）。詳細は docs/album-desktop.md
+- **デスクトップ版（取り込み（アップロードまで）・記事（下書きと編集）・アバター・服・管理・設定の画面。`npm run desktop`）**: `src/FaraVrcAlbum.Desktop`（WPF・net10.0-windows。Windows 専用。**`FaraVrcAlbum.sln` に入れない**＝ubuntu の CI の `dotnet build` を壊さないため）と `src/FaraVrcAlbum.Desktop.Core`（ViewModel とロジック。net10.0。sln 内。テストは Linux でも動く）。ロジックは Tools の公開 API を呼ぶだけで、CLI と同じ安全策。`--demo <作業フォルダ>` は合成データで R2 に接続しない起動（実バケットには触れない）。「このアプリについて」のバージョンは `AppInfo`（Desktop.Core）が、ビルドに埋め込まれた版とコミットを読んで出す（版は `Desktop.csproj` の `Version`＝既定の 0.0.0-dev で「開発版」と出し、どの版かはコミットで見分ける）。詳細は docs/album-desktop.md
 - `verify` の対象は記事の写真（非公開の記事も含む。公開したときに写真が揃っているように）。`verify --ledger` で、記事に無い台帳（uploaded）の写真も加える。対象が 0 件のときは理由を出す。
 
 - **アバターと服**: `content/avatars.json`（アバター名 → 着せている服の id の順序つき）と `content/outfits.json`（服の名前・任意で店名と https の URL）。写真の `avatar` / `outfits` は id だけ。キャプションには服の名前だけを出し、アバター名は出さない（静的 HTML・data に入れない。テストで確認）。写真へのアバターの付与は手で行う（VRChat のログは使わない・写真の XMP にアバターは無い）。`album avatar|outfit|photo-avatar`（docs/album-tool.md）。

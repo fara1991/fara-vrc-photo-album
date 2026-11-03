@@ -15,6 +15,8 @@
     <RootNamespace>FaraVrcAlbum.Desktop</RootNamespace>
     <AssemblyName>FaraVrcAlbum.Desktop</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 手元でビルドして使うので、版は既定のまま「開発版」と表示し、どの版かはコミットで見分ける（「このアプリについて」）。-p:Version=1.2.3 で版を指定できる -->
+    <Version>0.0.0-dev</Version>
     <SatelliteResourceLanguages>ja</SatelliteResourceLanguages>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>

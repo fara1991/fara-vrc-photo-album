@@ -115,7 +115,7 @@ public partial class MainWindow : Window
             "Fara Photo Album\n\n" +
             "VRChat で撮った写真を、写真ブログに載せるためのアプリです。\n" +
             "写真の取り込み・記事の編集・アバターと服の登録・公開した写真の管理ができます。\n\n" +
-            $"バージョン {typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}",
+            $"バージョン {AppInfo.DisplayVersion(typeof(MainWindow).Assembly)}",
             "このアプリについて", MessageBoxButton.OK, MessageBoxImage.Information);
 
     /// <summary>エクスプローラーで開く。無ければ理由を状態行に出す（作らない）。</summary>

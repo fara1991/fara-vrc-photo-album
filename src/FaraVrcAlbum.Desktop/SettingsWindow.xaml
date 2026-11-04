@@ -1,0 +1,22 @@
+<Window x:Class="FaraVrcAlbum.Desktop.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="設定 - Fara Photo Album"
+        Width="900" Height="720" MinWidth="700" MinHeight="480"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+    <DockPanel>
+        <StatusBar DockPanel.Dock="Bottom" Padding="8,4">
+            <StatusBarItem>
+                <TextBlock Text="{Binding Status}" TextWrapping="Wrap" AutomationProperties.Name="状態"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <Button Content="閉じる" IsCancel="True" Click="Close_Click" Margin="0"/>
+            </StatusBarItem>
+        </StatusBar>
+        <!-- 中身は App.xaml の DataTemplate（SettingsViewModel → SettingsView） -->
+        <ContentControl Content="{Binding}" Margin="16,10,16,10"/>
+    </DockPanel>
+</Window>

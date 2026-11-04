@@ -1,0 +1,165 @@
+@* 記事ページの本文（A 案: 本文全体を 1 枚の角丸カード .album-post-card に入れる。写真ギャラリー・ライトボックスは従来どおり）: パンくず・題（月のアーカイブへのリンク。公開日は題の下には出さない）・タグ・本文（Markdown 変換済みの HTML）・写真ギャラリー・前後の記事・関連する記事。
+   ギャラリーの写真は <a href="2048px の画像"><img></a>（JS が無くてもフルサイズの画像へ行ける）。起動後に js/lightbox.js が、クリック・Enter・Space でライトボックスを開く。
+   撮影者・写っている人は持たない。ワールド名は静的 HTML に出し、VRChat のワールドページへのリンクにする（作者へのクレジット）。Blazor が R2 画像の alt を作る（キャプションから）。 *@
+<nav class="album-breadcrumb" aria-label="パンくずリスト">
+    <ol>
+        <li><a href="./">ホーム</a></li>
+        <li><a href="@SiteRules.ArchiveHref(Month.Year, Month.Month)">@(Month.Year)年@(Month.Month)月</a></li>
+        <li aria-current="page"><span class="album-breadcrumb-current">@Post.Title</span></li>
+    </ol>
+</nav>
+<article class="album-post album-post-card">
+    <header>
+        <h1 class="album-heading"><a class="album-heading-link" href="@SiteRules.ArchiveHref(Month.Year, Month.Month)">@Post.Title</a></h1>
+        @if (Post.Tags.Count > 0)
+        {
+            <p class="album-post-meta">
+                @for (var t = 0; t < Post.Tags.Count; t++)
+                {
+                    if (t > 0) { <span>、</span> }
+                    <a class="album-tag" href="@SiteRules.TagHref(Post.Tags[t].Slug)">@Post.Tags[t].Name</a>
+                }
+            </p>
+        }
+    </header>
+    <div class="album-post-body">@((MarkupString)Post.BodyHtml)</div>
+    @foreach (var segment in Segments)
+    {
+        var segmentPhotos = Post.Photos.GetRange(segment.Start, segment.Count);
+        if (segment.TextHtml is { } textHtml)
+        {
+            <div class="album-post-body album-post-text">@((MarkupString)textHtml)</div>
+        }
+        <ul class="@GalleryClass(segment.Count)" aria-label="写真（@(segment.Count) 枚）">
+            @for (var i = segment.Start; i < segment.Start + segment.Count; i++)
+            {
+                var photo = Post.Photos[i];
+                <li class="album-gallery-item" id="photo-@(i + 1)" style="--ar: @AspectRatioOf(photo)">
+                    <figure>
+                        <a class="album-photo-link" href="@SiteRules.ImageUrl(BaseUrl, photo.Key, 2048)" aria-haspopup="dialog">
+                            <PhotoImg Photo="photo" BaseUrl="@BaseUrl" Alt="@AltOf(photo, i)" Eager="@(i == 0)"
+                                      DefaultSize="1280" SrcsetSizes="@SiteRules.ImageSizes" Sizes="@SiteRules.GallerySizes(segmentPhotos, i - segment.Start)" />
+                        </a>
+                        @if (HasCaption(photo))
+                        {
+                            <figcaption>
+                                @if (!string.IsNullOrWhiteSpace(photo.Caption))
+                                {
+                                    <span class="album-caption-text">@photo.Caption</span>
+                                }
+                                @if (SiteRules.FormatTakenAt(photo.TakenAt) is { } taken)
+                                {
+                                    <span class="album-caption-taken"><time datetime="@photo.TakenAt">@taken</time></span>
+                                }
+                                @if (photo.Wear is { Count: > 0 } wear)
+                                {
+                                    <span class="album-caption-outfits">服: @for (var w = 0; w < wear.Count; w++)
+                                    {
+                                        if (w > 0) { <span>、</span> }
+                                        if (wear[w].Id.Length > 0)
+                                        {
+                                            <a class="album-outfit-link" href="@SiteRules.OutfitHref(wear[w].Id)">@wear[w].Name</a>
+                                        }
+                                        else
+                                        {
+                                            <span>@wear[w].Name</span>
+                                        }
+                                    }</span>
+                                }
+                                @if (photo.World is { Name.Length: > 0 } world)
+                                {
+                                    <span class="album-caption-world">
+                                        <a class="album-world-link" href="@SiteRules.WorldHref(world.Id)">@world.Name</a>
+                                    </span>
+                                }
+                            </figcaption>
+                        }
+                    </figure>
+                </li>
+            }
+        </ul>
+    }
+    @if (Post.AfterwordHtml is { } afterword)
+    {
+        <div class="album-post-body album-post-afterword">@((MarkupString)afterword)</div>
+    }
+</article>
+
+@if (Post.Older is not null || Post.Newer is not null)
+{
+    <nav class="album-prevnext" aria-label="前後の記事">
+        @if (Post.Older is { } older)
+        {
+            <a class="album-prevnext-link album-prevnext-link--older" rel="prev" href="@SiteRules.PostHref(older.Slug)">
+                <span class="album-prevnext-label">前の記事</span>
+                <span class="album-prevnext-title">@older.Title</span>
+            </a>
+        }
+        @if (Post.Newer is { } newer)
+        {
+            <a class="album-prevnext-link album-prevnext-link--newer" rel="next" href="@SiteRules.PostHref(newer.Slug)">
+                <span class="album-prevnext-label">次の記事</span>
+                <span class="album-prevnext-title">@newer.Title</span>
+            </a>
+        }
+    </nav>
+}
+
+@if (Post.Related is { Count: > 0 })
+{
+    <section class="album-related" aria-labelledby="album-related-heading">
+        <h2 id="album-related-heading" class="album-subheading">関連する記事</h2>
+        <p class="album-lead">同じタグ・同じワールドの記事です。</p>
+        <PostListView Posts="Post.Related" BaseUrl="@BaseUrl" TagNames="TagNames" EagerFirst="false" Nested="true" />
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public PostPage Post { get; set; } = new();
+
+    [Parameter, EditorRequired] public string BaseUrl { get; set; } = "";
+
+    /// <summary>タグの slug → 表示名（関連する記事のカードのタグ）。</summary>
+    [Parameter] public IReadOnlyDictionary<string, string>? TagNames { get; set; }
+
+    private (int Year, int Month) Month => SiteRules.MonthOf(Post.PublishedAt);
+
+    /// <summary>写真の並びの区切り（文章のある写真の前で区切る）。Start は記事全体の 0 始まりの位置（#photo-N の番号は記事全体の通し）。</summary>
+    private sealed record Segment(int Start, int Count, string? TextHtml);
+
+    private IReadOnlyList<Segment> Segments
+    {
+        get
+        {
+            var segments = new List<Segment>();
+            for (var i = 0; i < Post.Photos.Count; i++)
+            {
+                if (i == 0 || Post.Photos[i].TextHtml is not null) segments.Add(new Segment(i, 1, Post.Photos[i].TextHtml));
+                else segments[^1] = segments[^1] with { Count = segments[^1].Count + 1 };
+            }
+            return segments;
+        }
+    }
+
+    // 1 枚 = 大きく / 2 枚 = 横並び（高さをそろえる）/ 3 枚以上 = 均等高さの行（CSS だけ。最後の行は広げすぎない）。スマホは CSS で 1 列
+    private static string GalleryClass(int count) => count switch
+    {
+        1 => "album-gallery album-gallery--1",
+        2 => "album-gallery album-gallery--2",
+        _ => "album-gallery album-gallery--n",
+    };
+
+    private static bool HasCaption(PhotoInfo photo) =>
+        !string.IsNullOrWhiteSpace(photo.Caption) || photo.TakenAt is not null || photo.World is { Name.Length: > 0 } || photo.Wear is { Count: > 0 };
+
+    /// <summary>alt: キャプションがあればそれ。無ければ「ワールド名で撮った写真」か「記事の題の写真」+ 連番。人名は入れない。</summary>
+    private string AltOf(PhotoInfo photo, int index)
+    {
+        if (!string.IsNullOrWhiteSpace(photo.Caption)) return photo.Caption!;
+        var number = Post.Photos.Count > 1 ? $"（{index + 1} / {Post.Photos.Count}）" : "";
+        return photo.World is { Name.Length: > 0 } world ? $"{world.Name} で撮った写真{number}" : $"{Post.Title} の写真{number}";
+    }
+
+    // 縦横比（幅 / 高さ）。CSS の --ar に入れ、行の幅の配分（flex）と 1 枚のときの最大幅の計算に使う
+    private static string AspectRatioOf(PhotoInfo p) => (p.W / (double)p.H).ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+}

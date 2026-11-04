@@ -1,0 +1,10 @@
+@page "/archive/{Year:int}/{Month:int}"
+
+@* ルートに無い Page は、ルーターが既定値のままにするとは限らないので、ページ番号は明示して渡す（Home / PagedHome と同じ作り） *@
+<ArchiveContent Year="Year" Month="Month" Page="1" />
+
+@code {
+    [Parameter] public int Year { get; set; }
+
+    [Parameter] public int Month { get; set; }
+}

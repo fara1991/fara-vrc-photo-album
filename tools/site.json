@@ -1,0 +1,23 @@
+{
+  "name": "Fara Photo Album",
+  "origin": "https://vrc-album.fara-labs.com",
+  "devOrigin": "https://vrc-album-dev.fara-labs.com",
+  "lang": "ja",
+  "locale": "ja_JP",
+  "bodyRootClass": "entry-static",
+  "developRobots": "disallow",
+  "csp": {
+    "scriptSrc": ["https://static.cloudflareinsights.com", "https://challenges.cloudflare.com"],
+    "styleSrc": ["https://fonts.googleapis.com"],
+    "fontSrc": ["https://fonts.gstatic.com"],
+    "imgSrc": ["https://booth.pximg.net"],
+    "connectSrc": ["https://cloudflareinsights.com", "https://challenges.cloudflare.com"],
+    "frameSrc": ["https://challenges.cloudflare.com"],
+    "cacheRules": [
+      { "path": "/images/header-*.webp", "value": "public, max-age=31536000, immutable" },
+      { "path": "/_framework/*.wasm", "value": "public, max-age=31536000, immutable" },
+      { "path": "/_framework/dotnet.native.*.js", "value": "public, max-age=31536000, immutable" },
+      { "path": "/_framework/dotnet.runtime.*.js", "value": "public, max-age=31536000, immutable" }
+    ]
+  }
+}

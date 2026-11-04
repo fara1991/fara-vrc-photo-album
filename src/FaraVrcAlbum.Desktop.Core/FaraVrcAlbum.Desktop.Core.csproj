@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    デスクトップ版（album の WPF 画面）のロジック。画面（WPF）から切り離してあるので、Windows 以外でも単体テストが動く。
+    サービス層は FaraVrcAlbum.Tools の公開 API を呼ぶだけ（再実装しない）。WPF に依存しない（Views は FaraVrcAlbum.Desktop）。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FaraVrcAlbum.Desktop</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FaraVrcAlbum.Tools\FaraVrcAlbum.Tools.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FaraVrcAlbum.Desktop.Core.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+  </ItemGroup>
+
+</Project>

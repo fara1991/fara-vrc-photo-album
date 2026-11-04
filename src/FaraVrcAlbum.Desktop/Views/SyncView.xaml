@@ -1,0 +1,72 @@
+<UserControl x:Class="FaraVrcAlbum.Desktop.Views.SyncView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:FaraVrcAlbum.Desktop.Views">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,0,12,0">
+            <views:PageHeader Title="同期"
+                              Description="記事の中身（content の JSON）が、このパソコンと R2（控え用のバケットの sync フォルダ）で揃っているかを比べます。どちらかに無いファイルや、中身が違うファイルは、ファイルごとに「R2 へ送る」「ローカルへ取り込む」「消す」「何もしない」を選べます（消せるのは、相手側に無いファイルだけ）。"/>
+
+            <Border Background="{StaticResource PanelBrush}" CornerRadius="4" Padding="14,10" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" TextWrapping="Wrap" AutomationProperties.Name="同期の状態"/>
+                    <TextBlock Text="上書き・消すローカルのファイルは、先に local/sync-backups に残します（R2 から消すファイルは、その中の r2 フォルダ）。変えたあとの記事の中身が読めないときは、ローカルは元に戻します。履歴用の控え（設定の「控えを作る」）は、これとは別に残ります。" Style="{StaticResource Note}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="R2 と比べる" Command="{Binding CompareCommand}" Margin="0,0,8,0" AutomationProperties.Name="R2 と比べる"/>
+                        <Button Content="足りないものを、足りない側へ写す" Command="{Binding SyncMissingCommand}" Margin="0,0,8,0"
+                                ToolTip="ローカルにだけあるものは「R2 へ送る」、R2 にだけあるものは「ローカルへ取り込む」を選びます（実行は、下のボタンで）。内容が違うものは変えません。"
+                                AutomationProperties.Name="足りないものを、足りない側へ写す"/>
+                        <Button Content="選んだ操作を実行する" Command="{Binding ApplyCommand}" AutomationProperties.Name="選んだ操作を実行する"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="R2 をローカルに合わせる" Command="{Binding MirrorToRemoteCommand}" Margin="0,0,8,0"
+                                ToolTip="ローカルにだけあるものは「R2 へ送る」、R2 にだけあるものは「R2 から消す」、内容が違うものは「R2 へ送る」を選びます（実行は、上のボタンで。確認が出ます）。"
+                                AutomationProperties.Name="R2 をローカルに合わせる"/>
+                        <Button Content="ローカルを R2 に合わせる" Command="{Binding MirrorToLocalCommand}"
+                                ToolTip="R2 にだけあるものは「ローカルへ取り込む」、ローカルにだけあるものは「ローカルから消す」、内容が違うものは「ローカルへ取り込む」を選びます（実行は、上のボタンで。確認が出ます）。"
+                                AutomationProperties.Name="ローカルを R2 に合わせる"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 1 ファイルずつの一覧 -->
+            <Grid Margin="14,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="140"/>
+                    <ColumnDefinition Width="90"/>
+                    <ColumnDefinition Width="90"/>
+                    <ColumnDefinition Width="330"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="ファイル" FontWeight="SemiBold"/>
+                <TextBlock Grid.Column="1" Text="状態" FontWeight="SemiBold"/>
+                <TextBlock Grid.Column="2" Text="ローカル" FontWeight="SemiBold"/>
+                <TextBlock Grid.Column="3" Text="R2" FontWeight="SemiBold"/>
+                <TextBlock Grid.Column="4" Text="操作" FontWeight="SemiBold"/>
+            </Grid>
+            <ItemsControl ItemsSource="{Binding Rows}" AutomationProperties.Name="ファイルごとの同期の一覧">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="{StaticResource PanelBrush}" CornerRadius="4" Padding="14,6" Margin="0,0,0,4">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="140"/>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="330"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding Path}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding Path}"/>
+                                <TextBlock Grid.Column="1" Text="{Binding StatusText}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="2" Text="{Binding LocalText}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="3" Text="{Binding RemoteText}" VerticalAlignment="Center"/>
+                                <ComboBox Grid.Column="4" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected}" IsEnabled="{Binding CanChoose}"
+                                          AutomationProperties.Name="{Binding Path, StringFormat=操作: {0}}"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,30 @@
+@* 記事の一覧ページ（タグ・アーカイブ）の本文。見出し + 説明 + カード + ページ送り。 *@
+<div class="album-list fbc-page-column fbc-page-column--wide">
+    <h1 class="album-heading">@Heading</h1>
+    @if (!string.IsNullOrWhiteSpace(Lead))
+    {
+        <p class="album-lead">@Lead</p>
+    }
+    <PostListView Posts="Posts" BaseUrl="@BaseUrl" TagNames="TagNames" />
+    <Pager Page="Page" PageCount="PageCount" HrefFor="HrefFor" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Heading { get; set; } = "";
+
+    [Parameter] public string? Lead { get; set; }
+
+    /// <summary>このページの記事（新しい順）。</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<PostSummary> Posts { get; set; } = Array.Empty<PostSummary>();
+
+    [Parameter, EditorRequired] public string BaseUrl { get; set; } = "";
+
+    /// <summary>タグの slug → 表示名。</summary>
+    [Parameter] public IReadOnlyDictionary<string, string>? TagNames { get; set; }
+
+    [Parameter] public int Page { get; set; } = 1;
+
+    [Parameter] public int PageCount { get; set; } = 1;
+
+    [Parameter, EditorRequired] public Func<int, string> HrefFor { get; set; } = SiteRules.HomeHref;
+}

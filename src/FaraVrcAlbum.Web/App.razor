@@ -1,0 +1,12 @@
+@* ルーティング。見つからない URL は 404.html（Worker の not_found_handling）から来るので、NotFoundView を出す。
+   404.html の head に noindex が既にある（Build）ので、NotFoundView の HeadContent（NoIndex）は使わない（robots の meta が 2 つになる）。 *@
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <NotFoundView HomeHref="./" NoIndex="false" />
+        </LayoutView>
+    </NotFound>
+</Router>

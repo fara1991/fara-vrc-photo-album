@@ -1,0 +1,9 @@
+@page "/worlds/{Uuid}/page/{Page:int}"
+
+<WorldContent Uuid="@Uuid" Page="Page" />
+
+@code {
+    [Parameter] public string Uuid { get; set; } = "";
+
+    [Parameter] public int Page { get; set; }
+}

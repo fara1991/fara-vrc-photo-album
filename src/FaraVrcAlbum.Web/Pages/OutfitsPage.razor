@@ -1,0 +1,24 @@
+@page "/outfits"
+@inject AlbumStore Store
+
+<PageTitle>服 | @Store.Settings.SiteName</PageTitle>
+
+@if (outfits is not null)
+{
+    <OutfitListView Outfits="outfits" BaseUrl="@Store.Settings.ImageBaseUrl" />
+}
+else if (failed)
+{
+    <NotFoundView HomeHref="./" NoIndex="false" Title="読み込めませんでした" Lead="服の一覧を読み込めませんでした。しばらくしてから、もう一度お試しください。" />
+}
+
+@code {
+    private List<OutfitSummary>? outfits;
+    private bool failed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        outfits = await Store.GetOutfitsAsync();
+        failed = outfits is null;
+    }
+}

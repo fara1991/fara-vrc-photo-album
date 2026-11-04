@@ -1,0 +1,36 @@
+@inherits LayoutComponentBase
+@inject MaintenanceInfo Maintenance
+@inject SiteOptions Site
+
+@* 共通のレイアウト（fara-blazor-component の SiteLayout）: ヘッダー・サイドバー（PC は Mini、スマホは一時的なメニュー）・本文・フッター・お知らせの帯。
+   ヘッダーは細いバー（サイト名・ハンバーガー・ライト／ダークの切り替え）。名前（ブランド）は文字（サイト名『Fara Photo Album』。appsettings.json の SiteName。<title>・og:site_name・RSS・フッター・プライバシーポリシーと同じ）。h1 にはしない（h1 は各ページの題）。
+   サイドバー（A 案）は、浮いた角丸のパネル。最上段にプロフィールカード（バナー画像・アバター・名前・件数。SidebarProfile）、その下に大きな角丸ボタンの縦のメニュー（ホーム・ワールド・服・タグ、アーカイブ、サポート。AlbumNav）。
+   画像（文字『Fara』入りのバナー）はこのプロフィールカードに移した（本文の先頭には出さない）。app.css の「サイドバー」・docs/header-image.md。
+   ライト／ダークの切り替えは、PC はヘッダーのスイッチ（kit の HeaderEnd は PC だけ）、スマホはドロワーの下のボタン（ヘッダーに置くと、スイッチの押せる範囲が 44px に届かない）。 *@
+<SiteLayout Body="Body" Maintenance="Maintenance" MobilePageScroll="true" CustomTheme="Theme">
+    <Brand>
+        <a class="fbc-brand album-brand" href="@Site.HomeHref" title="ホームへ">
+            <span class="album-brand-mark" aria-hidden="true"><MudIcon Icon="@Icons.Material.Filled.PhotoCamera" Color="Color.Inherit" /></span>
+            @Site.Name
+        </a>
+    </Brand>
+    <DrawerContent>
+        @* 浮いたパネル。PC の細い列では、プロフィールカードとラベルを隠してアイコンだけにする（app.css）。スマホでは、このパネルがドロワーの中身になる *@
+        <div class="album-side">
+            <SidebarProfile />
+            <AlbumNav />
+            @* ライト／ダークの切り替え（スマホ。PC はヘッダーのスイッチ。.album-side-theme は app.css が PC では隠す） *@
+            <div class="album-side-theme">
+                <ThemeSwitch AsButton="true" />
+            </div>
+        </div>
+    </DrawerContent>
+    <HeaderEnd>
+        <ThemeSwitch />
+    </HeaderEnd>
+</SiteLayout>
+
+@code {
+    /// <summary>このサイトの MudBlazor のテーマ（kit の紫のまま、角丸とサイドバーの幅だけ。AlbumTheme.cs）。</summary>
+    private static readonly MudBlazor.MudTheme Theme = AlbumTheme.Create();
+}

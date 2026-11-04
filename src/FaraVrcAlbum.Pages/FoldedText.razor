@@ -1,0 +1,34 @@
+@* 長い説明文を、最初の 3 行だけ見せて、「続きを見る」を押すと全文を出す（もう一度押すと「閉じる」）。
+   JS なしの CSS だけ（チェックボックスの :checked）。静的 HTML（ビルド）でも、ブラウザのアプリでも同じ。
+   3 行に収まらないかどうかは、CSS の行数の切り詰めで決まる。ここでは、長そうな文章（行が多い・文字が多い）のときだけ、「続きを見る」を出す。 *@
+@if (!string.IsNullOrWhiteSpace(Text))
+{
+    <div class="album-more">
+        @if (Foldable)
+        {
+            <input type="checkbox" id="@ToggleId" class="album-more-toggle" aria-label="説明の続きを見る・閉じる" />
+        }
+        <p class="@("album-world-description album-more-text" + (Foldable ? " album-more-text--clamped" : ""))">@Text</p>
+        @if (Foldable)
+        {
+            <label for="@ToggleId" class="album-more-label"><span class="album-more-open">続きを見る</span><span class="album-more-close">閉じる</span></label>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>説明の全文。</summary>
+    [Parameter, EditorRequired] public string? Text { get; set; }
+
+    /// <summary>チェックボックスの id の一部（ページ内で重ならない名前）。</summary>
+    [Parameter] public string Id { get; set; } = "description";
+
+    /// <summary>これより行が多いか、文字が多いと、折りたたむ（行数は CSS の -webkit-line-clamp と同じ 3）。</summary>
+    public const int Lines = 3;
+    public const int Characters = 150;
+
+    private string ToggleId => "album-more-" + Id;
+
+    private bool Foldable =>
+        Text is { } text && (text.Replace("\r\n", "\n").Split('\n').Count(l => l.Length > 0) > Lines || text.Length > Characters);
+}

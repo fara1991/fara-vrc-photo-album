@@ -1,0 +1,132 @@
+<UserControl x:Class="FaraVrcAlbum.Desktop.Views.AvatarOutfitView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:FaraVrcAlbum.Desktop.Views">
+    <DockPanel>
+        <views:PageHeader DockPanel.Dock="Top" Title="アバター・服"
+                          Description="写真に写っているアバターと、着ている服を登録します。アバターに服を紐づけておくと、記事の写真の下に服の名前（と、お店のページへのリンク）が表示されます。アバター名はサイトには表示されません。"/>
+
+        <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+            <Button Content="読み直す(_R)" Command="{Binding RefreshCommand}"/>
+        </WrapPanel>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="360"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*" MinWidth="360"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 左: 服 -->
+            <GroupBox Header="服">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" MinHeight="150"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <DataGrid ItemsSource="{Binding Outfits}" SelectedItem="{Binding SelectedOutfit}" SelectionMode="Single"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" EnableRowVirtualization="False"
+                              AutomationProperties.Name="服の一覧">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Width="56" CanUserSort="False">
+                                <DataGridTemplateColumn.Header>
+                                    <CheckBox IsChecked="{Binding DataContext.AllOutfitsChecked, RelativeSource={RelativeSource AncestorType=DataGrid}}" HorizontalAlignment="Center"
+                                              ToolTip="全部を選ぶ・選択を外す" AutomationProperties.Name="全部を選ぶ"/>
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" AutomationProperties.Name="この服を選ぶ"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="画像" Width="64" CanUserSort="False" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding ThumbnailUrl}" Width="48" Height="48" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="名前" Binding="{Binding Name}" IsReadOnly="True" Width="*" MinWidth="140"/>
+                            <DataGridTextColumn Header="お店" Binding="{Binding Shop}" IsReadOnly="True" Width="110"/>
+                            <DataGridTextColumn Header="アバター数" Binding="{Binding Users}" IsReadOnly="True" Width="90"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                        <TextBlock Text="服の名前（キャプションに出ます）" Style="{StaticResource Note}"/>
+                        <TextBox Text="{Binding OutfitName, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="服の名前"/>
+                        <TextBlock Text="お店の名前（任意）" Style="{StaticResource Note}"/>
+                        <TextBox Text="{Binding OutfitShop, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="ショップ"/>
+                        <TextBlock Text="お店の商品ページの URL（任意・https:// で始まるもの。服の名前のリンクになります）" Style="{StaticResource Note}"/>
+                        <TextBox Text="{Binding OutfitUrl, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="商品ページの URL"/>
+                        <TextBlock Text="{Binding OutfitMultiNote}" Style="{StaticResource Note}" Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <WrapPanel Grid.Row="2" Margin="0,8,0,0">
+                        <Button Content="新しい服(_N)" Command="{Binding NewOutfitCommand}"/>
+                        <Button Content="服を保存(_S)" Style="{StaticResource Primary}" Command="{Binding SaveOutfitCommand}"/>
+                        <Button Content="選んだ服を削除" Style="{StaticResource DangerButton}" Command="{Binding RemoveOutfitCommand}"
+                                ToolTip="チェックした服をまとめて削除します（チェックが無いときは、一覧で選んでいる服）"/>
+                    </WrapPanel>
+                    <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="フォルダから服を読む（別ウィンドウで一覧を開く）" Click="OpenOutfitImport_Click"/>
+                    </StackPanel>
+                </Grid>
+            </GroupBox>
+
+            <!-- 右: アバター -->
+            <GroupBox Grid.Column="2" Header="アバター（着せている服の紐づけ）">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" MinHeight="150"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <DataGrid ItemsSource="{Binding Avatars}" SelectedItem="{Binding SelectedAvatar}" SelectionMode="Single"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" EnableRowVirtualization="False"
+                              AutomationProperties.Name="アバターの一覧">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Width="56" CanUserSort="False">
+                                <DataGridTemplateColumn.Header>
+                                    <CheckBox IsChecked="{Binding DataContext.AllAvatarsChecked, RelativeSource={RelativeSource AncestorType=DataGrid}}" HorizontalAlignment="Center"
+                                              ToolTip="全部を選ぶ・選択を外す" AutomationProperties.Name="全部を選ぶ"/>
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsChecked, UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center" AutomationProperties.Name="このアバターを選ぶ"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="画像" Width="64" CanUserSort="False" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding ThumbnailPath}" Width="48" Height="48" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="アバター名" Binding="{Binding Name}" IsReadOnly="True" Width="*" MinWidth="120"/>
+                            <DataGridTextColumn Header="着せている服" Binding="{Binding OutfitsText}" IsReadOnly="True" Width="*" MinWidth="140"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                        <TextBlock Text="VRChat のアバター名（そのまま貼り付け。サイトには出ません）" Style="{StaticResource Note}"/>
+                        <TextBox Text="{Binding AvatarName, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="アバター名"/>
+                        <TextBlock Text="着ている服（1 つ選びます）" Style="{StaticResource Note}" Margin="0,6,0,2"/>
+                        <ComboBox ItemsSource="{Binding OutfitPicks}" SelectedItem="{Binding SelectedOutfitPick}" DisplayMemberPath="Name"
+                                  IsEditable="True" IsTextSearchEnabled="True" TextSearch.TextPath="Name" AutomationProperties.Name="着ている服"/>
+                        <TextBlock Text="{Binding ExtraOutfitsNote}" Style="{StaticResource Note}" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding AvatarMultiNote}" Style="{StaticResource Note}" Foreground="{StaticResource DangerBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <WrapPanel Grid.Row="2" Margin="0,8,0,0">
+                        <Button Content="新しいアバター(_W)" Command="{Binding NewAvatarCommand}"/>
+                        <Button Content="アバターを保存(_A)" Style="{StaticResource Primary}" Command="{Binding SaveAvatarCommand}"/>
+                        <Button Content="選んだアバターを削除" Style="{StaticResource DangerButton}" Command="{Binding RemoveAvatarCommand}"
+                                ToolTip="チェックしたアバターをまとめて削除します（チェックが無いときは、一覧で選んでいるアバター）"/>
+                    </WrapPanel>
+                    <Button Grid.Row="3" Content="Unity のフォルダからアバターを読む（別ウィンドウで一覧を開く）" Margin="0,8,0,0" HorizontalAlignment="Left" Click="OpenAvatarImport_Click"/>
+                </Grid>
+            </GroupBox>
+        </Grid>
+    </DockPanel>
+</UserControl>

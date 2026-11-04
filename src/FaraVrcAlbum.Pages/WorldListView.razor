@@ -1,0 +1,39 @@
+@* ワールドの一覧（/worlds）。写真を撮ったワールドを、写真の多い順に。
+   カードの画像はワールドの画像（VRChat から取って R2 に置いたもの）。画像がまだ無いワールドは、画像を出さない（自分の撮った写真は出さない）。 *@
+<div class="album-list fbc-page-column fbc-page-column--wide">
+    <h1 class="album-heading">ワールド</h1>
+    <p class="album-lead">写真を撮ったワールドの一覧です。</p>
+    @if (Worlds.Count == 0)
+    {
+        <p class="album-empty">まだワールドがありません。</p>
+    }
+    else
+    {
+        <ul class="album-grid">
+            @for (var i = 0; i < Worlds.Count; i++)
+            {
+                var world = Worlds[i];
+                <li class="album-card">
+                    @if (world.Image is { } image)
+                    {
+                        <div class="album-card-media album-card-media--world">
+                            <img src="@SiteRules.ImageUrl(BaseUrl, image.Key, 512)" srcset="@($"{SiteRules.ImageUrl(BaseUrl, image.Key, 512)} 512w, {SiteRules.ImageUrl(BaseUrl, image.Key, 1024)} 1024w")"
+                                 sizes="(max-width: 599.98px) 100vw, (max-width: 1199.98px) 50vw, 33vw" width="@image.W" height="@image.H" alt=""
+                                 loading="@(i == 0 ? "eager" : "lazy")" decoding="async" />
+                        </div>
+                    }
+                    <div class="album-card-body">
+                        <h2 class="album-card-title"><a class="album-card-link" href="@SiteRules.WorldHref(world.Id)">@world.Name</a></h2>
+                        <p class="album-card-meta">@world.PhotoCount 枚</p>
+                    </div>
+            </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<WorldSummary> Worlds { get; set; } = Array.Empty<WorldSummary>();
+
+    [Parameter, EditorRequired] public string BaseUrl { get; set; } = "";
+}

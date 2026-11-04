@@ -1,0 +1,9 @@
+@page "/tags/{Slug}/page/{Page:int}"
+
+<TagContent Slug="@Slug" Page="Page" />
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    [Parameter] public int Page { get; set; }
+}

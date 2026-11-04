@@ -1,0 +1,81 @@
+<UserControl x:Class="FaraVrcAlbum.Desktop.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:views="clr-namespace:FaraVrcAlbum.Desktop.Views">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,0,12,0">
+            <views:PageHeader Title="設定"
+                              Description="写真の保存先（Cloudflare R2）に接続するための情報と、この PC のフォルダを設定します。秘密の値は「●」で隠しています。「押している間 表示」を押している間だけ、今の値が見えます。"/>
+
+            <TextBlock Text="{Binding ConnectionText}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,8"/>
+            <ItemsControl ItemsSource="{Binding Rows}" AutomationProperties.Name="設定の項目">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,4,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="230"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <!-- 今の値。秘密は「●」、「表示」を押している間だけ値 -->
+                                <DockPanel>
+                                    <Button DockPanel.Dock="Right" Content="押している間 表示" MinWidth="0" Margin="8,0,0,0"
+                                            Visibility="{Binding IsSecret, Converter={StaticResource BoolToVisibility}}"
+                                            PreviewMouseLeftButtonDown="Reveal_Down" PreviewMouseLeftButtonUp="Reveal_Up"
+                                            MouseLeave="Reveal_Up" LostMouseCapture="Reveal_Up"
+                                            PreviewKeyDown="Reveal_KeyDown" PreviewKeyUp="Reveal_KeyUp" LostKeyboardFocus="Reveal_Up"
+                                            AutomationProperties.Name="押している間だけ値を表示"
+                                            ToolTip="押している間だけ、今の値を表示します（離すと隠れます）"/>
+                                    <TextBlock Text="{Binding DisplayText}" FontFamily="Consolas" VerticalAlignment="Center" TextWrapping="Wrap"
+                                               AutomationProperties.Name="今の値"/>
+                                </DockPanel>
+                                <!-- 新しい値。秘密は PasswordBox（入力中も見えない）。空のままなら変えない -->
+                                <DockPanel Margin="0,4,0,0" Visibility="{Binding IsSecret, Converter={StaticResource BoolToVisibility}}">
+                                    <Button DockPanel.Dock="Right" Content="消す" MinWidth="0" Margin="8,0,0,0" Click="Clear_Click"
+                                            AutomationProperties.Name="この項目を消す"/>
+                                    <PasswordBox PasswordChanged="Secret_PasswordChanged" Margin="0,0,0,0"
+                                                 materialDesign:HintAssist.Hint="新しい値（空なら変えない）"
+                                                 AutomationProperties.Name="新しい値"/>
+                                </DockPanel>
+                                <DockPanel Visibility="{Binding IsSecret, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}">
+                                    <Button DockPanel.Dock="Right" Content="フォルダを選ぶ" Command="{Binding BrowseCommand}" MinWidth="0" Margin="8,0,0,0"
+                                            Visibility="{Binding IsFolder, Converter={StaticResource BoolToVisibility}}"
+                                            AutomationProperties.Name="フォルダを選ぶ"/>
+                                    <TextBox Text="{Binding EditText, UpdateSourceTrigger=PropertyChanged}"
+                                             materialDesign:HintAssist.Hint="空なら既定"
+                                             AutomationProperties.Name="値"/>
+                                </DockPanel>
+                                <TextBlock Text="{Binding Note}" Style="{StaticResource Note}"/>
+                                <TextBlock Text="この PC の環境変数に同じ設定があるため、ここを変えても環境変数のほうが使われます。" Style="{StaticResource Note}"
+                                           Foreground="{StaticResource DangerBrush}"
+                                           Visibility="{Binding OverriddenByEnvironment, Converter={StaticResource BoolToVisibility}}"/>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <!-- 記事の中身（content）の移行と、R2 の控え -->
+            <GroupBox Header="記事の中身（content）のコピーと控え" Margin="0,16,0,0">
+                <StackPanel Margin="8">
+                    <TextBlock Text="{Binding ContentFolderText}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                    <TextBlock Style="{StaticResource Note}" TextWrapping="Wrap"
+                               Text="記事・マスタ・台帳の JSON は、今は既定の content フォルダにあります。「外のフォルダへコピー」は、コピーを作るだけです（使う場所は変わりません）。「控え」は、R2 の控え用のバケットに、スナップショットとして置きます（上の「記事の中身の控え用のバケット名」が要ります）。"/>
+                    <WrapPanel Margin="0,6,0,0">
+                        <Button Content="外のフォルダへコピー(_O)" Command="{Binding CopyOutCommand}"/>
+                        <Button Content="R2 に控えを作る(_B)" Command="{Binding BackupCommand}"/>
+                        <Button Content="控えから戻す(_T)" Command="{Binding RestoreCommand}"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding BackupStatusText}" Style="{StaticResource Note}"/>
+                </StackPanel>
+            </GroupBox>
+            <WrapPanel Margin="0,8,0,0">
+                <Button Content="保存する(_S)" Style="{StaticResource Primary}" Command="{Binding SaveCommand}"/>
+                <Button Content="入力を取り消す" Command="{Binding RevertCommand}"/>
+            </WrapPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

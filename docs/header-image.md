@@ -1,0 +1,44 @@
+# ヘッダー画像（Brand スロット）の確認結果（M0）
+
+計画書 §4.2.1 の確認項目。M0 では **仮の SVG（`wwwroot/images/fara-album-header.svg`。白い文字 "Fara Album"）** で差し込み口を確かめた。作者の既存のヘッダー画像は未受領（M2 で差し替え。形式・寸法・透過・ファイルサイズを、このファイルに追記する）。
+
+測定: 以前は `tools/verify/m0-smoke.mjs`（PC 1280・スマホ 390 × ダーク・ライト）で行った（そのスクリプトはリポジトリに無い）。
+
+| 項目 | 結果 |
+| --- | --- |
+| 差し込み方 | `SiteLayout` の `Brand` に `<a class="fbc-brand album-brand" href="./" title="ホームへ"><img alt="Fara Album" width="168" height="28" fetchpriority="high"></a>`。kit の変更は不要。kit の文字リンクとは重ならない（`a.fbc-brand` は 1 つ）。テストは `tests/FaraVrcAlbum.Web.Tests/WebTests.cs` |
+| ヘッダーの背景（両テーマ） | **同じ**: kit の `--fbc-header-bg` = `linear-gradient(90deg, #140a26, #241243)`（ダーク・ライトとも）。文字は白（`.fbc-brand { color:#fff }`）。→ **画像は 1 枚で足りる**（白系・暗い紫の上で読めること。`prefers-color-scheme` の `<picture>` は使わない） |
+| 高さ・収まり | ヘッダー 56px の中で PC 28px（y=14〜42）、スマホ 24px（y=16〜40）。リンクの当たり判定は 44px。横スクロールなし |
+| スマホでの幅 | ブランドのリンクは残りの幅を使う（kit の `flex:1 1 auto; min-width:0; overflow:hidden`）。画像 144px で収まる。検索ボタンは M0 では無い（M2 の検索を入れるときに再確認） |
+| `.fbc-brand` の指定との相性 | `font-size`・`white-space`・`text-overflow` は画像に無関係。`display:inline-flex; min-height:44px` を `app.css` で足した |
+| キーボードのフォーカス枠 | **kit の既定では出ない**: `.fbc-header :focus-visible` は `outline-color` だけで、MudBlazor の reset により `outline-style: none`。ブランドのリンクにフォーカスしても枠が見えない（kit の文字リンクも同じ）。サイトの `app.css` で `.album-brand:focus-visible { outline: 2px solid #e9d5ff }` を足した。**kit 側の修正候補**として申し送り |
+| 画像ブロック時の alt | `alt="Fara Album"` がリンクの名前になる（テスト済み）。実画像でのブロック時の表示は M2 で目視 |
+| CLS | width/height を付け、`loading` なし。M2 の boot-diff / cls で実測 |
+| 静的 HTML 側の枠 | M2 の `StaticFrame` で同じ `<img>` を出す（M0 の静的 HTML は本文のみ） |
+
+## M1 の変更: ヘッダーの表示名は『Fara』（テキスト）
+
+ヘッダーのブランドは文字の **『Fara』だけ**（`SiteInfo.BrandName`。変えるのはこの 1 か所）。`<title>`・`og:site_name`・RSS のタイトル・フッター・プライバシーポリシーは『Fara Album』のまま。M2 で入れるヘッダー画像の `alt` は『Fara』にする。上の M0 の記録（仮の SVG・alt `Fara Album`）は、画像の差し込み方の検証結果として残す（`fara-album-header.svg` はいまは使っていない）。
+
+## M2: 実際のヘッダー画像（決定）
+
+- ファイル: `src/FaraVrcAlbum.Web/wwwroot/images/header-{内容の SHA-256 の先頭 8 桁}.webp`（**960×240 の WebP、約 25 KB**。元は 1920×480 の約 90 KB で、表示は最大 448px 幅なので 2x に縮めた。`python tools/make-header-image.py <元の WebP>` で作る。元の左下にある背景の扉のかすかな明るい四角は、左隣の色でなじませてある。左端・右端は CSS の mask でヘッダーの背景へ溶かす。青空の写真・アバター・文字『Fara』が焼き込み済み。元の写真の PNG は入れない）。ファイル名の 8 桁は `SiteInfo.HeaderImage` と一致させる（`WebTests.TheHeaderImageFileIsHashNamedByItsContentAndIs1920By480` が確かめる）。差し替えたら名前も変える（`tools/site.json` の cacheRules が `/images/header-*.webp` を immutable にしている）
+- 差し込み: `MainLayout` の `Brand` に `<a class="fbc-brand album-brand" href="./" title="ホームへ"><img alt="Fara" width="1920" height="480" fetchpriority="high"></a>`。遅延読み込みにしない。両テーマでヘッダーの背景は同じ（kit の紫のグラデーション）なので 1 枚
+- 高さ: **PC 112px・スマホ（767.98px 以下）72px**。kit は変更せず `app.css` で上書き: `.fbc-header.mud-appbar`・`.fbc-header .mud-toolbar`（kit は 3.5rem 固定）、`--mud-appbar-height`（`html:root` と `.fbc-page`。MudBlazor のテーマが後から `:root` に出すので詳しさで勝たせる）、本文の上余白（MudBlazor は 600px 未満の縦向きで 7/8 にする）、`html { scroll-padding-top }`（スマホはページ全体がスクロールするので、アンカーがヘッダーに隠れない）
+- 画像は高さに合わせて縮め、左寄せ（`object-fit: cover; object-position: left`）。右端の 45% は `mask-image` でヘッダーの背景へゆるやかに溶かし、ヘッダーの背景には画像の色を右へ伸ばす薄い光（radial-gradient）を重ねる（画像の右端で途切れて見えないように。元ファイルの右端は青空のまま）。画像の右の空きは押せない（リンクは画像の幅だけ）
+- 画像の `alt` は『Fara』。h1 にはしない（トップは視覚的に隠した h1『Fara Album』）。フォーカス枠は画像の内側（`outline-offset: -3px`）
+- 確認: 以前は `tools/verify/m2-check.mjs` で行った（サンプル記事に依存したため削除。git 履歴 `18603ce`）。kit の `.fbc-header` の 3.5rem 固定と、MudBlazor の 7/8 は、kit 側で CSS 変数にする候補（申し送り）
+
+## M3: 画像は各ページの本文の最初へ（現在の形）
+
+- ヘッダーの名前は kit 既定の文字 **『Fara Photo Album』**（サイト名。`appsettings.json` の `SiteName`。`<title>`・`og:site_name`・RSS のタイトル・フッター・プライバシーポリシーと同じ。`SiteLayout` の `Brand` は使わない）。ヘッダーの高さは kit 既定の 3.5rem（`--album-header-h`。PC・スマホとも同じ）。**上の M0〜M2 のヘッダー画像・高さ（112px・72px）・`SiteInfo.BrandName` の記述は、この変更で置き換わった。**
+- 画像（`SiteRules.HeaderImage`。960×240 の WebP）は、**すべてのページの本文の最初**に、本文の幅の半分（狭い画面でも 200px 以上）を、本文の領域の中央に置いて出す（コンポーネント `SiteBanner`、CSS は `.album-banner`。以前は本文の幅いっぱいだった）。縦横比は 4:1（`aspect-ratio`）で、画像が来る前から高さが決まる。alt は空（名前は文字で出ているので飾り）。
+- **静的 HTML にも同じものを入れる**（`PageCatalog` が全ページの `<main class="entry-static">` の先頭に `SiteBanner` を足す）。起動の前後で画像が動かない（CLS）。
+
+## A 案: 画像はサイドバーのプロフィールカードへ（現在の形）
+
+- **本文の先頭の画像（`SiteBanner`・`.album-banner`）は廃止した**。同じ画像（`SiteRules.HeaderImage`。960×240 の WebP。URL・サイズは変えない）を、サイドバーの最上段のプロフィールカード（`Components/SidebarProfile.razor`）に出す。バナーは 4:1 のまま、サイドバーの幅（パネル 304px の中のカード）に収める（`.album-profile-banner img { width:100%; aspect-ratio:4/1 }`）。alt は空（名前は文字で出ている飾り）。
+- **丸いアバター**は、新しい画像ではなく、同じバナー画像の Fara の顔を CSS で丸く切り出したもの（`.album-avatar img { width:480%; left:-190% }`）。`role="img"`・`aria-label="Fara のアイコン"`。
+- **静的な入口ページ（JS 無し）にはサイドバーが無い**ので、バナーは起動の後に出る。`Build/PageCatalog.cs` は本文の先頭に画像を足さない（`SiteBuilderTests` が `album-banner`・`images/header-` が無いことを確かめる）。起動の前後で本文が動かないよう、静的 HTML の左余白は、起動後のドロワーの幅（`--mud-drawer-width-left`。無いとき `--album-drawer-w` = 328px）に合わせる。
+- ヘッダー（細いバー）の高さは kit 既定の 3.5rem のまま（`--album-header-h`）。名前は文字（サイト名）の前に、飾りのマーク（SVG）を付けた。
+- 以降の「M3: 画像は各ページの本文の最初へ」の記述（本文の幅の半分・`SiteBanner`・静的 HTML にも入れる）は、この変更で置き換わった。

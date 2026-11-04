@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Fara Photo Album のデスクトップ版（album の画面）。Windows 専用（WPF）。
+    CI（ubuntu）のビルドには含めない（FaraVrcAlbum.sln に入れていない）。手元では
+    dotnet run の project 指定（npm run desktop）で起動する。
+    ロジックと ViewModel は FaraVrcAlbum.Desktop.Core（Windows 以外でもテストできる）。
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>FaraVrcAlbum.Desktop</RootNamespace>
+    <AssemblyName>FaraVrcAlbum.Desktop</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>ja</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 見た目は fara-bot-moderator と同じ MaterialDesign（ライト・紫系）。版もそろえる -->
+    <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FaraVrcAlbum.Desktop.Core\FaraVrcAlbum.Desktop.Core.csproj" />
+  </ItemGroup>
+
+</Project>

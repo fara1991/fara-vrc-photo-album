@@ -1,0 +1,44 @@
+## .NET（Windows は bin/obj、Windows 以外は bin.unix/obj.unix。Directory.Build.props）
+bin/
+obj/
+bin.unix/
+obj.unix/
+*.user
+*.suo
+
+## Node
+node_modules/
+
+## wrangler の assets（公開物を置く。tools/site.mjs が環境ごとの出力を dist に置く）
+dist/
+.wrangler/
+
+## dotnet publish の出力と、Build が環境ごとに書き足したコピー（tools/site.mjs）
+publish/
+site-production/
+site-develop/
+
+## 本物の記事の中身（Git に入れない。リポジトリを公開するため。R2 の控え用バケットに同期して持つ。docs/album-desktop.md）
+## CI 用の架空のサンプルは samples/content（こちらは Git に入れる）
+/content/
+
+## 手元だけのもの（画像のアップロード設定・作業フォルダ。M3 以降）
+local/
+
+## R2 の認証情報（値を入れない・Git に入れない。docs/album-tool.md）
+.env.local
+
+## IDE
+.idea/
+.vs/
+*.swp
+*~
+
+## OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## Claude Code（個人の設定）
+.claude/
+verify-out/
